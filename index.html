@@ -3388,7 +3388,6 @@
                 </div>
             </form>
             <div class="alert alert-info" style="margin-top: 20px;">
-                <strong>관리자 계정:</strong> pastor / 1234<br>
                 <small style="color: #666;">일반 사용자는 가입신청 후 승인을 받으세요.</small>
             </div>
         </div>
@@ -3801,22 +3800,22 @@
                 });
             }
             
-            // 자동 로그인 (개발용 - pastor)
-            autoLogin();
+            // 자동 로그인 비활성화 (배포용)
+            // autoLogin();
         });
         
         // 자동 로그인 함수 (개발용)
         function autoLogin() {
             currentUser = { 
-                username: 'pastor', 
+                username: 'gkc8127', 
                 name: '정준연', 
                 role: '담임목사',
-                permissions: ['attendance', 'cell', 'department', 'mentor', 'offering', 'members']
+                permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users']
             };
             
             document.getElementById('authButtons').style.display = 'none';
             document.getElementById('userDisplay').style.display = 'block';
-            document.getElementById('userName').textContent = 'pastor';
+            document.getElementById('userName').textContent = 'gkc8127';
             document.getElementById('userRole').textContent = '담임목사';
             
             // 회원 메뉴 표시
@@ -6549,9 +6548,9 @@
             const password = document.getElementById('password').value;
             
             // pastor 계정 (마스터)
-            if (username === 'pastor' && password === '1234') {
+            if (username === 'gkc8127' && password === '4581') {
                 currentUser = { 
-                    username: 'pastor', 
+                    username: 'gkc8127', 
                     name: '정준연', 
                     role: '담임목사',
                     permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users']
@@ -6559,7 +6558,7 @@
                 
                 document.getElementById('authButtons').style.display = 'none';
                 document.getElementById('userDisplay').style.display = 'block';
-                document.getElementById('userName').textContent = 'pastor';
+                document.getElementById('userName').textContent = 'gkc8127';
                 document.getElementById('userRole').textContent = '담임목사';
                 
                 // 회원 메뉴 표시
