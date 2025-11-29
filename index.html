@@ -534,14 +534,14 @@
             <div class="nav-item" onclick="showSection('sundayschool')">Sunday School</div>
             <div class="nav-item" onclick="showSection('gallery')">갤러리</div>
             <div class="nav-item member-only" style="display:none;" onclick="showSection('my')">내정보</div>
-            <div class="nav-item pastor-only" style="display:none;" onclick="showSection('dashboard')">대시보드</div>
+            <div class="nav-item perm-dashboard" style="display:none;" onclick="showSection('dashboard')">대시보드</div>
             <div class="nav-item perm-attendance" style="display:none;" onclick="showSection('attendance')">출석관리</div>
             <div class="nav-item perm-cell" style="display:none;" onclick="showSection('cell')">구역관리</div>
             <div class="nav-item perm-department" style="display:none;" onclick="showSection('department')">부서관리</div>
             <div class="nav-item perm-mentor" style="display:none;" onclick="showSection('mentor')">멘토링</div>
             <div class="nav-item perm-offering" style="display:none;" onclick="showSection('offering')">재정관리</div>
             <div class="nav-item perm-members" style="display:none;" onclick="showSection('members')">교적관리</div>
-            <div class="nav-item pastor-only" style="display:none;" onclick="showSection('users')">사용자관리</div>
+            <div class="nav-item perm-users" style="display:none;" onclick="showSection('users')">사용자관리</div>
         </div>
     </div>
     
@@ -549,20 +549,27 @@
     <div class="main-content">
         <!-- 홈 섹션 -->
         <div id="home" class="section section-home active" style="background: linear-gradient(180deg, #f5f0e8 0%, #ebe4d8 100%); padding: 25px; margin: -25px; margin-bottom: 0;">
-            <!-- 메인 히어로 섹션 -->
-            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1a365d 100%); color: white; padding: 60px 40px; border-radius: 16px; margin-bottom: 25px; text-align: center; position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.03; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✝</text></svg>'); background-size: 80px; background-repeat: repeat;"></div>
-                <div style="position: relative; z-index: 1;">
-                    <p style="margin: 0 0 8px 0; font-size: 0.9em; letter-spacing: 3px; opacity: 0.85; text-transform: uppercase;">Sacramento Glory Church</p>
-                    <h1 style="margin: 0; color: white; font-size: 2.5em; font-weight: 700;">새크라멘토 영광교회</h1>
-                    <div style="width: 60px; height: 2px; background: rgba(255,255,255,0.6); margin: 25px auto;"></div>
-                    <p style="margin: 0; font-size: 1.15em; opacity: 0.95; line-height: 1.7; max-width: 600px; margin: 0 auto;">
-                        오직 성경, 오직 그리스도, 오직 믿음, 오직 은혜, 오직 하나님께 영광
-                    </p>
-                    <p style="margin: 20px 0 0 0; opacity: 0.7; font-size: 0.85em; letter-spacing: 1px;">
-                        Sola Scriptura · Solus Christus · Sola Fide · Sola Gratia · Soli Deo Gloria
-                    </p>
+            <!-- 메인 히어로 슬라이드쇼 -->
+            <div id="heroSlideshow" style="position: relative; border-radius: 16px; margin-bottom: 25px; overflow: hidden; height: 320px;">
+                <!-- 슬라이드 컨테이너 -->
+                <div id="slidesContainer" style="position: relative; width: 100%; height: 100%;">
+                    <!-- 슬라이드가 JavaScript로 동적 생성됨 -->
                 </div>
+                
+                <!-- 슬라이드 인디케이터 -->
+                <div id="slideIndicators" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10;"></div>
+                
+                <!-- 이전/다음 버튼 -->
+                <button onclick="prevSlide()" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.3); border: none; color: white; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 1.3em; z-index: 10; transition: background 0.3s;" onmouseover="this.style.background='rgba(0,0,0,0.5)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">❮</button>
+                <button onclick="nextSlide()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.3); border: none; color: white; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 1.3em; z-index: 10; transition: background 0.3s;" onmouseover="this.style.background='rgba(0,0,0,0.5)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">❯</button>
+                
+                <!-- 관리자 편집 버튼 -->
+                <button class="pastor-only" style="display: none; position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.95); border: none; color: #1e3a5f; padding: 10px 18px; border-radius: 25px; cursor: pointer; font-size: 0.85em; font-weight: 600; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.2);" onclick="openSlideEditModal()">
+                    슬라이드 관리
+                </button>
+                
+                <!-- 자동 재생 컨트롤 -->
+                <button id="slidePlayPause" onclick="toggleSlideAutoPlay()" style="position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.4); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 0.9em; z-index: 10;" title="자동 재생">⏸</button>
             </div>
             
             <!-- 환영 메시지 -->
@@ -629,7 +636,7 @@
                     </a>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #4a5568;">
                         <p style="margin: 0 0 8px 0;"><span style="font-weight: 500;">전화:</span> (916) 969-8141</p>
-                        <p style="margin: 0;"><span style="font-weight: 500;">이메일:</span> <a href="mailto:sacglorychurch@hotmail.com" style="color: #2d5a87;">sacglorychurch@hotmail.com</a></p>
+                        <p style="margin: 0;"><span style="font-weight: 500;">이메일:</span> <a href="/cdn-cgi/l/email-protection#1566747672797a676c767d6067767d557d7a6178747c793b767a78" style="color: #2d5a87;"><span class="__cf_email__" data-cfemail="33405250545f5c414a505b4641505b735b5c475e525a5f1d505c5e">[email&#160;protected]</span></a></p>
                     </div>
                 </div>
                 
@@ -1004,7 +1011,7 @@
                         <h4 style="margin: 0 0 15px 0; color: #1e3a5f; font-size: 1.1em;">📞 연락처</h4>
                         <p style="margin: 0; color: #4a5568; line-height: 2;">
                             <strong>전화:</strong> (916) 969-8141<br>
-                            <strong>이메일:</strong> <a href="mailto:sacglorychurch@hotmail.com" style="color: #2d5a87;">sacglorychurch@hotmail.com</a>
+                            <strong>이메일:</strong> <a href="/cdn-cgi/l/email-protection#a6d5c7c5c1cac9d4dfc5ced3d4c5cee6cec9d2cbc7cfca88c5c9cb" style="color: #2d5a87;"><span class="__cf_email__" data-cfemail="afdcceccc8c3c0ddd6ccc7daddccc7efc7c0dbc2cec6c381ccc0c2">[email&#160;protected]</span></a>
                         </p>
                     </div>
                     <div style="background: #f8fafc; padding: 25px; border-radius: 12px; border-left: 4px solid #3d7ab5;">
@@ -1261,6 +1268,41 @@
                     <div style="text-align: center; padding: 40px 20px; color: #94a3b8; grid-column: 1 / -1;">
                         <div style="font-size: 3em; margin-bottom: 10px;">📷</div>
                         <p>등록된 사진이 없습니다</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 관리 모달 -->
+        <div id="slideEditModal" class="modal">
+            <div class="modal-content" style="max-width: 800px;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e3a5f, #2d5a87);">
+                    <h2>슬라이드 관리</h2>
+                    <button class="close-btn" onclick="closeSlideEditModal()">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 25px;">
+                    <!-- 슬라이드 설정 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <label style="font-weight: 600;">자동 전환 시간:</label>
+                            <select id="slideInterval" class="form-control" style="width: auto;" onchange="updateSlideInterval()">
+                                <option value="3000">3초</option>
+                                <option value="5000" selected>5초</option>
+                                <option value="7000">7초</option>
+                                <option value="10000">10초</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-success" onclick="addNewSlide()">+ 새 슬라이드 추가</button>
+                    </div>
+                    
+                    <!-- 슬라이드 목록 -->
+                    <div id="slideEditList" style="display: grid; gap: 15px; max-height: 400px; overflow-y: auto;">
+                        <!-- 슬라이드가 동적으로 로드됨 -->
+                    </div>
+                    
+                    <div class="btn-group" style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="saveSlides()">저장</button>
+                        <button class="btn btn-secondary" onclick="closeSlideEditModal()">닫기</button>
                     </div>
                 </div>
             </div>
@@ -1650,9 +1692,32 @@
                 </div>
                 
                 <!-- 새가족 명단 -->
-                <div class="card" style="border-left: 4px solid #e53e3e;">
-                    <h3 style="margin: 0 0 15px 0; color: #e53e3e; font-weight: 600;">새가족 명단</h3>
+                <div class="card" style="border-left: 4px solid #ed8936;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #ed8936; font-weight: 600;">새가족 명단</h3>
+                        <span style="font-size: 0.8em; color: #888;">최근 3개월</span>
+                    </div>
                     <div id="dashNewFamilySummary" style="max-height: 150px; overflow-y: auto;"></div>
+                </div>
+                
+                <!-- 이번달/다음달 생일 -->
+                <div class="card" style="border-left: 4px solid #ec4899;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #ec4899; font-weight: 600;">생일 축하</h3>
+                        <span style="font-size: 0.8em; color: #888;">이번달 · 다음달</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <!-- 이번달 생일 -->
+                        <div style="background: #fdf2f8; border-radius: 10px; padding: 12px;">
+                            <div style="font-weight: 600; color: #be185d; margin-bottom: 10px; font-size: 0.9em;">이번달 생일</div>
+                            <div id="dashThisMonthBirthday" style="max-height: 120px; overflow-y: auto;"></div>
+                        </div>
+                        <!-- 다음달 생일 -->
+                        <div style="background: #fce7f3; border-radius: 10px; padding: 12px;">
+                            <div style="font-weight: 600; color: #be185d; margin-bottom: 10px; font-size: 0.9em;">다음달 생일</div>
+                            <div id="dashNextMonthBirthday" style="max-height: 120px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -1920,13 +1985,45 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">테마 색상</label>
-                        <select class="form-control" id="deptColor">
-                            <option value="#1a1a2e">■ 네이비</option>
-                            <option value="#e94560">■ 레드</option>
-                            <option value="#0f3460">■ 블루</option>
-                            <option value="#533483">■ 퍼플</option>
-                            <option value="#16213e">■ 다크블루</option>
-                            <option value="#4a5568">■ 그레이</option>
+                        <select class="form-control" id="deptColor" style="font-size: 0.95em;">
+                            <optgroup label="🌈 밝은 색상">
+                                <option value="#3b82f6">■ 스카이블루</option>
+                                <option value="#06b6d4">■ 시안</option>
+                                <option value="#10b981">■ 에메랄드</option>
+                                <option value="#22c55e">■ 그린</option>
+                                <option value="#84cc16">■ 라임</option>
+                                <option value="#eab308">■ 옐로우</option>
+                                <option value="#f59e0b">■ 앰버</option>
+                                <option value="#f97316">■ 오렌지</option>
+                                <option value="#ef4444">■ 레드</option>
+                                <option value="#ec4899">■ 핑크</option>
+                                <option value="#d946ef">■ 푸시아</option>
+                                <option value="#a855f7">■ 퍼플</option>
+                                <option value="#8b5cf6">■ 바이올렛</option>
+                                <option value="#6366f1">■ 인디고</option>
+                            </optgroup>
+                            <optgroup label="🎨 파스텔 색상">
+                                <option value="#93c5fd">■ 파스텔 블루</option>
+                                <option value="#a5f3fc">■ 파스텔 시안</option>
+                                <option value="#86efac">■ 파스텔 그린</option>
+                                <option value="#fde047">■ 파스텔 옐로우</option>
+                                <option value="#fdba74">■ 파스텔 오렌지</option>
+                                <option value="#fca5a5">■ 파스텔 레드</option>
+                                <option value="#f9a8d4">■ 파스텔 핑크</option>
+                                <option value="#d8b4fe">■ 파스텔 퍼플</option>
+                            </optgroup>
+                            <optgroup label="🌙 어두운 색상">
+                                <option value="#1e3a5f">■ 네이비</option>
+                                <option value="#1e40af">■ 다크블루</option>
+                                <option value="#7c3aed">■ 다크퍼플</option>
+                                <option value="#be185d">■ 다크핑크</option>
+                                <option value="#b91c1c">■ 다크레드</option>
+                                <option value="#c2410c">■ 다크오렌지</option>
+                                <option value="#15803d">■ 다크그린</option>
+                                <option value="#0f766e">■ 다크시안</option>
+                                <option value="#4a5568">■ 그레이</option>
+                                <option value="#1f2937">■ 차콜</option>
+                            </optgroup>
                         </select>
                     </div>
                     <div class="form-group">
@@ -2106,19 +2203,41 @@
         
         <!-- 재정관리 -->
         <div id="offering" class="section section-offering">
-            <!-- 재정관리 서브 네비게이션 -->
-            <div class="card" style="padding: 0; margin-bottom: 20px;">
-                <div style="display: flex; border-bottom: 2px solid #e2e8f0;">
-                    <div class="finance-nav-item active" onclick="showFinanceTab('dashboard')" id="financeNavDashboard" style="flex: 1; padding: 15px 20px; text-align: center; cursor: pointer; font-weight: 600; background: linear-gradient(135deg, #667eea, #9f7aea); color: white; border-radius: 15px 0 0 0;">
-                        📊 대시보드
+            <!-- 재정관리 헤더 -->
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+                    <div>
+                        <h1 style="margin: 0; color: white; font-size: 1.8em;">재정관리</h1>
+                        <p style="margin: 8px 0 0 0; opacity: 0.9;">교회 재정을 투명하게 관리합니다</p>
                     </div>
-                    <div class="finance-nav-item" onclick="showFinanceTab('income')" id="financeNavIncome" style="flex: 1; padding: 15px 20px; text-align: center; cursor: pointer; font-weight: 600; color: #4a5568; transition: all 0.3s;">
-                        💰 수입
-                    </div>
-                    <div class="finance-nav-item" onclick="showFinanceTab('expense')" id="financeNavExpense" style="flex: 1; padding: 15px 20px; text-align: center; cursor: pointer; font-weight: 600; color: #4a5568; border-radius: 0 15px 0 0; transition: all 0.3s;">
-                        💸 지출
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
+                            <div style="font-size: 1.8em; font-weight: bold;" id="headerTotalIncome">$0</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">이번달 수입</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
+                            <div style="font-size: 1.8em; font-weight: bold;" id="headerTotalExpense">$0</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">이번달 지출</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
+                            <div style="font-size: 1.8em; font-weight: bold;" id="headerBalance">$0</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">잔액</div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 재정관리 서브 네비게이션 -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button class="finance-nav-item" onclick="showFinanceTab('dashboard')" id="financeNavDashboard" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 25px; border: none; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                    대시보드
+                </button>
+                <button class="finance-nav-item" onclick="showFinanceTab('income')" id="financeNavIncome" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                    수입
+                </button>
+                <button class="finance-nav-item" onclick="showFinanceTab('expense')" id="financeNavExpense" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                    지출
+                </button>
             </div>
             
             <!-- 대시보드 탭 -->
@@ -2508,17 +2627,17 @@
         <div id="categoryModal" class="modal">
             <div class="modal-content" style="max-width: 700px;">
                 <div class="modal-header">
-                    <h2>📁 지출 분류/항목 관리</h2>
+                    <h2>지출 분류/항목 관리</h2>
                 </div>
                 
                 <!-- 탭 네비게이션 -->
-                <div style="display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px;">
-                    <div id="catTabCategory" class="cat-tab active" onclick="showCatTab('category')" style="flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: 600; background: linear-gradient(135deg, #667eea, #9f7aea); color: white; border-radius: 10px 0 0 0;">
-                        📂 분류 관리
-                    </div>
-                    <div id="catTabItem" class="cat-tab" onclick="showCatTab('item')" style="flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: 600; color: #4a5568; border-radius: 0 10px 0 0;">
-                        📋 항목 관리
-                    </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button id="catTabCategory" class="cat-tab" onclick="showCatTab('category')" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 25px; border: none; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                        분류 관리
+                    </button>
+                    <button id="catTabItem" class="cat-tab" onclick="showCatTab('item')" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                        항목 관리
+                    </button>
                 </div>
                 
                 <!-- 분류 관리 탭 -->
@@ -2541,7 +2660,7 @@
                         </div>
                     </div>
                     <div style="margin-top: 20px;">
-                        <h3 style="margin-bottom: 15px;">📋 현재 분류 목록</h3>
+                        <h3 style="margin-bottom: 15px;">현재 분류 목록</h3>
                         <div id="categoryList" style="max-height: 250px; overflow-y: auto;">
                             <p style="text-align: center; color: #666;">부서를 선택하세요.</p>
                         </div>
@@ -2589,7 +2708,7 @@
         
         <!-- 연간 행사 추가 모달 -->
         <div id="yearEventModal" class="modal">
-            <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
                     <h2>📅 연간 행사 추가</h2>
                 </div>
@@ -2597,7 +2716,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">월 *</label>
-                            <select class="form-control" id="yearEventMonth" required>
+                            <select class="form-control" id="yearEventMonth" required onchange="syncDateFromMonth(this.value)">
                                 <option value="1">1월</option>
                                 <option value="2">2월</option>
                                 <option value="3">3월</option>
@@ -2613,8 +2732,22 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">날짜</label>
-                            <input type="date" class="form-control" id="yearEventDate">
+                            <label class="form-label">시작일</label>
+                            <input type="date" class="form-control" id="yearEventDate" onchange="syncEventMonthFromDate(this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">종료일</label>
+                            <input type="date" class="form-control" id="yearEventEndDate">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">시작 시간</label>
+                            <input type="time" class="form-control" id="yearEventStartTime">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">종료 시간</label>
+                            <input type="time" class="form-control" id="yearEventEndTime">
                         </div>
                     </div>
                     <div class="form-group">
@@ -2764,16 +2897,16 @@
             <!-- 탭 네비게이션 -->
             <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
                 <button id="memberTabDashboard" onclick="showMemberTab('dashboard')" class="btn" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 25px; border: none; font-weight: 600;">
-                    📊 대시보드
+                    대시보드
                 </button>
                 <button id="memberTabRegister" onclick="showMemberTab('register')" class="btn" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600;">
-                    📝 교인등록
+                    교인등록
                 </button>
                 <button id="memberTabList" onclick="showMemberTab('list')" class="btn" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600;">
-                    👥 교인목록
+                    교인목록
                 </button>
                 <button id="memberTabStats" onclick="showMemberTab('stats')" class="btn" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600;">
-                    📈 교인통계
+                    교인통계
                 </button>
             </div>
             
@@ -2793,27 +2926,36 @@
                         <div style="font-size: 2.5em; margin-bottom: 5px;" id="dashFemaleCount">0</div>
                         <div style="opacity: 0.9;">여성</div>
                     </div>
-                    <div class="card" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; text-align: center; padding: 20px;">
-                        <div style="font-size: 2.5em; margin-bottom: 5px;" id="dashCellAssigned">0</div>
-                        <div style="opacity: 0.9;">구역 배정</div>
+                    <div class="card" style="background: linear-gradient(135deg, #f6ad55, #ed8936); color: white; text-align: center; padding: 20px;">
+                        <div style="font-size: 2.5em; margin-bottom: 5px;" id="dashNewFamilyCount">0</div>
+                        <div style="opacity: 0.9;">새가족 (3개월)</div>
                     </div>
+                </div>
+                
+                <!-- 새가족 명단 (3개월 이내 등록) -->
+                <div class="card" style="margin-bottom: 20px; border-left: 4px solid #ed8936;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #ed8936;">새가족 명단</h3>
+                        <span style="font-size: 0.85em; color: #888;">최근 3개월 내 등록</span>
+                    </div>
+                    <div id="dashNewFamilyList"></div>
                 </div>
                 
                 <!-- 빠른 통계 -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="card">
-                        <h3 style="margin: 0 0 15px 0;">⛪ 직분별 현황</h3>
+                        <h3 style="margin: 0 0 15px 0;">직분별 현황</h3>
                         <div id="dashPositionStats"></div>
                     </div>
                     <div class="card">
-                        <h3 style="margin: 0 0 15px 0;">🏘️ 구역별 현황</h3>
+                        <h3 style="margin: 0 0 15px 0;">구역별 현황</h3>
                         <div id="dashCellStats"></div>
                     </div>
                 </div>
                 
                 <!-- 최근 등록 교인 -->
                 <div class="card" style="margin-top: 20px;">
-                    <h3 style="margin: 0 0 15px 0;">🆕 최근 등록 교인</h3>
+                    <h3 style="margin: 0 0 15px 0;">최근 등록 교인</h3>
                     <div id="dashRecentMembers"></div>
                 </div>
             </div>
@@ -3084,26 +3226,26 @@
         </div>
         
         <!-- 탭 네비게이션 -->
-        <div style="display: flex; background: white; border-radius: 15px 15px 0 0; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 0;">
-            <div class="user-tab active" onclick="showUserTab('requests')" id="userTabRequests" style="flex: 1; padding: 15px 20px; text-align: center; cursor: pointer; font-weight: 600; background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white;">
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button class="user-tab" onclick="showUserTab('requests')" id="userTabRequests" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 25px; border: none; font-weight: 600; border-radius: 8px; cursor: pointer;">
                 가입신청 <span id="pendingCount" style="background: #ef4444; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 5px;">0</span>
-            </div>
-            <div class="user-tab" onclick="showUserTab('list')" id="userTabList" style="flex: 1; padding: 15px 20px; text-align: center; cursor: pointer; font-weight: 600; color: #666; background: #f8fafc;">
+            </button>
+            <button class="user-tab" onclick="showUserTab('list')" id="userTabList" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
                 회원 목록
-            </div>
+            </button>
         </div>
         
         <!-- 가입신청 탭 -->
-        <div id="userRequestsTab" class="card" style="border-radius: 0 0 15px 15px; margin-top: 0;">
-            <h3 style="margin: 0 0 20px 0; color: #5b21b6;">가입 대기 목록</h3>
+        <div id="userRequestsTab" class="card">
+            <h3 style="margin: 0 0 20px 0; color: #667eea;">가입 대기 목록</h3>
             <div id="signupRequestList">
                 <p style="text-align: center; color: #718096; padding: 40px;">가입 대기중인 신청이 없습니다.</p>
             </div>
         </div>
         
         <!-- 회원목록 탭 -->
-        <div id="userListTab" class="card" style="display: none; border-radius: 0 0 15px 15px; margin-top: 0;">
-            <h3 style="margin: 0 0 20px 0; color: #5b21b6;">등록된 회원</h3>
+        <div id="userListTab" class="card" style="display: none;">
+            <h3 style="margin: 0 0 20px 0; color: #667eea;">등록된 회원</h3>
             <div id="registeredUserList">
                 <p style="text-align: center; color: #718096; padding: 40px;">등록된 회원이 없습니다.</p>
             </div>
@@ -3173,7 +3315,7 @@
                 <input type="hidden" id="permUserId">
                 
                 <!-- 교적 연결 -->
-                <h4 style="margin: 0 0 15px 0; color: #38a169;">📋 교적 연결</h4>
+                <h4 style="margin: 0 0 15px 0; color: #38a169;">교적 연결</h4>
                 <div style="margin-bottom: 20px; padding: 15px; background: #f0fdf4; border-radius: 8px; border: 1px solid #86efac;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #166534;">교적 회원 선택</label>
                     <select id="permMemberLink" class="form-control" style="width: 100%;">
@@ -3182,8 +3324,12 @@
                     <small style="color: #166534; margin-top: 8px; display: block;">교적에 등록된 회원과 연결하면 "내 정보"에서 출석/헌금 내역을 볼 수 있습니다.</small>
                 </div>
                 
-                <h4 style="margin: 0 0 15px 0; color: #5b21b6;">🔐 메뉴 접근 권한</h4>
+                <h4 style="margin: 0 0 15px 0; color: #5b21b6;">메뉴 접근 권한</h4>
                 <div style="display: grid; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border-radius: 8px; cursor: pointer;">
+                        <input type="checkbox" id="permDashboard" style="width: 20px; height: 20px;">
+                        <span>대시보드</span>
+                    </label>
                     <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" id="permAttendance" style="width: 20px; height: 20px;">
                         <span>출석관리</span>
@@ -3207,6 +3353,10 @@
                     <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" id="permMembers" style="width: 20px; height: 20px;">
                         <span>교적관리</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #fef2f2; border-radius: 8px; cursor: pointer; border: 1px solid #fecaca;">
+                        <input type="checkbox" id="permUsers" style="width: 20px; height: 20px;">
+                        <span style="color: #dc2626; font-weight: 600;">사용자관리 (관리자)</span>
                     </label>
                 </div>
             </div>
@@ -3244,7 +3394,7 @@
         </div>
     </div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // 전역 변수
         let currentUser = null;
         let members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
@@ -3277,9 +3427,335 @@
             const maxNumber = Math.max(...members.map(m => parseInt(m.number) || 0));
             return maxNumber + 1;
         }
+        
+        // ========== 슬라이드쇼 ==========
+        let heroSlides = JSON.parse(localStorage.getItem('heroSlides') || 'null');
+        let currentSlideIndex = 0;
+        let slideAutoPlay = true;
+        let slideTimer = null;
+        let slideIntervalTime = 5000;
+        
+        // 기본 샘플 슬라이드 (5장)
+        const defaultSlides = [
+            {
+                type: 'gradient',
+                background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1a365d 100%)',
+                title: '새크라멘토 영광교회',
+                subtitle: 'Sacramento Glory Church',
+                text: '오직 성경, 오직 그리스도, 오직 믿음, 오직 은혜, 오직 하나님께 영광',
+                subtext: 'Sola Scriptura · Solus Christus · Sola Fide · Sola Gratia · Soli Deo Gloria'
+            },
+            {
+                type: 'gradient',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                title: '주일예배에 초대합니다',
+                subtitle: 'Sunday Worship Service',
+                text: '매주 주일 오전 11시',
+                subtext: '예배를 통해 하나님께 영광 돌리는 시간에 함께하세요'
+            },
+            {
+                type: 'gradient',
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                title: '수요 경배와 찬양',
+                subtitle: 'Wednesday Praise & Worship',
+                text: '매주 수요일 저녁 6:30',
+                subtext: '찬양과 말씀으로 한 주의 중심을 세워가는 시간'
+            },
+            {
+                type: 'gradient',
+                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                title: 'Sunday School',
+                subtitle: '주일학교',
+                text: '매주 주일 오전 11시',
+                subtext: '어린이들이 예수님을 만나는 즐거운 시간'
+            },
+            {
+                type: 'gradient',
+                background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                title: '새가족을 환영합니다',
+                subtitle: 'Welcome New Family',
+                text: '처음 오신 분들을 위한 새가족 환영회',
+                subtext: '따뜻한 교제와 함께 신앙생활을 시작하세요'
+            }
+        ];
+        
+        // 슬라이드쇼 초기화
+        function initSlideshow() {
+            if (!heroSlides) {
+                heroSlides = defaultSlides;
+                localStorage.setItem('heroSlides', JSON.stringify(heroSlides));
+            }
+            
+            renderSlides();
+            startSlideTimer();
+        }
+        
+        // 슬라이드 렌더링
+        function renderSlides() {
+            const container = document.getElementById('slidesContainer');
+            const indicators = document.getElementById('slideIndicators');
+            if (!container || !indicators) return;
+            
+            container.innerHTML = '';
+            indicators.innerHTML = '';
+            
+            heroSlides.forEach((slide, index) => {
+                // 슬라이드 생성
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'hero-slide';
+                slideDiv.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: ${index === 0 ? '1' : '0'}; transition: opacity 0.8s ease-in-out; pointer-events: ${index === 0 ? 'auto' : 'none'};`;
+                
+                if (slide.type === 'image' && slide.imageData) {
+                    // 이미지 슬라이드
+                    slideDiv.innerHTML = `
+                        <div style="width: 100%; height: 100%; background: url('${slide.imageData}') center/cover no-repeat; position: relative;">
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4);"></div>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; width: 90%;">
+                                ${slide.subtitle ? `<p style="margin: 0 0 8px 0; font-size: 0.9em; letter-spacing: 3px; opacity: 0.9; text-transform: uppercase;">${slide.subtitle}</p>` : ''}
+                                ${slide.title ? `<h1 style="margin: 0; font-size: 2.5em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${slide.title}</h1>` : ''}
+                                ${slide.text ? `<p style="margin: 20px auto 0; font-size: 1.15em; opacity: 0.95; max-width: 600px;">${slide.text}</p>` : ''}
+                                ${slide.subtext ? `<p style="margin: 15px 0 0 0; opacity: 0.8; font-size: 0.9em;">${slide.subtext}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 그라데이션 슬라이드
+                    slideDiv.innerHTML = `
+                        <div style="width: 100%; height: 100%; background: ${slide.background || 'linear-gradient(135deg, #1e3a5f, #2d5a87)'}; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.05; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✝</text></svg>'); background-size: 80px; background-repeat: repeat;"></div>
+                            <div style="text-align: center; color: white; padding: 40px; position: relative; z-index: 1;">
+                                ${slide.subtitle ? `<p style="margin: 0 0 8px 0; font-size: 0.9em; letter-spacing: 3px; opacity: 0.85; text-transform: uppercase;">${slide.subtitle}</p>` : ''}
+                                ${slide.title ? `<h1 style="margin: 0; font-size: 2.5em; font-weight: 700;">${slide.title}</h1>` : ''}
+                                <div style="width: 60px; height: 2px; background: rgba(255,255,255,0.6); margin: 25px auto;"></div>
+                                ${slide.text ? `<p style="margin: 0; font-size: 1.15em; opacity: 0.95; max-width: 600px;">${slide.text}</p>` : ''}
+                                ${slide.subtext ? `<p style="margin: 20px 0 0 0; opacity: 0.7; font-size: 0.85em; letter-spacing: 1px;">${slide.subtext}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                container.appendChild(slideDiv);
+                
+                // 인디케이터 생성
+                const dot = document.createElement('span');
+                dot.className = 'slide-dot' + (index === 0 ? ' active' : '');
+                dot.style.cssText = `width: 12px; height: 12px; border-radius: 50%; background: ${index === 0 ? 'white' : 'rgba(255,255,255,0.5)'}; cursor: pointer; transition: all 0.3s;`;
+                dot.onclick = () => goToSlide(index);
+                indicators.appendChild(dot);
+            });
+        }
+        
+        // 슬라이드 이동
+        function goToSlide(index) {
+            const slides = document.querySelectorAll('.hero-slide');
+            const dots = document.querySelectorAll('.slide-dot');
+            
+            if (slides.length === 0) return;
+            
+            // 이전 슬라이드 숨김
+            slides[currentSlideIndex].style.opacity = '0';
+            slides[currentSlideIndex].style.pointerEvents = 'none';
+            dots[currentSlideIndex].style.background = 'rgba(255,255,255,0.5)';
+            
+            // 새 인덱스 설정
+            currentSlideIndex = index;
+            if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
+            if (currentSlideIndex < 0) currentSlideIndex = slides.length - 1;
+            
+            // 새 슬라이드 표시
+            slides[currentSlideIndex].style.opacity = '1';
+            slides[currentSlideIndex].style.pointerEvents = 'auto';
+            dots[currentSlideIndex].style.background = 'white';
+            
+            // 타이머 리셋
+            if (slideAutoPlay) {
+                startSlideTimer();
+            }
+        }
+        
+        function nextSlide() {
+            goToSlide(currentSlideIndex + 1);
+        }
+        
+        function prevSlide() {
+            goToSlide(currentSlideIndex - 1);
+        }
+        
+        // 자동 재생
+        function startSlideTimer() {
+            if (slideTimer) clearInterval(slideTimer);
+            if (slideAutoPlay && heroSlides.length > 1) {
+                slideTimer = setInterval(() => {
+                    nextSlide();
+                }, slideIntervalTime);
+            }
+        }
+        
+        function toggleSlideAutoPlay() {
+            slideAutoPlay = !slideAutoPlay;
+            const btn = document.getElementById('slidePlayPause');
+            if (btn) {
+                btn.textContent = slideAutoPlay ? '⏸' : '▶';
+                btn.title = slideAutoPlay ? '자동 재생 중' : '일시 정지';
+            }
+            if (slideAutoPlay) {
+                startSlideTimer();
+            } else {
+                if (slideTimer) clearInterval(slideTimer);
+            }
+        }
+        
+        // 슬라이드 편집 모달
+        function openSlideEditModal() {
+            document.getElementById('slideEditModal').classList.add('active');
+            loadSlideEditList();
+        }
+        
+        function closeSlideEditModal() {
+            document.getElementById('slideEditModal').classList.remove('active');
+        }
+        
+        function loadSlideEditList() {
+            const container = document.getElementById('slideEditList');
+            if (!container) return;
+            
+            let html = '';
+            heroSlides.forEach((slide, index) => {
+                html += `
+                    <div style="background: #f8fafc; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; gap: 15px; align-items: flex-start;">
+                            <!-- 미리보기 -->
+                            <div style="width: 150px; height: 90px; border-radius: 8px; overflow: hidden; flex-shrink: 0; ${slide.type === 'image' && slide.imageData ? `background: url('${slide.imageData}') center/cover` : `background: ${slide.background || 'linear-gradient(135deg, #1e3a5f, #2d5a87)'}`};">
+                            </div>
+                            
+                            <!-- 편집 폼 -->
+                            <div style="flex: 1;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                    <input type="text" class="form-control" value="${slide.title || ''}" placeholder="제목" onchange="updateSlideField(${index}, 'title', this.value)" style="font-size: 0.9em;">
+                                    <input type="text" class="form-control" value="${slide.subtitle || ''}" placeholder="부제목" onchange="updateSlideField(${index}, 'subtitle', this.value)" style="font-size: 0.9em;">
+                                </div>
+                                <input type="text" class="form-control" value="${slide.text || ''}" placeholder="본문" onchange="updateSlideField(${index}, 'text', this.value)" style="font-size: 0.9em; margin-bottom: 10px;">
+                                <input type="text" class="form-control" value="${slide.subtext || ''}" placeholder="하단 텍스트" onchange="updateSlideField(${index}, 'subtext', this.value)" style="font-size: 0.9em;">
+                            </div>
+                            
+                            <!-- 버튼들 -->
+                            <div style="display: flex; flex-direction: column; gap: 5px;">
+                                <button onclick="uploadSlideImage(${index})" class="btn" style="padding: 5px 10px; font-size: 0.8em; background: #3182ce; color: white;">이미지</button>
+                                <button onclick="changeSlideGradient(${index})" class="btn" style="padding: 5px 10px; font-size: 0.8em; background: #805ad5; color: white;">색상</button>
+                                ${index > 0 ? `<button onclick="moveSlide(${index}, -1)" class="btn" style="padding: 5px 10px; font-size: 0.8em;">↑</button>` : ''}
+                                ${index < heroSlides.length - 1 ? `<button onclick="moveSlide(${index}, 1)" class="btn" style="padding: 5px 10px; font-size: 0.8em;">↓</button>` : ''}
+                                <button onclick="deleteSlide(${index})" class="btn" style="padding: 5px 10px; font-size: 0.8em; background: #e53e3e; color: white;">삭제</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html || '<p style="text-align: center; color: #666;">슬라이드가 없습니다.</p>';
+        }
+        
+        function updateSlideField(index, field, value) {
+            if (heroSlides[index]) {
+                heroSlides[index][field] = value;
+            }
+        }
+        
+        function addNewSlide() {
+            heroSlides.push({
+                type: 'gradient',
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                title: '새 슬라이드',
+                subtitle: '',
+                text: '내용을 입력하세요',
+                subtext: ''
+            });
+            loadSlideEditList();
+        }
+        
+        function deleteSlide(index) {
+            if (heroSlides.length <= 1) {
+                alert('최소 1개의 슬라이드가 필요합니다.');
+                return;
+            }
+            if (confirm('이 슬라이드를 삭제하시겠습니까?')) {
+                heroSlides.splice(index, 1);
+                loadSlideEditList();
+            }
+        }
+        
+        function moveSlide(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < heroSlides.length) {
+                const temp = heroSlides[index];
+                heroSlides[index] = heroSlides[newIndex];
+                heroSlides[newIndex] = temp;
+                loadSlideEditList();
+            }
+        }
+        
+        function uploadSlideImage(index) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        heroSlides[index].type = 'image';
+                        heroSlides[index].imageData = ev.target.result;
+                        loadSlideEditList();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        
+        function changeSlideGradient(index) {
+            const gradients = [
+                'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+                'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+                'linear-gradient(135deg, #cd9cf2 0%, #f6f3ff 100%)'
+            ];
+            
+            const currentIdx = gradients.indexOf(heroSlides[index].background);
+            const nextIdx = (currentIdx + 1) % gradients.length;
+            
+            heroSlides[index].type = 'gradient';
+            heroSlides[index].background = gradients[nextIdx];
+            heroSlides[index].imageData = null;
+            loadSlideEditList();
+        }
+        
+        function saveSlides() {
+            localStorage.setItem('heroSlides', JSON.stringify(heroSlides));
+            renderSlides();
+            currentSlideIndex = 0;
+            goToSlide(0);
+            closeSlideEditModal();
+            alert('슬라이드가 저장되었습니다.');
+        }
+        
+        function updateSlideInterval() {
+            const select = document.getElementById('slideInterval');
+            if (select) {
+                slideIntervalTime = parseInt(select.value);
+                startSlideTimer();
+            }
+        }
 
         // 페이지 로드 시 초기 설정
         document.addEventListener('DOMContentLoaded', function() {
+            // 슬라이드쇼 초기화
+            initSlideshow();
+            
             // 교인번호 자동 생성
             document.getElementById('memberNumber').value = generateMemberNumber();
             
@@ -3354,7 +3830,7 @@
             });
             
             // 모든 권한 메뉴 표시 (pastor는 모든 권한)
-            document.querySelectorAll('.perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members').forEach(el => {
+            document.querySelectorAll('.perm-dashboard, .perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members, .perm-users').forEach(el => {
                 el.style.display = 'block';
             });
             
@@ -3548,12 +4024,14 @@
             let html = '<div style="display: grid; gap: 15px;">';
             users.forEach(user => {
                 const permLabels = [];
+                if (user.permissions.includes('dashboard')) permLabels.push('대시보드');
                 if (user.permissions.includes('attendance')) permLabels.push('출석');
                 if (user.permissions.includes('cell')) permLabels.push('구역');
                 if (user.permissions.includes('department')) permLabels.push('부서');
                 if (user.permissions.includes('mentor')) permLabels.push('멘토링');
                 if (user.permissions.includes('offering')) permLabels.push('재정');
                 if (user.permissions.includes('members')) permLabels.push('교적');
+                if (user.permissions.includes('users')) permLabels.push('사용자관리');
                 
                 const permText = permLabels.length > 0 ? permLabels.join(', ') : '기본 권한만';
                 const date = new Date(user.registeredDate).toLocaleDateString('ko-KR');
@@ -3592,10 +4070,25 @@
             document.getElementById('userRequestsTab').style.display = tab === 'requests' ? 'block' : 'none';
             document.getElementById('userListTab').style.display = tab === 'list' ? 'block' : 'none';
             
-            document.getElementById('userTabRequests').style.background = tab === 'requests' ? 'linear-gradient(135deg, #7c3aed, #5b21b6)' : '#f8fafc';
-            document.getElementById('userTabRequests').style.color = tab === 'requests' ? 'white' : '#666';
-            document.getElementById('userTabList').style.background = tab === 'list' ? 'linear-gradient(135deg, #7c3aed, #5b21b6)' : '#f8fafc';
-            document.getElementById('userTabList').style.color = tab === 'list' ? 'white' : '#666';
+            // 탭 버튼 스타일 업데이트
+            const reqTab = document.getElementById('userTabRequests');
+            const listTab = document.getElementById('userTabList');
+            
+            if (tab === 'requests') {
+                reqTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                reqTab.style.color = 'white';
+                reqTab.style.border = 'none';
+                listTab.style.background = 'white';
+                listTab.style.color = '#333';
+                listTab.style.border = '1px solid #e2e8f0';
+            } else {
+                listTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                listTab.style.color = 'white';
+                listTab.style.border = 'none';
+                reqTab.style.background = 'white';
+                reqTab.style.color = '#333';
+                reqTab.style.border = '1px solid #e2e8f0';
+            }
             
             if (tab === 'list') {
                 loadRegisteredUsers();
@@ -3621,12 +4114,14 @@
             });
             
             // 현재 권한 체크
+            document.getElementById('permDashboard').checked = user.permissions.includes('dashboard');
             document.getElementById('permAttendance').checked = user.permissions.includes('attendance');
             document.getElementById('permCell').checked = user.permissions.includes('cell');
             document.getElementById('permDepartment').checked = user.permissions.includes('department');
             document.getElementById('permMentor').checked = user.permissions.includes('mentor');
             document.getElementById('permOffering').checked = user.permissions.includes('offering');
             document.getElementById('permMembers').checked = user.permissions.includes('members');
+            document.getElementById('permUsers').checked = user.permissions.includes('users');
             
             document.getElementById('permissionModal').classList.add('active');
         }
@@ -3644,12 +4139,14 @@
             if (userIndex === -1) return;
             
             const permissions = [];
+            if (document.getElementById('permDashboard').checked) permissions.push('dashboard');
             if (document.getElementById('permAttendance').checked) permissions.push('attendance');
             if (document.getElementById('permCell').checked) permissions.push('cell');
             if (document.getElementById('permDepartment').checked) permissions.push('department');
             if (document.getElementById('permMentor').checked) permissions.push('mentor');
             if (document.getElementById('permOffering').checked) permissions.push('offering');
             if (document.getElementById('permMembers').checked) permissions.push('members');
+            if (document.getElementById('permUsers').checked) permissions.push('users');
             
             users[userIndex].permissions = permissions;
             
@@ -3668,6 +4165,14 @@
             }
             
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+            
+            // 현재 로그인한 사용자의 권한이 변경된 경우 세션 업데이트
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (currentUser && currentUser.id === userId) {
+                currentUser.permissions = permissions;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateMenuVisibility(); // 메뉴 가시성 업데이트
+            }
             
             alert('권한이 저장되었습니다.');
             closePermissionModal();
@@ -3689,7 +4194,7 @@
         // 권한에 따른 메뉴 표시 함수
         function applyUserPermissions(permissions) {
             // 모든 권한 메뉴 숨기기
-            document.querySelectorAll('.perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members').forEach(el => {
+            document.querySelectorAll('.perm-dashboard, .perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members, .perm-users').forEach(el => {
                 el.style.display = 'none';
             });
             
@@ -3699,6 +4204,39 @@
                     el.style.display = 'block';
                 });
             });
+        }
+        
+        // 메뉴 가시성 업데이트 함수
+        function updateMenuVisibility() {
+            if (!currentUser) {
+                // 비로그인 - 모든 권한 메뉴 숨기기
+                document.querySelectorAll('.member-only, .perm-dashboard, .perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members, .perm-users').forEach(el => {
+                    el.style.display = 'none';
+                });
+                document.querySelectorAll('.pastor-only').forEach(el => {
+                    el.style.display = 'none';
+                });
+            } else if (currentUser.role === '담임목사') {
+                // 담임목사 - 모든 메뉴 표시
+                document.querySelectorAll('.member-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+                document.querySelectorAll('.pastor-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+                document.querySelectorAll('.perm-dashboard, .perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members, .perm-users').forEach(el => {
+                    el.style.display = 'block';
+                });
+            } else {
+                // 일반 성도 - 권한에 따라 메뉴 표시
+                document.querySelectorAll('.member-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+                document.querySelectorAll('.pastor-only').forEach(el => {
+                    el.style.display = 'none';
+                });
+                applyUserPermissions(currentUser.permissions || []);
+            }
         }
 
         // 폼 초기화 함수
@@ -3785,6 +4323,16 @@
             const female = members.filter(m => m.gender === '여').length;
             const cellAssigned = members.filter(m => m.cell).length;
             
+            // 새가족 (3개월 이내 등록)
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            const newFamilies = members.filter(m => {
+                if (m.regDate) {
+                    return new Date(m.regDate) >= threeMonthsAgo;
+                }
+                return false;
+            }).sort((a, b) => new Date(b.regDate) - new Date(a.regDate)); // 최근 등록순 정렬
+            
             // 헤더 통계
             document.getElementById('memberTotalCount').textContent = total;
             
@@ -3809,7 +4357,75 @@
             document.getElementById('dashTotalMembers').textContent = total;
             document.getElementById('dashMaleCount').textContent = male;
             document.getElementById('dashFemaleCount').textContent = female;
-            document.getElementById('dashCellAssigned').textContent = cellAssigned;
+            
+            // 새가족 수
+            const newFamilyCountEl = document.getElementById('dashNewFamilyCount');
+            if (newFamilyCountEl) newFamilyCountEl.textContent = newFamilies.length;
+            
+            // 새가족 명단 (교적관리 대시보드)
+            let newFamilyListHtml = '';
+            if (newFamilies.length > 0) {
+                newFamilyListHtml = '<div style="display: grid; gap: 10px;">';
+                newFamilies.forEach(m => {
+                    const regDate = m.regDate ? new Date(m.regDate) : null;
+                    const daysAgo = regDate ? Math.floor((new Date() - regDate) / (1000 * 60 * 60 * 24)) : 0;
+                    let timeLabel = '';
+                    if (daysAgo === 0) timeLabel = '오늘';
+                    else if (daysAgo === 1) timeLabel = '어제';
+                    else if (daysAgo < 7) timeLabel = `${daysAgo}일 전`;
+                    else if (daysAgo < 30) timeLabel = `${Math.floor(daysAgo / 7)}주 전`;
+                    else timeLabel = `${Math.floor(daysAgo / 30)}개월 전`;
+                    
+                    newFamilyListHtml += `
+                        <div style="background: #fff8f0; padding: 12px 15px; border-radius: 10px; border-left: 3px solid #ed8936;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #ed8936, #f6ad55); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1em;">
+                                        ${m.nameKr?.charAt(0) || '?'}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; color: #333;">${m.nameKr}</div>
+                                        <div style="font-size: 0.8em; color: #888;">
+                                            ${m.regDate || ''} <span style="color: #ed8936; font-weight: 500;">(${timeLabel})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.85em; color: #666;">${m.phone || '-'}</div>
+                                    <div style="font-size: 0.75em; color: #999;">${m.position || '성도'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                newFamilyListHtml += '</div>';
+            } else {
+                newFamilyListHtml = '<p style="color: #999; text-align: center; padding: 30px;">최근 3개월 내 새가족이 없습니다.</p>';
+            }
+            const newFamilyListEl = document.getElementById('dashNewFamilyList');
+            if (newFamilyListEl) newFamilyListEl.innerHTML = newFamilyListHtml;
+            
+            // 대시보드 섹션의 새가족 명단도 연동 (dashNewFamilySummary)
+            let newFamilySummaryHtml = '';
+            if (newFamilies.length > 0) {
+                newFamilies.forEach(m => {
+                    newFamilySummaryHtml += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                            <div>
+                                <span style="font-weight: 600;">${m.nameKr}</span>
+                                <span style="font-size: 0.8em; color: #888; margin-left: 8px;">${m.regDate || ''}</span>
+                            </div>
+                            <a href="tel:${m.phone}" style="color: #3182ce; text-decoration: none; font-size: 0.85em;">
+                                ${m.phone || '-'}
+                            </a>
+                        </div>
+                    `;
+                });
+            } else {
+                newFamilySummaryHtml = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 15px;">최근 3개월 내 새가족 없음</p>';
+            }
+            const newFamilySummaryEl = document.getElementById('dashNewFamilySummary');
+            if (newFamilySummaryEl) newFamilySummaryEl.innerHTML = newFamilySummaryHtml;
             
             // 직분별 현황
             const positionStats = {};
@@ -3851,7 +4467,7 @@
                 const color = cellData ? cellData.color : '#999';
                 cellHtml += `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
-                        <span style="color: ${color}; font-weight: 500;">${cell === '미배정' ? '📋 ' + cell : '🏘️ ' + cell + '구역'}</span>
+                        <span style="color: ${color}; font-weight: 500;">${cell === '미배정' ? cell : cell + '구역'}</span>
                         <span style="font-weight: 600;">${cnt}명</span>
                     </div>
                 `;
@@ -3881,6 +4497,84 @@
                 recentHtml = '<p style="color: #999;">등록된 교인이 없습니다.</p>';
             }
             document.getElementById('dashRecentMembers').innerHTML = recentHtml;
+            
+            // 이번달/다음달 생일 로드
+            loadBirthdayList();
+        }
+        
+        // 생일 목록 로드 함수
+        function loadBirthdayList() {
+            const now = new Date();
+            const thisMonth = now.getMonth() + 1; // 1-12
+            const nextMonth = thisMonth === 12 ? 1 : thisMonth + 1;
+            
+            // 생일이 있는 교인 필터링
+            const thisMonthBirthdays = [];
+            const nextMonthBirthdays = [];
+            
+            members.forEach(m => {
+                if (m.birth) {
+                    const birthParts = m.birth.split('-');
+                    if (birthParts.length >= 3) {
+                        const birthMonth = parseInt(birthParts[1]);
+                        const birthDay = parseInt(birthParts[2]);
+                        
+                        if (birthMonth === thisMonth) {
+                            thisMonthBirthdays.push({ ...m, day: birthDay });
+                        } else if (birthMonth === nextMonth) {
+                            nextMonthBirthdays.push({ ...m, day: birthDay });
+                        }
+                    }
+                }
+            });
+            
+            // 날짜순 정렬
+            thisMonthBirthdays.sort((a, b) => a.day - b.day);
+            nextMonthBirthdays.sort((a, b) => a.day - b.day);
+            
+            // 이번달 생일 표시
+            let thisMonthHtml = '';
+            if (thisMonthBirthdays.length > 0) {
+                thisMonthBirthdays.forEach(m => {
+                    const isToday = m.day === now.getDate();
+                    thisMonthHtml += `
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(236,72,153,0.1); ${isToday ? 'background: #fff0f7; margin: -6px -8px; padding: 6px 8px; border-radius: 5px;' : ''}">
+                            <span style="font-size: 1.1em;">${isToday ? '🎂' : '🎈'}</span>
+                            <div style="flex: 1;">
+                                <span style="font-weight: ${isToday ? '700' : '500'}; color: ${isToday ? '#be185d' : '#333'};">${m.nameKr}</span>
+                                <span style="font-size: 0.8em; color: #888; margin-left: 5px;">${thisMonth}/${m.day}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                thisMonthHtml = '<p style="color: #999; font-size: 0.85em; text-align: center; padding: 10px;">생일자 없음</p>';
+            }
+            
+            // 다음달 생일 표시
+            let nextMonthHtml = '';
+            if (nextMonthBirthdays.length > 0) {
+                nextMonthBirthdays.forEach(m => {
+                    nextMonthHtml += `
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(236,72,153,0.1);">
+                            <span style="font-size: 1.1em;">🎈</span>
+                            <div style="flex: 1;">
+                                <span style="font-weight: 500; color: #333;">${m.nameKr}</span>
+                                <span style="font-size: 0.8em; color: #888; margin-left: 5px;">${nextMonth}/${m.day}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                nextMonthHtml = '<p style="color: #999; font-size: 0.85em; text-align: center; padding: 10px;">생일자 없음</p>';
+            }
+            
+            // DOM 업데이트
+            const thisMonthEl = document.getElementById('dashThisMonthBirthday');
+            const nextMonthEl = document.getElementById('dashNextMonthBirthday');
+            
+            if (thisMonthEl) thisMonthEl.innerHTML = thisMonthHtml;
+            if (nextMonthEl) nextMonthEl.innerHTML = nextMonthHtml;
         }
 
         // 교인 통계 표시
@@ -4234,6 +4928,44 @@
         }
 
         function showSection(sectionId) {
+            // 권한 체크 - 접근 제한된 섹션
+            const restrictedSections = {
+                'my': 'member',           // 로그인 필요
+                'dashboard': 'dashboard', // 대시보드 권한
+                'attendance': 'attendance', // 출석관리 권한
+                'cell': 'cell',           // 구역관리 권한
+                'department': 'department', // 부서관리 권한
+                'mentor': 'mentor',       // 멘토링 권한
+                'offering': 'offering',   // 재정관리 권한
+                'members': 'members',     // 교적관리 권한
+                'users': 'users'          // 사용자관리 권한
+            };
+            
+            // 공개 섹션 (로그인 없이 접근 가능)
+            const publicSections = ['home', 'about', 'worship', 'news', 'sundayschool', 'gallery'];
+            
+            if (!publicSections.includes(sectionId)) {
+                // 비공개 섹션 - 로그인 필요
+                if (!currentUser) {
+                    alert('로그인이 필요한 메뉴입니다.');
+                    return;
+                }
+                
+                // 내정보는 로그인만 하면 접근 가능
+                if (sectionId === 'my') {
+                    // 접근 허용
+                } else if (restrictedSections[sectionId]) {
+                    // 담임목사는 모든 접근 가능
+                    if (currentUser.role !== '담임목사') {
+                        const requiredPerm = restrictedSections[sectionId];
+                        if (!currentUser.permissions || !currentUser.permissions.includes(requiredPerm)) {
+                            alert('접근 권한이 없습니다.\\n관리자에게 권한을 요청하세요.');
+                            return;
+                        }
+                    }
+                }
+            }
+            
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -4246,7 +4978,9 @@
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
             
             // 교적관리 섹션 선택 시 대시보드 탭 표시
             if (sectionId === 'members') {
@@ -4401,35 +5135,8 @@
                 </div>
             `;
             
-            // 새가족 명단 (최근 3개월 내 등록)
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            const newFamilies = members.filter(m => {
-                if (m.regDate) {
-                    return new Date(m.regDate) >= threeMonthsAgo;
-                }
-                return false;
-            });
-            
-            let newFamilyHtml = '';
-            if (newFamilies.length > 0) {
-                newFamilies.forEach(m => {
-                    newFamilyHtml += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
-                            <div>
-                                <span style="font-weight: 600;">${m.nameKr}</span>
-                                <span style="font-size: 0.8em; color: #888; margin-left: 8px;">${m.regDate || ''}</span>
-                            </div>
-                            <a href="tel:${m.phone}" style="color: #3182ce; text-decoration: none; font-size: 0.85em;">
-                                📞 ${m.phone || '-'}
-                            </a>
-                        </div>
-                    `;
-                });
-            } else {
-                newFamilyHtml = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 15px;">최근 3개월 내 새가족 없음</p>';
-            }
-            document.getElementById('dashNewFamilySummary').innerHTML = newFamilyHtml;
+            // 새가족 명단 연동 - loadMemberDashboard()에서 dashNewFamilySummary도 업데이트
+            loadMemberDashboard();
             
             // 교회 조직도 로드
             loadOrgChart();
@@ -4594,6 +5301,31 @@
             }
         }
         
+        // 부서 삭제 (조직도 편집 모달에서)
+        function deleteOrgDept(deptName) {
+            if (!confirm(`"${deptName}" 부서를 삭제하시겠습니까?\n\n⚠️ 부서 아래의 모든 팀도 함께 삭제됩니다.`)) return;
+            
+            // 부서 목록에서 삭제
+            let depts = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            depts = depts.filter(d => d.name !== deptName);
+            localStorage.setItem('churchDepartments', JSON.stringify(depts));
+            
+            // 부서 팀 데이터 삭제
+            let deptTeams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
+            delete deptTeams[deptName];
+            localStorage.setItem('churchDeptTeams', JSON.stringify(deptTeams));
+            
+            // 모달 닫고 다시 열기
+            closeOrgChartEditModal();
+            showOrgChartEditModal();
+            
+            // 조직도 다시 로드
+            if (typeof loadOrgChart === 'function') loadOrgChart();
+            if (typeof loadDepartmentList === 'function') loadDepartmentList();
+            
+            alert(`"${deptName}" 부서가 삭제되었습니다.`);
+        }
+        
         // 조직도 편집 모달 표시
         function showOrgChartEditModal() {
             const orgData = JSON.parse(localStorage.getItem('churchOrgChart') || '{}');
@@ -4610,13 +5342,18 @@
                     const isActive = index === 0;
                     
                     deptTabsHtml += `
-                        <button class="dept-team-tab ${isActive ? 'active' : ''}" 
-                                onclick="switchDeptTeamTab('${dept.name}')" 
-                                data-dept="${dept.name}"
-                                style="padding: 6px 12px; border: none; background: ${isActive ? '#1e3a5f' : '#e2e8f0'}; 
-                                       color: ${isActive ? 'white' : '#4a5568'}; border-radius: 5px; cursor: pointer; font-size: 0.85em;">
-                            ${dept.name}
-                        </button>
+                        <div style="display: inline-flex; align-items: center; gap: 2px;">
+                            <button class="dept-team-tab ${isActive ? 'active' : ''}" 
+                                    onclick="switchDeptTeamTab('${dept.name}')" 
+                                    data-dept="${dept.name}"
+                                    style="padding: 6px 12px; border: none; background: ${isActive ? '#1e3a5f' : '#e2e8f0'}; 
+                                           color: ${isActive ? 'white' : '#4a5568'}; border-radius: 5px 0 0 5px; cursor: pointer; font-size: 0.85em;">
+                                ${dept.name}
+                            </button>
+                            <button onclick="deleteOrgDept('${dept.name}')" 
+                                    style="padding: 6px 8px; border: none; background: #e53e3e; color: white; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 0.75em;" 
+                                    title="부서 삭제">✕</button>
+                        </div>
                     `;
                     
                     let teamsListHtml = '';
@@ -5817,7 +6554,7 @@
                     username: 'pastor', 
                     name: '정준연', 
                     role: '담임목사',
-                    permissions: ['attendance', 'cell', 'department', 'mentor', 'offering', 'members']
+                    permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users']
                 };
                 
                 document.getElementById('authButtons').style.display = 'none';
@@ -5836,7 +6573,7 @@
                 });
                 
                 // 모든 권한 메뉴 표시
-                document.querySelectorAll('.perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members').forEach(el => {
+                document.querySelectorAll('.perm-dashboard, .perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members, .perm-users').forEach(el => {
                     el.style.display = 'block';
                 });
                 
@@ -5886,7 +6623,7 @@
             document.getElementById('userDisplay').style.display = 'none';
             
             // 모든 권한 메뉴 숨기기
-            document.querySelectorAll('.member-only, .pastor-only, .perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members').forEach(el => {
+            document.querySelectorAll('.member-only, .pastor-only, .perm-dashboard, .perm-attendance, .perm-cell, .perm-department, .perm-mentor, .perm-offering, .perm-members, .perm-users').forEach(el => {
                 el.style.display = 'none';
             });
             
@@ -6618,11 +7355,32 @@
                 const isThisMonth = parseInt(event.month) === thisMonth;
                 const statusColors = {
                     '완료': '#48bb78',
-                    '진행중': '#4299e1',
+                    '진행중': '#ed8936',
                     '예정': '#e2e8f0'
                 };
                 const statusColor = statusColors[event.status] || '#e2e8f0';
                 const textColor = event.status === '완료' || event.status === '진행중' ? 'white' : '#666';
+                
+                // 날짜 표시 (시작일~종료일)
+                let dateDisplay = '';
+                if (event.date) {
+                    const startDay = event.date.split('-').slice(1).join('/');
+                    if (event.endDate && event.endDate !== event.date) {
+                        const endDay = event.endDate.split('-').slice(1).join('/');
+                        dateDisplay = `${startDay}~${endDay}`;
+                    } else {
+                        dateDisplay = startDay;
+                    }
+                }
+                
+                // 시간 표시
+                let timeDisplay = '';
+                if (event.startTime) {
+                    timeDisplay = event.startTime;
+                    if (event.endTime) {
+                        timeDisplay += `~${event.endTime}`;
+                    }
+                }
                 
                 html += `
                     <div style="background: white; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid ${isThisMonth ? '#667eea' : '#a0aec0'};">
@@ -6631,7 +7389,8 @@
                                 <div style="font-size: 0.85em; font-weight: 500;">${event.name || '(미정)'}</div>
                                 <div style="font-size: 0.75em; color: #888;">
                                     <span style="color: ${isThisMonth ? '#667eea' : '#a0aec0'}; font-weight: 600;">${monthNames[parseInt(event.month)]}</span>
-                                    ${event.date ? event.date.split('-').slice(1).join('/') : ''}
+                                    ${dateDisplay}
+                                    ${timeDisplay ? ` <span style="color: #e53e3e;">⏰${timeDisplay}</span>` : ''}
                                 </div>
                             </div>
                             <span style="background: ${statusColor}; color: ${textColor}; padding: 2px 8px; border-radius: 10px; font-size: 0.7em;">${event.status || '예정'}</span>
@@ -7955,14 +8714,16 @@
             
             // 네비게이션 스타일 업데이트
             document.querySelectorAll('[id^="financeNav"]').forEach(nav => {
-                nav.style.background = 'transparent';
-                nav.style.color = '#4a5568';
+                nav.style.background = 'white';
+                nav.style.color = '#333';
+                nav.style.border = '1px solid #e2e8f0';
             });
             
             const activeNav = document.getElementById('financeNav' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
             if (activeNav) {
-                activeNav.style.background = 'linear-gradient(135deg, #667eea, #9f7aea)';
+                activeNav.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
                 activeNav.style.color = 'white';
+                activeNav.style.border = 'none';
             }
             
             // 각 탭별 데이터 로드
@@ -8398,10 +9159,24 @@
             document.getElementById('catTabContentCategory').style.display = tabName === 'category' ? 'block' : 'none';
             document.getElementById('catTabContentItem').style.display = tabName === 'item' ? 'block' : 'none';
             
-            document.getElementById('catTabCategory').style.background = tabName === 'category' ? 'linear-gradient(135deg, #667eea, #9f7aea)' : 'transparent';
-            document.getElementById('catTabCategory').style.color = tabName === 'category' ? 'white' : '#4a5568';
-            document.getElementById('catTabItem').style.background = tabName === 'item' ? 'linear-gradient(135deg, #667eea, #9f7aea)' : 'transparent';
-            document.getElementById('catTabItem').style.color = tabName === 'item' ? 'white' : '#4a5568';
+            const catTab = document.getElementById('catTabCategory');
+            const itemTab = document.getElementById('catTabItem');
+            
+            if (tabName === 'category') {
+                catTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                catTab.style.color = 'white';
+                catTab.style.border = 'none';
+                itemTab.style.background = 'white';
+                itemTab.style.color = '#333';
+                itemTab.style.border = '1px solid #e2e8f0';
+            } else {
+                itemTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                itemTab.style.color = 'white';
+                itemTab.style.border = 'none';
+                catTab.style.background = 'white';
+                catTab.style.color = '#333';
+                catTab.style.border = '1px solid #e2e8f0';
+            }
             
             if (tabName === 'item') {
                 // 항목 탭 부서 선택 옵션 업데이트
@@ -9041,6 +9816,18 @@
                 const d = new Date(e.date);
                 return d.getFullYear() === currentYear;
             }).reduce((sum, e) => sum + e.amount, 0);
+            
+            // 헤더 카드 업데이트
+            const headerIncomeEl = document.getElementById('headerTotalIncome');
+            const headerExpenseEl = document.getElementById('headerTotalExpense');
+            const headerBalanceEl = document.getElementById('headerBalance');
+            
+            if (headerIncomeEl) headerIncomeEl.textContent = '$' + monthlyIncome.toLocaleString();
+            if (headerExpenseEl) headerExpenseEl.textContent = '$' + monthlyExpense.toLocaleString();
+            if (headerBalanceEl) {
+                const balance = monthlyIncome - monthlyExpense;
+                headerBalanceEl.textContent = (balance >= 0 ? '+$' : '-$') + Math.abs(balance).toLocaleString();
+            }
             
             // 대시보드 카드 업데이트
             const dashTotalIncomeEl = document.getElementById('dashTotalIncome');
@@ -9973,6 +10760,10 @@
             const currentYear = new Date().getFullYear();
             const currentMonth = new Date().getMonth() + 1;
             
+            // 최신 데이터 로드 (전역 변수도 업데이트)
+            departments = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            yearlyEvents = JSON.parse(localStorage.getItem('yearlyEvents') || '[]');
+            
             const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
             const monthColors = [
                 '#e3f2fd', '#fce4ec', '#f3e5f5', '#e8f5e9', 
@@ -9999,7 +10790,13 @@
             let html = '';
             
             for (let month = 1; month <= 12; month++) {
-                const monthEvents = allEvents.filter(e => parseInt(e.month) === month);
+                let monthEvents = allEvents.filter(e => parseInt(e.month) === month);
+                // 날짜순 정렬
+                monthEvents.sort((a, b) => {
+                    const dayA = a.date ? parseInt(a.date.split('-')[2]) : 99;
+                    const dayB = b.date ? parseInt(b.date.split('-')[2]) : 99;
+                    return dayA - dayB;
+                });
                 const isCurrentMonth = selectedYear === currentYear && currentMonth === month;
                 
                 html += `
@@ -10023,14 +10820,36 @@
                         const statusColor = statusColors[event.status] || '#718096';
                         const eventIndex = event.fromDept ? -1 : yearlyEvents.findIndex(e => e.name === event.name && e.month === event.month);
                         
+                        // 날짜 표시 (시작일~종료일)
+                        let dateDisplay = '';
+                        if (event.date) {
+                            const startDay = event.date.split('-').slice(1).join('/');
+                            if (event.endDate && event.endDate !== event.date) {
+                                const endDay = event.endDate.split('-').slice(1).join('/');
+                                dateDisplay = `${startDay}~${endDay}`;
+                            } else {
+                                dateDisplay = startDay;
+                            }
+                        }
+                        
+                        // 시간 표시
+                        let timeDisplay = '';
+                        if (event.startTime) {
+                            timeDisplay = event.startTime;
+                            if (event.endTime) {
+                                timeDisplay += `~${event.endTime}`;
+                            }
+                        }
+                        
                         html += `
                             <div style="background: white; padding: 6px 8px; border-radius: 6px; border-left: 3px solid ${statusColor}; font-size: 0.75em;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                     <div style="flex: 1;">
-                                        <div style="font-weight: 600; color: #333; font-size: 0.95em; line-height: 1.3;">${event.name}</div>
+                                        <div style="font-weight: 600; color: #333; font-size: 0.95em; line-height: 1.3;">
+                                            ${dateDisplay ? `<span style="color: #667eea; margin-right: 5px;">${dateDisplay}</span>` : ''}${event.name}
+                                        </div>
                                         <div style="color: #888; font-size: 0.85em;">
-                                            ${event.date ? event.date.split('-').slice(1).join('/') : ''}
-                                            ${event.department ? ' · ' + event.department : ''}
+                                            ${timeDisplay ? `<span style="color: #e53e3e;">⏰${timeDisplay}</span> ` : ''}${event.department || ''}
                                         </div>
                                     </div>
                                     ${!event.fromDept ? `<button class="no-print" onclick="deleteYearlyEvent(${eventIndex})" style="background: none; border: none; cursor: pointer; color: #e53e3e; font-size: 0.85em;" title="삭제">✕</button>` : ''}
@@ -10212,11 +11031,22 @@
             document.getElementById('yearEventForm').reset();
             document.getElementById('yearEventEditIndex').value = -1;
             
+            const selectedYear = getSelectedEventYear();
+            let selectedMonth;
+            
             if (month) {
+                selectedMonth = month;
                 document.getElementById('yearEventMonth').value = month;
             } else {
-                document.getElementById('yearEventMonth').value = new Date().getMonth() + 1;
+                selectedMonth = new Date().getMonth() + 1;
+                document.getElementById('yearEventMonth').value = selectedMonth;
             }
+            
+            // 시작일/종료일 기본값을 선택된 월의 1일로 설정
+            const monthStr = selectedMonth.toString().padStart(2, '0');
+            const defaultDate = `${selectedYear}-${monthStr}-01`;
+            document.getElementById('yearEventDate').value = defaultDate;
+            document.getElementById('yearEventEndDate').value = defaultDate;
             
             // 부서 목록 로드
             const deptSelect = document.getElementById('yearEventDept');
@@ -10243,20 +11073,61 @@
             document.getElementById('yearEventModal').classList.remove('active');
         }
         
+        // 월 선택 변경 시 시작일/종료일 자동 동기화
+        function syncDateFromMonth(month) {
+            const selectedYear = getSelectedEventYear();
+            const monthStr = month.toString().padStart(2, '0');
+            const defaultDate = `${selectedYear}-${monthStr}-01`;
+            document.getElementById('yearEventDate').value = defaultDate;
+            document.getElementById('yearEventEndDate').value = defaultDate;
+        }
+        
+        // 날짜 선택 시 월 자동 동기화
+        function syncEventMonthFromDate(dateValue) {
+            if (dateValue) {
+                const dateParts = dateValue.split('-');
+                const month = parseInt(dateParts[1]);
+                document.getElementById('yearEventMonth').value = month;
+                
+                // 종료일이 비어있거나 시작일보다 이전이면 시작일과 같게 설정
+                const endDateEl = document.getElementById('yearEventEndDate');
+                if (!endDateEl.value || endDateEl.value < dateValue) {
+                    endDateEl.value = dateValue;
+                }
+            }
+        }
+        
         // 행사 저장
         document.getElementById('yearEventForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // 날짜가 있으면 날짜에서 월과 년도 자동 추출
+            const dateValue = document.getElementById('yearEventDate').value;
+            const endDateValue = document.getElementById('yearEventEndDate').value;
+            const startTime = document.getElementById('yearEventStartTime').value;
+            const endTime = document.getElementById('yearEventEndTime').value;
+            let eventMonth = document.getElementById('yearEventMonth').value;
+            let eventYear = getSelectedEventYear();
+            
+            if (dateValue) {
+                const dateParts = dateValue.split('-');
+                eventYear = parseInt(dateParts[0]);
+                eventMonth = parseInt(dateParts[1]).toString();
+            }
+            
             const eventData = {
-                month: document.getElementById('yearEventMonth').value,
-                date: document.getElementById('yearEventDate').value,
+                month: eventMonth,
+                date: dateValue,
+                endDate: endDateValue,
+                startTime: startTime,
+                endTime: endTime,
                 name: document.getElementById('yearEventName').value,
                 department: document.getElementById('yearEventDept').value,
                 manager: document.getElementById('yearEventManager').value,
                 budget: parseFloat(document.getElementById('yearEventBudget').value) || 0,
                 status: document.getElementById('yearEventStatus').value,
                 memo: document.getElementById('yearEventMemo').value,
-                year: getSelectedEventYear()
+                year: eventYear
             };
             
             const editIndex = parseInt(document.getElementById('yearEventEditIndex').value);
@@ -11118,7 +11989,7 @@
                 const expenseTotal = filteredExpense.reduce((sum, e) => sum + e.amount, 0);
                 csv += `지출 합계,,,, ${expenseTotal.toFixed(2)},\n`;
             }
-                      
+                                
             // 다운로드
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
