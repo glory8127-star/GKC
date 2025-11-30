@@ -498,6 +498,52 @@
             border-left: 4px solid #f56565;
         }
     </style>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyAG6_0snbn9BfY0N94EsZiG7GbiSA31zNY",
+            authDomain: "gkc-web-project-c87c9.firebaseapp.com",
+            projectId: "gkc-web-project-c87c9",
+            storageBucket: "gkc-web-project-c87c9.firebasestorage.app",
+            messagingSenderId: "482708865916",
+            appId: "1:482708865916:web:55ace8c18c023278dddaf9"
+        };
+        
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Firestore 데이터 저장 함수
+        async function saveToFirestore(collection, data) {
+            try {
+                await db.collection(collection).doc('main').set(data);
+                console.log(collection + ' 저장 완료');
+            } catch (error) {
+                console.error('Firestore 저장 오류:', error);
+            }
+        }
+        
+        // Firestore 데이터 로드 함수
+        async function loadFromFirestore(collection) {
+            try {
+                const doc = await db.collection(collection).doc('main').get();
+                if (doc.exists) {
+                    return doc.data();
+                }
+                return null;
+            } catch (error) {
+                console.error('Firestore 로드 오류:', error);
+                return null;
+            }
+        }
+        
+        // 전역 데이터 변수
+        let firebaseReady = false;
+    </script>
 </head>
 <body>
     <!-- 헤더 -->
@@ -3396,7 +3442,213 @@
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // 전역 변수
         let currentUser = null;
-        let members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+        let members = [];
+        let registeredUsers = [];
+        let signupRequests = [];
+        
+        // Firebase에서 모든 데이터 로드
+        async function loadAllDataFromFirebase() {
+            try {
+                // 교인 데이터 로드
+                const membersData = await loadFromFirestore('churchMembers');
+                if (membersData && membersData.list) {
+                    members = membersData.list;
+                } else {
+                    // localStorage에서 마이그레이션
+                    members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+                    if (members.length > 0) {
+                        await saveToFirestore('churchMembers', { list: members });
+                    }
+                }
+                
+                // 등록된 사용자 로드
+                const usersData = await loadFromFirestore('registeredUsers');
+                if (usersData && usersData.list) {
+                    registeredUsers = usersData.list;
+                    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+                } else {
+                    registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                    if (registeredUsers.length > 0) {
+                        await saveToFirestore('registeredUsers', { list: registeredUsers });
+                    }
+                }
+                
+                // 가입 신청 로드
+                const requestsData = await loadFromFirestore('signupRequests');
+                if (requestsData && requestsData.list) {
+                    signupRequests = requestsData.list;
+                    localStorage.setItem('signupRequests', JSON.stringify(signupRequests));
+                } else {
+                    signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+                    if (signupRequests.length > 0) {
+                        await saveToFirestore('signupRequests', { list: signupRequests });
+                    }
+                }
+                
+                // 출석 데이터 로드
+                const attendanceData = await loadFromFirestore('attendanceRecords');
+                if (attendanceData && attendanceData.list) {
+                    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceData.list));
+                } else {
+                    const localAttendance = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
+                    if (localAttendance.length > 0) {
+                        await saveToFirestore('attendanceRecords', { list: localAttendance });
+                    }
+                }
+                
+                // 헌금 데이터 로드
+                const offeringsData = await loadFromFirestore('offerings');
+                if (offeringsData && offeringsData.list) {
+                    localStorage.setItem('offerings', JSON.stringify(offeringsData.list));
+                } else {
+                    const localOfferings = JSON.parse(localStorage.getItem('offerings') || '[]');
+                    if (localOfferings.length > 0) {
+                        await saveToFirestore('offerings', { list: localOfferings });
+                    }
+                }
+                
+                // 구역 데이터 로드
+                const cellsData = await loadFromFirestore('cells');
+                if (cellsData && cellsData.list) {
+                    localStorage.setItem('cells', JSON.stringify(cellsData.list));
+                } else {
+                    const localCells = JSON.parse(localStorage.getItem('cells') || '[]');
+                    if (localCells.length > 0) {
+                        await saveToFirestore('cells', { list: localCells });
+                    }
+                }
+                
+                // 부서 데이터 로드
+                const departmentsData = await loadFromFirestore('departments');
+                if (departmentsData && departmentsData.list) {
+                    localStorage.setItem('departments', JSON.stringify(departmentsData.list));
+                } else {
+                    const localDepartments = JSON.parse(localStorage.getItem('departments') || '[]');
+                    if (localDepartments.length > 0) {
+                        await saveToFirestore('departments', { list: localDepartments });
+                    }
+                }
+                
+                // 교회 구역 데이터 로드
+                const churchCellsData = await loadFromFirestore('churchCells');
+                if (churchCellsData && churchCellsData.list) {
+                    localStorage.setItem('churchCells', JSON.stringify(churchCellsData.list));
+                } else {
+                    const localChurchCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
+                    if (localChurchCells.length > 0) {
+                        await saveToFirestore('churchCells', { list: localChurchCells });
+                    }
+                }
+                
+                // 구역 출석 데이터 로드
+                const cellAttendanceData = await loadFromFirestore('cellAttendance');
+                if (cellAttendanceData && cellAttendanceData.data) {
+                    localStorage.setItem('cellAttendance', JSON.stringify(cellAttendanceData.data));
+                } else {
+                    const localCellAttendance = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
+                    if (Object.keys(localCellAttendance).length > 0) {
+                        await saveToFirestore('cellAttendance', { data: localCellAttendance });
+                    }
+                }
+                
+                firebaseReady = true;
+                console.log('Firebase 데이터 로드 완료');
+                
+                // UI 업데이트
+                if (typeof loadMemberList === 'function') loadMemberList();
+                if (typeof loadCellList === 'function') loadCellList();
+                
+            } catch (error) {
+                console.error('Firebase 데이터 로드 오류:', error);
+                // 오류 시 localStorage 사용
+                members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            }
+        }
+        
+        // 교인 데이터 저장 (Firebase + localStorage 동기화)
+        async function saveMembersToFirebase() {
+            localStorage.setItem('churchMembers', JSON.stringify(members));
+            if (firebaseReady) {
+                await saveToFirestore('churchMembers', { list: members });
+            }
+        }
+        
+        // 사용자 데이터 저장
+        async function saveUsersToFirebase() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('registeredUsers', { list: users });
+            }
+        }
+        
+        // 가입신청 데이터 저장
+        async function saveRequestsToFirebase() {
+            const requests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('signupRequests', { list: requests });
+            }
+        }
+        
+        // 출석 데이터 저장
+        async function saveAttendanceToFirebase() {
+            const attendance = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('attendanceRecords', { list: attendance });
+            }
+        }
+        
+        // 헌금 데이터 저장
+        async function saveOfferingsToFirebase() {
+            const offerings = JSON.parse(localStorage.getItem('offerings') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('offerings', { list: offerings });
+            }
+        }
+        
+        // 구역 데이터 저장
+        async function saveCellsToFirebase() {
+            const cells = JSON.parse(localStorage.getItem('cells') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('cells', { list: cells });
+            }
+        }
+        
+        // 부서 데이터 저장
+        async function saveDepartmentsToFirebase() {
+            const departments = JSON.parse(localStorage.getItem('departments') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('departments', { list: departments });
+            }
+        }
+        
+        // 구역(Cell) 데이터 저장
+        async function saveChurchCellsToFirebase() {
+            const churchCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('churchCells', { list: churchCells });
+            }
+        }
+        
+        // 구역 출석 데이터 저장
+        async function saveCellAttendanceToFirebase() {
+            const cellAttendance = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
+            if (firebaseReady) {
+                await saveToFirestore('cellAttendance', { data: cellAttendance });
+            }
+        }
+        
+        // 가입신청 저장
+        async function saveSignupRequestsToFirebase() {
+            const requests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('signupRequests', { list: requests });
+            }
+        }
+        
+        // 페이지 로드 시 Firebase 데이터 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllDataFromFirebase();
+        });
 
         // 전화번호 자동 포맷팅 함수 (000) 000-0000
         function formatPhoneNumber(input) {
@@ -3911,6 +4163,7 @@
             
             requests.push(request);
             localStorage.setItem('signupRequests', JSON.stringify(requests));
+            saveSignupRequestsToFirebase(); // Firebase 동기화
             
             alert('가입 신청이 완료되었습니다.\\n담임목사님의 승인 후 로그인이 가능합니다.');
             closeSignupRequest();
@@ -3985,10 +4238,12 @@
             
             users.push(newUser);
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+            saveUsersToFirebase(); // Firebase 동기화
             
             // 신청 상태 변경
             request.status = 'approved';
             localStorage.setItem('signupRequests', JSON.stringify(requests));
+            saveRequestsToFirebase(); // Firebase 동기화
             
             alert(`${request.name}님의 가입이 승인되었습니다.`);
             loadSignupRequests();
@@ -4005,6 +4260,7 @@
             
             request.status = 'rejected';
             localStorage.setItem('signupRequests', JSON.stringify(requests));
+            saveSignupRequestsToFirebase(); // Firebase 동기화
             
             alert('가입 신청이 거절되었습니다.');
             loadSignupRequests();
@@ -4164,6 +4420,7 @@
             }
             
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+            saveUsersToFirebase(); // Firebase 동기화
             
             // 현재 로그인한 사용자의 권한이 변경된 경우 세션 업데이트
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -4185,6 +4442,7 @@
             let users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
             users = users.filter(u => u.id !== userId);
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+            saveUsersToFirebase(); // Firebase 동기화
             
             alert('사용자가 삭제되었습니다.');
             loadRegisteredUsers();
@@ -6668,6 +6926,7 @@
             // 데이터 저장
             members.push(memberData);
             localStorage.setItem('churchMembers', JSON.stringify(members));
+            saveMembersToFirebase(); // Firebase 동기화
             
             // 성공 메시지
             alert(`교인이 성공적으로 등록되었습니다!\n교인번호: ${memberData.number}\n이름: ${memberData.nameKr}`);
@@ -6699,6 +6958,7 @@
             if (confirm(`${members[index].nameKr}님의 "${eduNames[eduType]}" 을(를) ${action} 하시겠습니까?`)) {
                 members[index].education[eduType] = !currentValue;
                 localStorage.setItem('churchMembers', JSON.stringify(members));
+                saveMembersToFirebase(); // Firebase 동기화
                 loadMembersList();
                 
                 const status = members[index].education[eduType] ? '이수 완료' : '미이수';
@@ -6763,6 +7023,7 @@
             // 기존 데이터 삭제 (수정 모드)
             members.splice(index, 1);
             localStorage.setItem('churchMembers', JSON.stringify(members));
+            saveMembersToFirebase(); // Firebase 동기화
             loadMembersList();
             
             // 스크롤을 폼으로 이동
@@ -6776,6 +7037,7 @@
             if (confirm(`정말 "${member.nameKr}" 교인을 삭제하시겠습니까?`)) {
                 members.splice(index, 1);
                 localStorage.setItem('churchMembers', JSON.stringify(members));
+                saveMembersToFirebase(); // Firebase 동기화
                 loadMembersList();
                 document.getElementById('totalMembers').textContent = members.length;
                 alert('삭제되었습니다.');
@@ -10616,6 +10878,7 @@
             }
             
             localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+            saveCellAttendanceToFirebase(); // Firebase 동기화
             console.log('[구역관리] 저장된 cellAttendance:', JSON.stringify(cellAttendance));
             loadCellList();
         }
@@ -10626,6 +10889,7 @@
                 const key = `${cellName}_${date}`;
                 delete cellAttendance[key];
                 localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+                saveCellAttendanceToFirebase(); // Firebase 동기화
                 loadCellList();
             }
         }
@@ -10686,6 +10950,7 @@
             if (confirm(`"${cells[index].name}구역"을 삭제하시겠습니까?`)) {
                 cells.splice(index, 1);
                 localStorage.setItem('churchCells', JSON.stringify(cells));
+                saveChurchCellsToFirebase(); // Firebase 동기화
                 loadCellList();
             }
         }
@@ -10716,6 +10981,7 @@
             }
             
             localStorage.setItem('churchCells', JSON.stringify(cells));
+            saveChurchCellsToFirebase(); // Firebase 동기화
             closeCellModal();
             loadCellList();
             alert('구역이 저장되었습니다.');
