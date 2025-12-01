@@ -506,9 +506,9 @@
         // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyAG6_0snbn9BfY0N94EsZiG7GbiSA31zNY",
-            authDomain: "gkc-web-project.firebaseapp.com",
-            projectId: "gkc-web-project",
-            storageBucket: "gkc-web-project.firebasestorage.app",
+            authDomain: "gkc-web-project-c87c9.firebaseapp.com",
+            projectId: "gkc-web-project-c87c9",
+            storageBucket: "gkc-web-project-c87c9.firebasestorage.app",
             messagingSenderId: "482708865916",
             appId: "1:482708865916:web:55ace8c18c023278dddaf9"
         };
@@ -579,7 +579,7 @@
             <div class="nav-item" onclick="showSection('news')">교회소식</div>
             <div class="nav-item" onclick="showSection('sundayschool')">Sunday School</div>
             <div class="nav-item" onclick="showSection('gallery')">갤러리</div>
-            <div class="nav-item member-only" style="display:none;" onclick="showSection('my')">내정보</div>
+            <div class="nav-item member-only pastor-also" style="display:none;" onclick="showSection('my')">내정보</div>
             <div class="nav-item perm-dashboard" style="display:none;" onclick="showSection('dashboard')">대시보드</div>
             <div class="nav-item perm-attendance" style="display:none;" onclick="showSection('attendance')">출석관리</div>
             <div class="nav-item perm-cell" style="display:none;" onclick="showSection('cell')">구역관리</div>
@@ -1741,9 +1741,9 @@
                 <div class="card" style="border-left: 4px solid #ed8936;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h3 style="margin: 0; color: #ed8936; font-weight: 600;">새가족 명단</h3>
-                        <span style="font-size: 0.8em; color: #888;">최근 3개월</span>
+                        <span style="font-size: 0.8em; color: #888;">최근 3개월 (등록일 기준)</span>
                     </div>
-                    <div id="dashNewFamilySummary" style="max-height: 150px; overflow-y: auto;"></div>
+                    <div id="dashNewFamilySummary"></div>
                 </div>
                 
                 <!-- 이번달/다음달 생일 -->
@@ -1756,12 +1756,12 @@
                         <!-- 이번달 생일 -->
                         <div style="background: #fdf2f8; border-radius: 10px; padding: 12px;">
                             <div style="font-weight: 600; color: #be185d; margin-bottom: 10px; font-size: 0.9em;">이번달 생일</div>
-                            <div id="dashThisMonthBirthday" style="max-height: 120px; overflow-y: auto;"></div>
+                            <div id="dashThisMonthBirthday"></div>
                         </div>
                         <!-- 다음달 생일 -->
                         <div style="background: #fce7f3; border-radius: 10px; padding: 12px;">
                             <div style="font-weight: 600; color: #be185d; margin-bottom: 10px; font-size: 0.9em;">다음달 생일</div>
-                            <div id="dashNextMonthBirthday" style="max-height: 120px; overflow-y: auto;"></div>
+                            <div id="dashNextMonthBirthday"></div>
                         </div>
                     </div>
                 </div>
@@ -3028,7 +3028,11 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">교인번호</label>
-                                    <input type="text" class="form-control" id="memberNumber" readonly style="background: #f0f0f0;">
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" class="form-control" id="memberNumber" placeholder="예: SGC-25-001" onblur="checkDuplicateMemberNumber(this.value)" style="flex: 1;">
+                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('memberNumber').value = generateMemberNumber()" style="padding: 8px 12px; font-size: 0.85em; white-space: nowrap;">자동생성</button>
+                                    </div>
+                                    <small id="memberNumberStatus" style="font-size: 0.8em; margin-top: 3px; display: block;"></small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">한글 이름 *</label>
@@ -3081,6 +3085,24 @@
                                 <option value="성도">성도</option>
                                 <option value="청년">청년</option>
                                 <option value="학생">학생</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">직업</label>
+                            <select class="form-control" id="memberJob">
+                                <option value="">선택</option>
+                                <option value="회사원">회사원</option>
+                                <option value="자영업">자영업</option>
+                                <option value="전문직">전문직 (의사/변호사/회계사 등)</option>
+                                <option value="교육직">교육직 (교사/교수)</option>
+                                <option value="공무원">공무원</option>
+                                <option value="IT/기술직">IT/기술직</option>
+                                <option value="의료/보건">의료/보건</option>
+                                <option value="서비스업">서비스업</option>
+                                <option value="주부">주부</option>
+                                <option value="학생">학생</option>
+                                <option value="은퇴">은퇴</option>
+                                <option value="기타">기타</option>
                             </select>
                         </div>
                     </div>
@@ -3291,9 +3313,37 @@
         
         <!-- 회원목록 탭 -->
         <div id="userListTab" class="card" style="display: none;">
-            <h3 style="margin: 0 0 20px 0; color: #667eea;">등록된 회원</h3>
-            <div id="registeredUserList">
-                <p style="text-align: center; color: #718096; padding: 40px;">등록된 회원이 없습니다.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #667eea;">등록된 회원</h3>
+                <div style="font-size: 0.85em; color: #666;">
+                    체크박스를 클릭하면 권한이 즉시 적용됩니다
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="userListTable" style="width: 100%; border-collapse: collapse; min-width: 900px;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                            <th style="padding: 12px 10px; text-align: left; font-weight: 600; white-space: nowrap;">이름</th>
+                            <th style="padding: 12px 10px; text-align: left; font-weight: 600; white-space: nowrap;">아이디</th>
+                            <th style="padding: 12px 10px; text-align: center; font-weight: 600; white-space: nowrap;">역할</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">대시보드</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">출석관리</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">구역관리</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">부서관리</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">멘토링</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">재정관리</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">교적관리</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">사용자관리</th>
+                            <th style="padding: 12px 10px; text-align: center; font-weight: 600;">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userListTableBody">
+                        <!-- 동적으로 생성됨 -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="userListEmpty" style="text-align: center; color: #718096; padding: 40px; display: none;">
+                등록된 회원이 없습니다.
             </div>
         </div>
     </div>
@@ -4266,58 +4316,149 @@
             loadSignupRequests();
         }
         
-        // 등록된 회원 목록 로드
+        // 등록된 회원 목록 로드 (시트 형태)
         function loadRegisteredUsers() {
             const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-            const container = document.getElementById('registeredUserList');
+            const tbody = document.getElementById('userListTableBody');
+            const emptyMsg = document.getElementById('userListEmpty');
+            const table = document.getElementById('userListTable');
+            
+            if (!tbody) return;
             
             if (users.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">등록된 회원이 없습니다.</p>';
+                tbody.innerHTML = '';
+                if (table) table.style.display = 'none';
+                if (emptyMsg) emptyMsg.style.display = 'block';
                 return;
             }
             
-            let html = '<div style="display: grid; gap: 15px;">';
-            users.forEach(user => {
-                const permLabels = [];
-                if (user.permissions.includes('dashboard')) permLabels.push('대시보드');
-                if (user.permissions.includes('attendance')) permLabels.push('출석');
-                if (user.permissions.includes('cell')) permLabels.push('구역');
-                if (user.permissions.includes('department')) permLabels.push('부서');
-                if (user.permissions.includes('mentor')) permLabels.push('멘토링');
-                if (user.permissions.includes('offering')) permLabels.push('재정');
-                if (user.permissions.includes('members')) permLabels.push('교적');
-                if (user.permissions.includes('users')) permLabels.push('사용자관리');
-                
-                const permText = permLabels.length > 0 ? permLabels.join(', ') : '기본 권한만';
-                const date = new Date(user.registeredDate).toLocaleDateString('ko-KR');
-                const memberLinkText = user.memberName ? `✅ ${user.memberName}` : '❌ 미연결';
-                const memberLinkColor = user.memberName ? '#16a34a' : '#dc2626';
+            if (table) table.style.display = 'table';
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            
+            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users'];
+            
+            let html = '';
+            users.forEach((user, index) => {
+                const isPastor = user.role === '담임목사';
+                const rowBg = index % 2 === 0 ? '#ffffff' : '#f8fafc';
                 
                 html += `
-                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #38b2ac;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
-                            <div>
-                                <div style="font-size: 1.1em; font-weight: 600; color: #1e3a5f; margin-bottom: 5px;">
-                                    ${user.name} 
-                                    <span style="font-size: 0.85em; color: #718096; font-weight: normal;">(@${user.username})</span>
-                                </div>
-                                <div style="color: #718096; font-size: 0.9em;">
-                                    <div>역할: ${user.role}</div>
-                                    <div>교적 연결: <span style="color: ${memberLinkColor}; font-weight: 600;">${memberLinkText}</span></div>
-                                    <div>권한: <span style="color: #7c3aed;">${permText}</span></div>
-                                    <div>가입일: ${date}</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn btn-primary" onclick="openPermissionModal(${user.id})" style="padding: 8px 16px;">권한설정</button>
-                                <button class="btn btn-secondary" onclick="deleteUser(${user.id})" style="padding: 8px 16px; background: #ef4444; color: white;">삭제</button>
-                            </div>
-                        </div>
-                    </div>
+                    <tr style="background: ${rowBg}; border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px 10px; font-weight: 600; color: #1e3a5f;">
+                            ${user.name}
+                            ${user.memberName ? `<br><small style="color: #16a34a; font-weight: normal;">✓ ${user.memberName}</small>` : ''}
+                        </td>
+                        <td style="padding: 12px 10px; color: #666;">@${user.username}</td>
+                        <td style="padding: 12px 10px; text-align: center;">
+                            <span style="background: ${isPastor ? '#7c3aed' : '#38b2ac'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8em;">
+                                ${user.role}
+                            </span>
+                        </td>
+                `;
+                
+                // 권한 체크박스들
+                permissionKeys.forEach(perm => {
+                    const checked = isPastor || (user.permissions && user.permissions.includes(perm));
+                    const disabled = isPastor ? 'disabled' : '';
+                    const cursor = isPastor ? 'not-allowed' : 'pointer';
+                    
+                    html += `
+                        <td style="padding: 12px 8px; text-align: center;">
+                            <input type="checkbox" 
+                                   ${checked ? 'checked' : ''} 
+                                   ${disabled}
+                                   onchange="toggleUserPermission(${user.id}, '${perm}', this.checked)"
+                                   style="width: 18px; height: 18px; cursor: ${cursor}; accent-color: #7c3aed;"
+                                   title="${isPastor ? '담임목사는 모든 권한' : perm}">
+                        </td>
+                    `;
+                });
+                
+                html += `
+                        <td style="padding: 12px 10px; text-align: center;">
+                            <button onclick="openPermissionModal(${user.id})" 
+                                    style="background: #16a34a; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em; margin-right: 5px;"
+                                    title="교적 연결 및 권한 설정">
+                                교적연결
+                            </button>
+                            ${isPastor ? '' : `<button onclick="deleteUser(${user.id})" 
+                                    style="background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">
+                                삭제
+                            </button>`}
+                        </td>
+                    </tr>
                 `;
             });
-            html += '</div>';
-            container.innerHTML = html;
+            
+            tbody.innerHTML = html;
+        }
+        
+        // 권한 토글 (체크박스 클릭 시 즉시 적용)
+        function toggleUserPermission(userId, permission, isChecked) {
+            let users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const userIndex = users.findIndex(u => u.id === userId);
+            
+            if (userIndex === -1) return;
+            
+            const user = users[userIndex];
+            if (!user.permissions) user.permissions = [];
+            
+            if (isChecked) {
+                // 권한 추가
+                if (!user.permissions.includes(permission)) {
+                    user.permissions.push(permission);
+                }
+            } else {
+                // 권한 제거
+                user.permissions = user.permissions.filter(p => p !== permission);
+            }
+            
+            users[userIndex] = user;
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+            
+            // 현재 로그인한 사용자의 권한이 변경되었으면 메뉴 업데이트
+            if (currentUser && currentUser.id === userId) {
+                currentUser.permissions = user.permissions;
+                applyUserPermissions(currentUser.permissions);
+            }
+            
+            // 피드백 표시
+            showPermissionToast(user.name, permission, isChecked);
+        }
+        
+        // 권한 변경 알림 표시
+        function showPermissionToast(userName, permission, isGranted) {
+            const permNames = {
+                'dashboard': '대시보드',
+                'attendance': '출석관리',
+                'cell': '구역관리',
+                'department': '부서관리',
+                'mentor': '멘토링',
+                'offering': '재정관리',
+                'members': '교적관리',
+                'users': '사용자관리'
+            };
+            
+            const message = `${userName}님의 ${permNames[permission] || permission} 권한이 ${isGranted ? '부여' : '해제'}되었습니다.`;
+            
+            // 간단한 토스트 메시지
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; bottom: 20px; right: 20px; 
+                background: ${isGranted ? '#16a34a' : '#ef4444'}; color: white; 
+                padding: 12px 20px; border-radius: 8px; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 9999; font-size: 0.9em;
+                animation: fadeIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
         }
         
         // 사용자 탭 전환
@@ -4368,15 +4509,23 @@
                 memberSelect.innerHTML += `<option value="${m.id}" ${selected}>${m.nameKr} (${m.position || '성도'})</option>`;
             });
             
-            // 현재 권한 체크
-            document.getElementById('permDashboard').checked = user.permissions.includes('dashboard');
-            document.getElementById('permAttendance').checked = user.permissions.includes('attendance');
-            document.getElementById('permCell').checked = user.permissions.includes('cell');
-            document.getElementById('permDepartment').checked = user.permissions.includes('department');
-            document.getElementById('permMentor').checked = user.permissions.includes('mentor');
-            document.getElementById('permOffering').checked = user.permissions.includes('offering');
-            document.getElementById('permMembers').checked = user.permissions.includes('members');
-            document.getElementById('permUsers').checked = user.permissions.includes('users');
+            // 담임목사 여부 확인
+            const isPastor = user.role === '담임목사';
+            
+            // 현재 권한 체크 (담임목사는 모든 권한 체크 + 비활성화)
+            const permissionCheckboxes = ['permDashboard', 'permAttendance', 'permCell', 'permDepartment', 'permMentor', 'permOffering', 'permMembers', 'permUsers'];
+            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users'];
+            
+            permissionCheckboxes.forEach((id, index) => {
+                const checkbox = document.getElementById(id);
+                if (isPastor) {
+                    checkbox.checked = true;
+                    checkbox.disabled = true;
+                } else {
+                    checkbox.checked = user.permissions.includes(permissionKeys[index]);
+                    checkbox.disabled = false;
+                }
+            });
             
             document.getElementById('permissionModal').classList.add('active');
         }
@@ -4501,6 +4650,12 @@
             document.getElementById('memberForm').reset();
             document.getElementById('memberNumber').value = generateMemberNumber();
             document.getElementById('memberRegDate').valueAsDate = new Date();
+            // 수정 모드 해제
+            delete document.getElementById('memberForm').dataset.editingId;
+            // 교인번호 상태 초기화
+            document.getElementById('memberNumberStatus').textContent = '';
+            // 직업 초기화
+            document.getElementById('memberJob').value = '';
             // 사진 초기화
             document.getElementById('memberPhotoData').value = '';
             document.getElementById('memberPhotoPreview').innerHTML = `
@@ -4911,22 +5066,11 @@
             return stats;
         }
         
-        // 지역별 통계
+        // 지역별 통계 (City 기준)
         function calculateRegionStats() {
             const stats = {};
             members.forEach(m => {
-                let region = '미등록';
-                if (m.address) {
-                    // 주소에서 도시명 추출 (CA 앞 부분)
-                    const match = m.address.match(/,\s*([^,]+),\s*CA/i);
-                    if (match) {
-                        region = match[1].trim();
-                    } else if (m.address.includes(',')) {
-                        region = m.address.split(',')[1]?.trim() || '기타';
-                    } else {
-                        region = '기타';
-                    }
-                }
+                const region = m.city ? m.city.trim() : '미등록';
                 stats[region] = (stats[region] || 0) + 1;
             });
             return stats;
@@ -5801,8 +5945,8 @@
             
             if (!select) return;
             
-            // pastor인 경우: 드롭다운 표시, 모든 교인 선택 가능
-            if (currentUser && currentUser.username === 'pastor') {
+            // 담임목사인 경우: 드롭다운 표시, 모든 교인 선택 가능
+            if (currentUser && currentUser.role === '담임목사') {
                 selectArea.style.display = 'flex';
                 notLinkedMsg.style.display = 'none';
                 
@@ -6035,7 +6179,7 @@
         function loadSundayYoutube() {
             const videos = JSON.parse(localStorage.getItem('sundayVideos') || '[]');
             const listContainer = document.getElementById('sundayVideoList');
-            const isPastor = currentUser && currentUser.username === 'pastor';
+            const isPastor = currentUser && currentUser.role === '담임목사';
             
             if (videos.length > 0) {
                 let listHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">';
@@ -6105,7 +6249,7 @@
         function loadWednesdayYoutube() {
             const videos = JSON.parse(localStorage.getItem('wednesdayVideos') || '[]');
             const listContainer = document.getElementById('wednesdayVideoList');
-            const isPastor = currentUser && currentUser.username === 'pastor';
+            const isPastor = currentUser && currentUser.role === '담임목사';
             
             if (videos.length > 0) {
                 let listHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">';
@@ -6360,7 +6504,7 @@
         function loadSSStaff() {
             const staff = JSON.parse(localStorage.getItem('ssStaff') || '[]');
             const grid = document.getElementById('ssStaffGrid');
-            const isPastor = currentUser && currentUser.username === 'pastor';
+            const isPastor = currentUser && currentUser.role === '담임목사';
             
             if (staff.length === 0) {
                 grid.innerHTML = `
@@ -6475,7 +6619,7 @@
         function loadSSPhotos() {
             const photos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
             const grid = document.getElementById('ssPhotoGrid');
-            const isPastor = currentUser && currentUser.username === 'pastor';
+            const isPastor = currentUser && currentUser.role === '담임목사';
             
             if (photos.length === 0) {
                 grid.innerHTML = `
@@ -6615,7 +6759,7 @@
                 return;
             }
             
-            const isPastor = currentUser && currentUser.username === 'pastor';
+            const isPastor = currentUser && currentUser.role === '담임목사';
             let html = '';
             
             photos.forEach((photo, index) => {
@@ -6887,9 +7031,48 @@
             showSection('home');
         }
         
+        // 교인번호 중복 체크 함수
+        function checkDuplicateMemberNumber(number) {
+            const statusEl = document.getElementById('memberNumberStatus');
+            if (!statusEl) return true;
+            
+            if (!number || number.trim() === '') {
+                statusEl.textContent = '';
+                statusEl.style.color = '';
+                return true;
+            }
+            
+            // 현재 수정 중인 교인의 원래 번호 (수정 모드일 경우)
+            const editingMemberId = document.getElementById('memberForm').dataset.editingId;
+            
+            const duplicate = members.find(m => {
+                // 수정 중인 교인 자신은 제외
+                if (editingMemberId && m.id == editingMemberId) return false;
+                return m.number === number.trim();
+            });
+            
+            if (duplicate) {
+                statusEl.textContent = `⚠️ 이미 사용 중인 번호입니다 (${duplicate.nameKr})`;
+                statusEl.style.color = '#e53e3e';
+                return false;
+            } else {
+                statusEl.textContent = '✓ 사용 가능한 번호입니다';
+                statusEl.style.color = '#38a169';
+                return true;
+            }
+        }
+        
         // 교인 등록 폼 제출 처리
         document.getElementById('memberForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // 교인번호 중복 체크
+            const memberNumber = document.getElementById('memberNumber').value;
+            if (!checkDuplicateMemberNumber(memberNumber)) {
+                alert('이미 사용 중인 교인번호입니다. 다른 번호를 입력해주세요.');
+                document.getElementById('memberNumber').focus();
+                return;
+            }
             
             // 폼 데이터 수집
             const memberData = {
@@ -6902,6 +7085,7 @@
                 phone: document.getElementById('memberPhone').value,
                 email: document.getElementById('memberEmail').value,
                 position: document.getElementById('memberPosition').value,
+                job: document.getElementById('memberJob').value,
                 address: document.getElementById('memberAddress').value,
                 city: document.getElementById('memberCity').value,
                 zip: document.getElementById('memberZip').value,
@@ -6970,6 +7154,9 @@
         function editMember(index) {
             const member = members[index];
             
+            // 수정 모드 설정 (중복 체크에서 자기 자신 제외용)
+            document.getElementById('memberForm').dataset.editingId = member.id;
+            
             // 구역 선택 옵션 먼저 업데이트
             updateCellSelect();
             
@@ -6982,6 +7169,7 @@
             document.getElementById('memberPhone').value = member.phone || '';
             document.getElementById('memberEmail').value = member.email || '';
             document.getElementById('memberPosition').value = member.position || '';
+            document.getElementById('memberJob').value = member.job || '';
             document.getElementById('memberAddress').value = member.address || '';
             document.getElementById('memberCity').value = member.city || '';
             document.getElementById('memberZip').value = member.zip || '';
@@ -6990,6 +7178,9 @@
             document.getElementById('familyHead').value = member.familyHead || '';
             document.getElementById('memberReferrer').value = member.referrer || '';
             document.getElementById('memberRegDate').value = member.regDate || '';
+            
+            // 교인번호 상태 초기화
+            document.getElementById('memberNumberStatus').textContent = '';
             
             // 사진 로드
             if (member.photo) {
@@ -7026,8 +7217,14 @@
             saveMembersToFirebase(); // Firebase 동기화
             loadMembersList();
             
+            // 교인등록 탭으로 이동
+            showMemberTab('register');
+            
             // 스크롤을 폼으로 이동
-            document.getElementById('memberForm').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                document.getElementById('memberForm').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+            
             alert('수정할 교인 정보가 폼에 로드되었습니다.\n수정 후 "교인 등록" 버튼을 클릭하세요.');
         }
         
@@ -7671,7 +7868,7 @@
             const totalDeptEl = document.getElementById('totalDepartments');
             const totalTeamsEl = document.getElementById('totalTeams');
             const totalMembersEl = document.getElementById('totalDeptMembers');
-            const isPastor = currentUser && currentUser.username === 'pastor';
+            const isPastor = currentUser && currentUser.role === '담임목사';
             
             if (totalDeptEl) totalDeptEl.textContent = departments.length;
             
@@ -8092,6 +8289,9 @@
             // 재정관리 예산과 연동
             syncBudgetWithFinance(deptData.name, deptData.budget);
             
+            // 재정관리 부서 드롭다운 업데이트
+            updateDepartmentSelects();
+            
             closeDepartmentModal();
             loadDepartmentList();
         });
@@ -8126,6 +8326,8 @@
                 departments.splice(index, 1);
                 localStorage.setItem('churchDepartments', JSON.stringify(departments));
                 loadDepartmentList();
+                // 재정관리 부서 목록 업데이트
+                updateDepartmentSelects();
             }
         }
         
@@ -8994,6 +9196,7 @@
                 loadOfferingList();
                 updateOfferingStats();
             } else if (tabName === 'expense') {
+                updateDepartmentSelects(); // 부서관리에서 등록된 부서 로드
                 loadExpenseList();
                 updateExpenseStats();
                 loadPaymentRequests();
@@ -9006,26 +9209,32 @@
         // 예산 데이터 (부서별 연간 예산)
         let budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
         
-        // 기본 부서 및 분류 설정
-        const defaultDepartments = [
-            { name: '예배부', budget: 0, categories: ['예배용품', '찬양대', '음향/영상', '기타'] },
-            { name: '교육부', budget: 0, categories: ['교재비', '교사훈련', '행사비', '기타'] },
-            { name: '선교부', budget: 0, categories: ['국내선교', '해외선교', '선교사후원', '기타'] },
-            { name: '친교부', budget: 0, categories: ['식비', '친교행사', '기타'] },
-            { name: '관리부', budget: 0, categories: ['시설관리', '공과금', '수리비', '청소용품', '기타'] },
-            { name: '사무국', budget: 0, categories: ['인건비', '사무용품', '통신비', '기타'] },
-            { name: '구제부', budget: 0, categories: ['성도구제', '지역구제', '긴급구호', '기타'] }
-        ];
-        
-        // 예산 초기화
+        // 예산 초기화 - 부서관리에서 등록된 부서 기준
         function initBudgets() {
-            if (budgets.length === 0) {
-                budgets = defaultDepartments.map(d => ({
-                    ...d,
-                    year: new Date().getFullYear()
-                }));
+            // 부서관리에서 등록된 부서 가져오기
+            const deptData = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            
+            if (deptData.length > 0) {
+                // 부서관리에 있는 부서들로 budgets 동기화
+                deptData.forEach(dept => {
+                    const existingBudget = budgets.find(b => b.name === dept.name);
+                    if (!existingBudget) {
+                        // 새 부서 추가
+                        budgets.push({
+                            name: dept.name,
+                            budget: dept.budget || 0,
+                            categories: ['운영비', '행사비', '물품구입', '기타'],
+                            year: new Date().getFullYear()
+                        });
+                    }
+                });
+                
+                // 부서관리에서 삭제된 부서는 budgets에서도 제거
+                budgets = budgets.filter(b => deptData.some(d => d.name === b.name));
+                
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
             }
+            
             updateDepartmentSelects();
             updateBudgetVisualization();
         }
@@ -9047,35 +9256,38 @@
             updateCellSelect();
         });
         
-        // 부서 선택 옵션 업데이트
+        // 부서 선택 옵션 업데이트 (부서관리에서 등록된 부서 사용)
         function updateDepartmentSelects() {
+            // 부서관리에서 등록된 부서 목록 가져오기
+            const deptData = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            
             const deptSelect = document.getElementById('expenseDepartment');
             const filterDeptSelect = document.getElementById('expenseFilterDepartment');
             const categoryDeptSelect = document.getElementById('categoryDeptSelect');
             
             if (deptSelect) {
                 deptSelect.innerHTML = '<option value="">선택</option>';
-                budgets.forEach(dept => {
+                deptData.forEach(dept => {
                     deptSelect.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
                 });
             }
             
             if (filterDeptSelect) {
                 filterDeptSelect.innerHTML = '<option value="all">전체</option>';
-                budgets.forEach(dept => {
+                deptData.forEach(dept => {
                     filterDeptSelect.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
                 });
             }
             
             if (categoryDeptSelect) {
                 categoryDeptSelect.innerHTML = '<option value="">부서를 선택하세요</option>';
-                budgets.forEach(dept => {
+                deptData.forEach(dept => {
                     categoryDeptSelect.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
                 });
             }
         }
         
-        // 부서 선택 시 해당 부서의 분류 로드
+        // 부서 선택 시 해당 부서의 분류 로드 (부서관리 기준)
         function updateExpenseCategories() {
             const deptSelect = document.getElementById('expenseDepartment');
             const catSelect = document.getElementById('expenseCategory');
@@ -9092,12 +9304,22 @@
                 return;
             }
             
+            // budgets에서 해당 부서의 분류 찾기
             const dept = budgets.find(d => d.name === deptName);
-            if (dept) {
+            if (dept && dept.categories && dept.categories.length > 0) {
                 catSelect.innerHTML = '<option value="">선택</option>';
                 dept.categories.forEach(cat => {
                     catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
                 });
+            } else {
+                // budgets에 없으면 기본 분류 제공
+                catSelect.innerHTML = `
+                    <option value="">선택</option>
+                    <option value="운영비">운영비</option>
+                    <option value="행사비">행사비</option>
+                    <option value="물품구입">물품구입</option>
+                    <option value="기타">기타</option>
+                `;
             }
             
             // 항목 선택 초기화
