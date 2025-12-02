@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>새크라멘토 영광교회 - Sacramento Glory Church</title>
+    
+    <!-- PWA 설정 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GKC">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
     <style>
         * {
             margin: 0;
@@ -517,6 +526,88 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
+        // ===================== 앱 버전 관리 =====================
+        const APP_VERSION = '2024.12.01.001'; // 버전 업데이트 시 이 값을 변경
+        let isVersionCheckActive = false;
+        
+        // 버전 체크 및 실시간 감지 시작
+        function startVersionCheck() {
+            if (isVersionCheckActive) return;
+            isVersionCheckActive = true;
+            
+            // 실시간 버전 감지 리스너
+            db.collection('appConfig').doc('version').onSnapshot((doc) => {
+                if (doc.exists) {
+                    const serverVersion = doc.data().current;
+                    const lastUpdate = doc.data().updatedAt;
+                    
+                    // 현재 버전과 서버 버전이 다르면 업데이트 알림
+                    if (serverVersion && serverVersion !== APP_VERSION) {
+                        showUpdateNotification(serverVersion);
+                    }
+                }
+            }, (error) => {
+                console.log('버전 체크 오류:', error);
+            });
+        }
+        
+        // 업데이트 알림 표시
+        function showUpdateNotification(newVersion) {
+            // 이미 알림이 있으면 무시
+            if (document.getElementById('updateNotification')) return;
+            
+            const notification = document.createElement('div');
+            notification.id = 'updateNotification';
+            notification.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px 20px; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">🔄</span>
+                        <div>
+                            <div style="font-weight: 600;">새 버전이 있습니다!</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">버전 ${newVersion} - 새로고침하여 최신 기능을 사용하세요.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="location.reload()" style="background: white; color: #667eea; border: none; padding: 10px 25px; border-radius: 25px; font-weight: 600; cursor: pointer;">
+                            지금 새로고침
+                        </button>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 15px; border-radius: 25px; cursor: pointer;">
+                            나중에
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.prepend(notification);
+        }
+        
+        // 관리자용: 새 버전 발행
+        async function publishNewVersion() {
+            if (!currentUser || currentUser.role !== '관리자') {
+                alert('관리자만 버전을 발행할 수 있습니다.');
+                return;
+            }
+            
+            const newVersion = prompt('새 버전 번호를 입력하세요:', APP_VERSION);
+            if (!newVersion) return;
+            
+            try {
+                await db.collection('appConfig').doc('version').set({
+                    current: newVersion,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: currentUser.username
+                });
+                alert(`버전 ${newVersion}이 발행되었습니다.\n다른 사용자들에게 업데이트 알림이 표시됩니다.`);
+            } catch (error) {
+                console.error('버전 발행 오류:', error);
+                alert('버전 발행 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 페이지 로드 시 버전 체크 시작
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(startVersionCheck, 2000); // 2초 후 버전 체크 시작
+        });
+        
         // Firestore 데이터 저장 함수
         async function saveToFirestore(collection, data) {
             try {
@@ -549,9 +640,12 @@
     <!-- 헤더 -->
     <div class="header">
         <div class="header-content">
-            <div class="logo">
-                ✝️ 새크라멘토 영광교회
-                <div style="font-size: 0.5em; opacity: 0.9;">Sacramento Glory Church</div>
+            <div class="logo" style="display: flex; align-items: center; gap: 12px;">
+                <img src="icons/logo.png" alt="GKC 로고" style="width: 50px; height: 50px; border-radius: 8px; background: white; padding: 3px;">
+                <div>
+                    새크라멘토 영광교회
+                    <div style="font-size: 0.5em; opacity: 0.9;">Sacramento Glory Church</div>
+                </div>
             </div>
             <div class="user-info">
                 <div class="language-switch" onclick="toggleLanguage()">
@@ -1582,7 +1676,7 @@
             <div id="myInfoNotLinked" class="card" style="display: none; text-align: center; padding: 40px; background: linear-gradient(135deg, #fef3c7, #fde68a);">
                 <div style="font-size: 3em; margin-bottom: 15px;">📋</div>
                 <h3 style="color: #92400e; margin: 0 0 10px 0;">교적 연결이 필요합니다</h3>
-                <p style="color: #a16207; margin: 0;">담임목사님께 교적 연결을 요청해주세요.<br>연결 후 출석/헌금 내역을 확인할 수 있습니다.</p>
+                <p style="color: #a16207; margin: 0;">관리자님께 교적 연결을 요청해주세요.<br>연결 후 출석/헌금 내역을 확인할 수 있습니다.</p>
             </div>
             
             <!-- 선택된 교인 프로필 -->
@@ -3289,8 +3383,18 @@
     <!-- 사용자관리 섹션 -->
     <div id="users" class="section section-users">
         <div class="card" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; margin-bottom: 20px;">
-            <h1 style="margin: 0; color: white; font-size: 1.8em;">사용자 관리</h1>
-            <p style="margin: 8px 0 0 0; opacity: 0.9;">회원 가입 승인 및 권한 관리</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h1 style="margin: 0; color: white; font-size: 1.8em;">사용자 관리</h1>
+                    <p style="margin: 8px 0 0 0; opacity: 0.9;">회원 가입 승인 및 권한 관리</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span style="font-size: 0.85em; opacity: 0.8;">현재 버전: <span id="currentAppVersion"></span></span>
+                    <button onclick="publishNewVersion()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        🚀 버전 발행
+                    </button>
+                </div>
+            </div>
         </div>
         
         <!-- 탭 네비게이션 -->
@@ -3357,7 +3461,7 @@
             </div>
             <div class="modal-body" style="padding: 25px;">
                 <div class="alert alert-info" style="margin-bottom: 20px;">
-                    가입 신청 후 담임목사님의 승인을 받으시면 로그인이 가능합니다.
+                    가입 신청 후 관리자님의 승인을 받으시면 로그인이 가능합니다.
                 </div>
                 <div class="form-group">
                     <label class="form-label">이름 (실명) *</label>
@@ -4054,6 +4158,10 @@
 
         // 페이지 로드 시 초기 설정
         document.addEventListener('DOMContentLoaded', function() {
+            // 현재 버전 표시
+            const versionEl = document.getElementById('currentAppVersion');
+            if (versionEl) versionEl.textContent = APP_VERSION;
+            
             // 슬라이드쇼 초기화
             initSlideshow();
             
@@ -4111,14 +4219,14 @@
             currentUser = { 
                 username: 'gkc8127', 
                 name: '정준연', 
-                role: '담임목사',
+                role: '관리자',
                 permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users']
             };
             
             document.getElementById('authButtons').style.display = 'none';
             document.getElementById('userDisplay').style.display = 'block';
             document.getElementById('userName').textContent = 'gkc8127';
-            document.getElementById('userRole').textContent = '담임목사';
+            document.getElementById('userRole').textContent = '관리자';
             
             // 회원 메뉴 표시
             document.querySelectorAll('.member-only').forEach(el => {
@@ -4215,7 +4323,7 @@
             localStorage.setItem('signupRequests', JSON.stringify(requests));
             saveSignupRequestsToFirebase(); // Firebase 동기화
             
-            alert('가입 신청이 완료되었습니다.\\n담임목사님의 승인 후 로그인이 가능합니다.');
+            alert('가입 신청이 완료되었습니다.\\n관리자님의 승인 후 로그인이 가능합니다.');
             closeSignupRequest();
         }
         
@@ -4339,7 +4447,7 @@
             
             let html = '';
             users.forEach((user, index) => {
-                const isPastor = user.role === '담임목사';
+                const isPastor = user.role === '관리자';
                 const rowBg = index % 2 === 0 ? '#ffffff' : '#f8fafc';
                 
                 html += `
@@ -4369,7 +4477,7 @@
                                    ${disabled}
                                    onchange="toggleUserPermission(${user.id}, '${perm}', this.checked)"
                                    style="width: 18px; height: 18px; cursor: ${cursor}; accent-color: #7c3aed;"
-                                   title="${isPastor ? '담임목사는 모든 권한' : perm}">
+                                   title="${isPastor ? '관리자는 모든 권한' : perm}">
                         </td>
                     `;
                 });
@@ -4509,10 +4617,10 @@
                 memberSelect.innerHTML += `<option value="${m.id}" ${selected}>${m.nameKr} (${m.position || '성도'})</option>`;
             });
             
-            // 담임목사 여부 확인
-            const isPastor = user.role === '담임목사';
+            // 관리자 여부 확인
+            const isPastor = user.role === '관리자';
             
-            // 현재 권한 체크 (담임목사는 모든 권한 체크 + 비활성화)
+            // 현재 권한 체크 (관리자는 모든 권한 체크 + 비활성화)
             const permissionCheckboxes = ['permDashboard', 'permAttendance', 'permCell', 'permDepartment', 'permMentor', 'permOffering', 'permMembers', 'permUsers'];
             const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users'];
             
@@ -4622,8 +4730,8 @@
                 document.querySelectorAll('.pastor-only').forEach(el => {
                     el.style.display = 'none';
                 });
-            } else if (currentUser.role === '담임목사') {
-                // 담임목사 - 모든 메뉴 표시
+            } else if (currentUser.role === '관리자') {
+                // 관리자 - 모든 메뉴 표시
                 document.querySelectorAll('.member-only').forEach(el => {
                     el.style.display = 'block';
                 });
@@ -5356,8 +5464,8 @@
                 if (sectionId === 'my') {
                     // 접근 허용
                 } else if (restrictedSections[sectionId]) {
-                    // 담임목사는 모든 접근 가능
-                    if (currentUser.role !== '담임목사') {
+                    // 관리자는 모든 접근 가능
+                    if (currentUser.role !== '관리자') {
                         const requiredPerm = restrictedSections[sectionId];
                         if (!currentUser.permissions || !currentUser.permissions.includes(requiredPerm)) {
                             alert('접근 권한이 없습니다.\\n관리자에게 권한을 요청하세요.');
@@ -5548,7 +5656,7 @@
             // 조직도 데이터 불러오기
             const orgData = JSON.parse(localStorage.getItem('churchOrgChart') || '{}');
             
-            // 담임목사
+            // 관리자
             const pastorEl = document.getElementById('orgPastor');
             if (pastorEl) pastorEl.textContent = orgData.pastor || '정준연';
             
@@ -5945,8 +6053,8 @@
             
             if (!select) return;
             
-            // 담임목사인 경우: 드롭다운 표시, 모든 교인 선택 가능
-            if (currentUser && currentUser.role === '담임목사') {
+            // 관리자인 경우: 드롭다운 표시, 모든 교인 선택 가능
+            if (currentUser && currentUser.role === '관리자') {
                 selectArea.style.display = 'flex';
                 notLinkedMsg.style.display = 'none';
                 
@@ -6179,7 +6287,7 @@
         function loadSundayYoutube() {
             const videos = JSON.parse(localStorage.getItem('sundayVideos') || '[]');
             const listContainer = document.getElementById('sundayVideoList');
-            const isPastor = currentUser && currentUser.role === '담임목사';
+            const isPastor = currentUser && currentUser.role === '관리자';
             
             if (videos.length > 0) {
                 let listHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">';
@@ -6249,7 +6357,7 @@
         function loadWednesdayYoutube() {
             const videos = JSON.parse(localStorage.getItem('wednesdayVideos') || '[]');
             const listContainer = document.getElementById('wednesdayVideoList');
-            const isPastor = currentUser && currentUser.role === '담임목사';
+            const isPastor = currentUser && currentUser.role === '관리자';
             
             if (videos.length > 0) {
                 let listHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">';
@@ -6504,7 +6612,7 @@
         function loadSSStaff() {
             const staff = JSON.parse(localStorage.getItem('ssStaff') || '[]');
             const grid = document.getElementById('ssStaffGrid');
-            const isPastor = currentUser && currentUser.role === '담임목사';
+            const isPastor = currentUser && currentUser.role === '관리자';
             
             if (staff.length === 0) {
                 grid.innerHTML = `
@@ -6619,7 +6727,7 @@
         function loadSSPhotos() {
             const photos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
             const grid = document.getElementById('ssPhotoGrid');
-            const isPastor = currentUser && currentUser.role === '담임목사';
+            const isPastor = currentUser && currentUser.role === '관리자';
             
             if (photos.length === 0) {
                 grid.innerHTML = `
@@ -6759,7 +6867,7 @@
                 return;
             }
             
-            const isPastor = currentUser && currentUser.role === '담임목사';
+            const isPastor = currentUser && currentUser.role === '관리자';
             let html = '';
             
             photos.forEach((photo, index) => {
@@ -6856,13 +6964,52 @@
                 return;
             }
             
+            // 이미지 자동 리사이즈 및 압축
             const reader = new FileReader();
             reader.onload = function(e) {
-                photoFileData = e.target.result;
-                document.getElementById('photoPreviewContainer').innerHTML = `
-                    <img src="${photoFileData}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px;">
-                `;
-                document.getElementById('photoDropZone').style.borderColor = '#667eea';
+                const img = new Image();
+                img.onload = function() {
+                    // 최대 크기 설정 (가로 1200px, 세로 900px)
+                    const maxWidth = 1200;
+                    const maxHeight = 900;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // 비율 유지하면서 리사이즈
+                    if (width > maxWidth) {
+                        height = Math.round(height * maxWidth / width);
+                        width = maxWidth;
+                    }
+                    if (height > maxHeight) {
+                        width = Math.round(width * maxHeight / height);
+                        height = maxHeight;
+                    }
+                    
+                    // Canvas로 리사이즈
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // JPEG로 압축 (품질 0.7 = 70%)
+                    photoFileData = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // 압축 결과 표시
+                    const originalSize = (file.size / 1024).toFixed(1);
+                    const compressedSize = (photoFileData.length * 0.75 / 1024).toFixed(1);
+                    
+                    document.getElementById('photoPreviewContainer').innerHTML = `
+                        <img src="${photoFileData}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px;">
+                        <div style="margin-top: 8px; font-size: 0.8em; color: #666;">
+                            📐 ${width} x ${height}px | 
+                            📦 ${originalSize}KB → <span style="color: #16a34a; font-weight: 600;">${compressedSize}KB</span>
+                            (${Math.round((1 - compressedSize/originalSize) * 100)}% 압축)
+                        </div>
+                    `;
+                    document.getElementById('photoDropZone').style.borderColor = '#16a34a';
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -6896,8 +7043,8 @@
                 uploadedAt: new Date().toISOString()
             });
             
-            // 최대 50개까지만 저장
-            if (photos.length > 50) photos.pop();
+            // 최대 100개까지만 저장
+            if (photos.length > 100) photos.pop();
             
             try {
                 localStorage.setItem('churchGallery', JSON.stringify(photos));
@@ -6954,14 +7101,14 @@
                 currentUser = { 
                     username: 'gkc8127', 
                     name: '정준연', 
-                    role: '담임목사',
+                    role: '관리자',
                     permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users']
                 };
                 
                 document.getElementById('authButtons').style.display = 'none';
                 document.getElementById('userDisplay').style.display = 'block';
                 document.getElementById('userName').textContent = 'gkc8127';
-                document.getElementById('userRole').textContent = '담임목사';
+                document.getElementById('userRole').textContent = '관리자';
                 
                 // 회원 메뉴 표시
                 document.querySelectorAll('.member-only').forEach(el => {
@@ -6978,9 +7125,27 @@
                     el.style.display = 'block';
                 });
                 
+                // 관리자를 registeredUsers에 추가 (회원목록에 표시되도록)
+                let adminUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                const existingAdmin = adminUsers.find(u => u.username === 'gkc8127');
+                if (!existingAdmin) {
+                    adminUsers.unshift({
+                        id: 1,
+                        username: 'gkc8127',
+                        name: '정준연',
+                        password: '4581',
+                        role: '관리자',
+                        permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'members', 'users'],
+                        approved: true
+                    });
+                    localStorage.setItem('registeredUsers', JSON.stringify(adminUsers));
+                    saveUsersToFirebase();
+                }
+                
                 closeLogin();
                 alert('로그인 성공!');
                 loadSignupRequests();
+                loadRegisteredUsers();
                 return;
             }
             
@@ -7124,7 +7289,7 @@
             document.getElementById('totalMembers').textContent = members.length;
         });
         
-        // 교육 이수 현황 토글 (담임목사 전용)
+        // 교육 이수 현황 토글 (관리자 전용)
         function toggleEducation(index, eduType) {
             if (!members[index].education) {
                 members[index].education = { newFamily: false, leadership: false, coffeeBreak: false };
@@ -7570,7 +7735,7 @@
                                             <div style="height: 100%; width: ${progressPercent}%; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.3s;"></div>
                                         </div>
                                         
-                                        <!-- 4주 체크박스 + 담임목사 확인 -->
+                                        <!-- 4주 체크박스 + 관리자 확인 -->
                                         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
                                             <label style="display: flex; flex-direction: column; align-items: center; padding: 12px 8px; background: ${progress.week1 ? '#667eea' : '#f8f9fa'}; border-radius: 10px; cursor: pointer; transition: all 0.3s;" onclick="toggleMentoringWeek('${progressKey}', 'week1')">
                                                 <div style="font-size: 1.3em; margin-bottom: 3px; color: ${progress.week1 ? 'white' : '#667eea'};">${progress.week1 ? '✓' : '1'}</div>
@@ -7594,7 +7759,7 @@
                                             </label>
                                             <label style="display: flex; flex-direction: column; align-items: center; padding: 12px 8px; background: ${progress.pastorConfirmed ? '#48bb78' : '#fff3cd'}; border: 2px solid ${progress.pastorConfirmed ? '#48bb78' : '#ffc107'}; border-radius: 10px; cursor: pointer; transition: all 0.3s;" onclick="toggleMentoringWeek('${progressKey}', 'pastorConfirmed')">
                                                 <div style="font-size: 1.3em; margin-bottom: 3px; color: ${progress.pastorConfirmed ? 'white' : '#856404'};">${progress.pastorConfirmed ? '✓' : '⛪'}</div>
-                                                <div style="font-size: 0.75em; font-weight: 600; color: ${progress.pastorConfirmed ? 'white' : '#333'};">담임목사</div>
+                                                <div style="font-size: 0.75em; font-weight: 600; color: ${progress.pastorConfirmed ? 'white' : '#333'};">관리자</div>
                                                 <div style="font-size: 0.65em; color: ${progress.pastorConfirmed ? 'rgba(255,255,255,0.8)' : '#856404'};">확인</div>
                                             </label>
                                         </div>
@@ -7611,10 +7776,10 @@
         
         // 4주 프로그램 체크 토글
         function toggleMentoringWeek(progressKey, week) {
-            // 담임목사 확인은 관리자만 가능
+            // 관리자 확인은 관리자만 가능
             if (week === 'pastorConfirmed') {
                 if (!currentUser || currentUser.username !== 'pastor') {
-                    alert('담임목사 확인은 관리자만 가능합니다.');
+                    alert('관리자 확인은 관리자만 가능합니다.');
                     return;
                 }
             }
@@ -7868,7 +8033,7 @@
             const totalDeptEl = document.getElementById('totalDepartments');
             const totalTeamsEl = document.getElementById('totalTeams');
             const totalMembersEl = document.getElementById('totalDeptMembers');
-            const isPastor = currentUser && currentUser.role === '담임목사';
+            const isPastor = currentUser && currentUser.role === '관리자';
             
             if (totalDeptEl) totalDeptEl.textContent = departments.length;
             
@@ -12484,6 +12649,19 @@
             link.download = `재정보고서_${startDate}_${endDate}.csv`;
             link.click();
             closeFinanceReportModal();
+        }
+        
+        // PWA Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then((registration) => {
+                        console.log('GKC ServiceWorker 등록 성공:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('GKC ServiceWorker 등록 실패:', error);
+                    });
+            });
         }
     </script>
 </body>
