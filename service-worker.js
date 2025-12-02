@@ -1,5 +1,5 @@
 // Service Worker for GKC (Sacramento Glory Korean Church)
-const CACHE_NAME = 'gkc-cache-v2';
+const CACHE_NAME = 'gkc-cache-v3';
 
 // 캐시할 파일 목록
 const urlsToCache = [
