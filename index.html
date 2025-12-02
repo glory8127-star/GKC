@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1200">
     <title>새크라멘토 영광교회 - Sacramento Glory Church</title>
     
     <!-- PWA 설정 -->
@@ -11471,7 +11471,7 @@
                         </div>
                         
                         <!-- 구역장 + 구역원 목록 (출석체크 포함) -->
-                        <div style="padding: 15px; max-height: 280px; overflow-y: auto;">
+                        <div style="padding: 15px;">
                             ${cellMembers.length > 0 ? cellMembers.map((m, mIdx) => {
                                 const isLeader = m.nameKr === cell.leaderName;
                                 const isPresent = todayAttendance.includes(m.nameKr);
