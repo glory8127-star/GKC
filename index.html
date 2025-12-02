@@ -5904,7 +5904,7 @@
             document.getElementById('dashCellSummary').innerHTML = cellHtml || '<p style="color: #999; font-size: 0.9em;">구역 데이터 없음</p>';
             
             // 부서 현황
-            const depts = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            const depts = JSON.parse(localStorage.getItem('departments') || '[]');
             let deptHtml = '';
             depts.slice(0, 4).forEach(dept => {
                 const deptMembers = members.filter(m => m.department === dept.name);
@@ -5991,7 +5991,7 @@
             if (membersEl) membersEl.textContent = memberCount > 0 ? memberCount + '명' : members.length + '명';
             
             // 부서 및 팀 표시
-            const depts = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            const depts = JSON.parse(localStorage.getItem('departments') || '[]');
             const deptTeams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
             const deptContainer = document.getElementById('orgDepartmentsWithTeams');
             
@@ -6068,7 +6068,7 @@
         
         // 팀 추가
         function addDeptTeam(deptName) {
-            const depts = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            const depts = JSON.parse(localStorage.getItem('departments') || '[]');
             const dept = depts.find(d => d.name === deptName);
             const listId = `teamsList_${deptName.replace(/\s/g, '_')}`;
             const listEl = document.getElementById(listId);
@@ -6110,9 +6110,9 @@
             if (!confirm(`"${deptName}" 부서를 삭제하시겠습니까?\n\n⚠️ 부서 아래의 모든 팀도 함께 삭제됩니다.`)) return;
             
             // 부서 목록에서 삭제
-            let depts = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            let depts = JSON.parse(localStorage.getItem('departments') || '[]');
             depts = depts.filter(d => d.name !== deptName);
-            localStorage.setItem('churchDepartments', JSON.stringify(depts));
+            localStorage.setItem('departments', JSON.stringify(depts));
             
             // 부서 팀 데이터 삭제
             let deptTeams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
@@ -6133,7 +6133,7 @@
         // 조직도 편집 모달 표시
         function showOrgChartEditModal() {
             const orgData = JSON.parse(localStorage.getItem('churchOrgChart') || '{}');
-            const depts = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            const depts = JSON.parse(localStorage.getItem('departments') || '[]');
             const deptTeams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
             
             // 부서별 팀 편집 HTML 생성
@@ -6282,7 +6282,7 @@
             localStorage.setItem('churchOrgChart', JSON.stringify(orgData));
             
             // 부서/팀 저장
-            const depts = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            const depts = JSON.parse(localStorage.getItem('departments') || '[]');
             const deptTeams = {};
             
             depts.forEach(dept => {
@@ -8089,7 +8089,7 @@
         }
         
         // ========== 부서관리 ==========
-        let departments = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+        let departments = JSON.parse(localStorage.getItem('departments') || '[]');
         
         // 기본 부서 초기화
         function initDefaultDepartments() {
@@ -8100,7 +8100,7 @@
                     { name: '선교부', color: '#533483', leader: '', description: '국내외 선교 사역', meeting: '매월 첫째 주일', budget: 8000, teams: [], expenses: [], eventPlan: [] },
                     { name: '친교부', color: '#e94560', leader: '', description: '새가족 환영 및 친교', meeting: '매주 주일 예배 후', budget: 2000, teams: [], expenses: [], eventPlan: [] }
                 ];
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
             }
         }
         
@@ -8603,7 +8603,7 @@
         function deleteTeamFrom(deptIndex, teamIndex) {
             if (confirm('이 팀을 삭제하시겠습니까?')) {
                 departments[deptIndex].teams.splice(teamIndex, 1);
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 loadDepartmentList();
             }
         }
@@ -8633,7 +8633,7 @@
                     note: '',
                     status: '예정'
                 });
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 loadDepartmentList();
             }
         }
@@ -8643,7 +8643,7 @@
             if (confirm('이 지출 결의서를 삭제하시겠습니까?')) {
                 const expId = departments[deptIndex].expenses[expIndex].id;
                 departments[deptIndex].expenses.splice(expIndex, 1);
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 
                 // 재정관리 지출에서도 삭제
                 let expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
@@ -8670,7 +8670,7 @@
                 departments[deptIndex].expenses[expIndex].paymentRequested = true;
                 departments[deptIndex].expenses[expIndex].requestDate = new Date().toISOString().split('T')[0];
                 departments[deptIndex].expenses[expIndex].requester = dept.leader || '미정';
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 
                 // 결제요청 목록에 추가
                 let paymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
@@ -8744,7 +8744,7 @@
                 alert('새 부서가 추가되었습니다.');
             }
             
-            localStorage.setItem('churchDepartments', JSON.stringify(departments));
+            localStorage.setItem('departments', JSON.stringify(departments));
             
             // 재정관리 예산과 연동
             syncBudgetWithFinance(deptData.name, deptData.budget);
@@ -8784,7 +8784,7 @@
         function deleteDepartment(index) {
             if (confirm(`"${departments[index].name}" 부서를 삭제하시겠습니까?`)) {
                 departments.splice(index, 1);
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 loadDepartmentList();
                 // 재정관리 부서 목록 업데이트
                 updateDepartmentSelects();
@@ -8915,7 +8915,7 @@
                 departments[deptIndex].teams.push(teamData);
             }
             
-            localStorage.setItem('churchDepartments', JSON.stringify(departments));
+            localStorage.setItem('departments', JSON.stringify(departments));
             closeTeamModal();
             loadDepartmentList();
         });
@@ -8924,7 +8924,7 @@
             const deptIndex = parseInt(document.getElementById('currentDetailDeptIndex').value);
             if (confirm('이 팀을 삭제하시겠습니까?')) {
                 departments[deptIndex].teams.splice(teamIndex, 1);
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 loadTeamsList(deptIndex);
                 loadDepartmentList();
             }
@@ -8992,7 +8992,7 @@
                 departments[deptIndex].teams[teamIndex].leader = name;
             }
             
-            localStorage.setItem('churchDepartments', JSON.stringify(departments));
+            localStorage.setItem('departments', JSON.stringify(departments));
             document.getElementById('newTeamMemberName').value = '';
             loadTeamMemberList(deptIndex, teamIndex);
             loadTeamsList(deptIndex);
@@ -9005,7 +9005,7 @@
             
             if (confirm('이 팀원을 삭제하시겠습니까?')) {
                 departments[deptIndex].teams[teamIndex].members.splice(memberIndex, 1);
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 loadTeamMemberList(deptIndex, teamIndex);
                 loadTeamsList(deptIndex);
                 loadDepartmentList();
@@ -9115,7 +9115,7 @@
             
             if (!departments[deptIndex].expenses) departments[deptIndex].expenses = [];
             departments[deptIndex].expenses.push(expenseData);
-            localStorage.setItem('churchDepartments', JSON.stringify(departments));
+            localStorage.setItem('departments', JSON.stringify(departments));
             
             // 결제요청 승인 후에 재정관리 지출에 추가됨
             
@@ -9188,14 +9188,14 @@
                 status: '예정'
             });
             
-            localStorage.setItem('churchDepartments', JSON.stringify(departments));
+            localStorage.setItem('departments', JSON.stringify(departments));
             loadEventPlan(deptIndex);
         }
         
         function updateEventPlan(eventIndex, field, value) {
             const deptIndex = parseInt(document.getElementById('currentDetailDeptIndex').value);
             departments[deptIndex].eventPlan[eventIndex][field] = field === 'budget' ? parseFloat(value) || 0 : value;
-            localStorage.setItem('churchDepartments', JSON.stringify(departments));
+            localStorage.setItem('departments', JSON.stringify(departments));
             
             // 상태 변경 시 색상 업데이트를 위해 다시 로드
             if (field === 'status') loadEventPlan(deptIndex);
@@ -9205,7 +9205,7 @@
             const deptIndex = parseInt(document.getElementById('currentDetailDeptIndex').value);
             if (confirm('이 행사를 삭제하시겠습니까?')) {
                 departments[deptIndex].eventPlan.splice(eventIndex, 1);
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
                 loadEventPlan(deptIndex);
             }
         }
@@ -9672,7 +9672,7 @@
         // 예산 초기화 - 부서관리에서 등록된 부서 기준
         function initBudgets() {
             // 부서관리에서 등록된 부서 가져오기
-            const deptData = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            const deptData = JSON.parse(localStorage.getItem('departments') || '[]');
             
             if (deptData.length > 0) {
                 // 부서관리에 있는 부서들로 budgets 동기화
@@ -9719,7 +9719,7 @@
         // 부서 선택 옵션 업데이트 (부서관리에서 등록된 부서 사용)
         function updateDepartmentSelects() {
             // 부서관리에서 등록된 부서 목록 가져오기
-            const deptData = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            const deptData = JSON.parse(localStorage.getItem('departments') || '[]');
             
             const deptSelect = document.getElementById('expenseDepartment');
             const filterDeptSelect = document.getElementById('expenseFilterDepartment');
@@ -9936,7 +9936,7 @@
                 const deptIndex = departments.findIndex(d => d.name === oldName);
                 if (deptIndex >= 0) {
                     departments[deptIndex].name = value;
-                    localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                    localStorage.setItem('departments', JSON.stringify(departments));
                 }
             }
         }
@@ -9965,7 +9965,7 @@
                 expenses: [],
                 eventPlan: []
             });
-            localStorage.setItem('churchDepartments', JSON.stringify(departments));
+            localStorage.setItem('departments', JSON.stringify(departments));
             
             loadBudgetForm();
         }
@@ -9986,7 +9986,7 @@
                     const deptIndex = departments.findIndex(d => d.name === deptToRemove.name);
                     if (deptIndex >= 0) {
                         departments.splice(deptIndex, 1);
-                        localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                        localStorage.setItem('departments', JSON.stringify(departments));
                     }
                     
                     loadBudgetForm();
@@ -9999,7 +9999,7 @@
             const deptIndex = departments.findIndex(d => d.name === deptName);
             if (deptIndex >= 0) {
                 departments[deptIndex].budget = budgetAmount;
-                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                localStorage.setItem('departments', JSON.stringify(departments));
             }
         }
         
@@ -10444,7 +10444,7 @@
                 if (req.deptIndex !== undefined && req.expIndex !== undefined) {
                     departments[req.deptIndex].expenses[req.expIndex].paymentApproved = true;
                     expData = departments[req.deptIndex].expenses[req.expIndex];
-                    localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                    localStorage.setItem('departments', JSON.stringify(departments));
                 }
                 
                 // 재정관리 지출 내역에 추가
@@ -10489,7 +10489,7 @@
                 // 부서 지출 결의서 상태 업데이트
                 if (req.deptIndex !== undefined && req.expIndex !== undefined) {
                     departments[req.deptIndex].expenses[req.expIndex].paymentRequested = false;
-                    localStorage.setItem('churchDepartments', JSON.stringify(departments));
+                    localStorage.setItem('departments', JSON.stringify(departments));
                 }
                 
                 loadPaymentRequests();
@@ -11708,7 +11708,7 @@
             const currentMonth = new Date().getMonth() + 1;
             
             // 최신 데이터 로드 (전역 변수도 업데이트)
-            departments = JSON.parse(localStorage.getItem('churchDepartments') || '[]');
+            departments = JSON.parse(localStorage.getItem('departments') || '[]');
             yearlyEvents = JSON.parse(localStorage.getItem('yearlyEvents') || '[]');
             
             const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
