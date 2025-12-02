@@ -3971,6 +3971,8 @@
                 const departmentsData = await loadFromFirestore('departments');
                 if (departmentsData && departmentsData.list) {
                     localStorage.setItem('departments', JSON.stringify(departmentsData.list));
+                    departments = departmentsData.list; // 전역 변수도 업데이트!
+                    console.log('Firebase에서 부서 데이터 로드:', departments.length + '개');
                 } else {
                     const localDepartments = JSON.parse(localStorage.getItem('departments') || '[]');
                     if (localDepartments.length > 0) {
@@ -4006,6 +4008,7 @@
                 // UI 업데이트
                 if (typeof loadMemberList === 'function') loadMemberList();
                 if (typeof loadCellList === 'function') loadCellList();
+                if (typeof loadDepartmentList === 'function') loadDepartmentList();
                 
             } catch (error) {
                 console.error('Firebase 데이터 로드 오류:', error);
