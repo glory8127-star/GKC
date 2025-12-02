@@ -506,6 +506,271 @@
             color: #742a2a;
             border-left: 4px solid #f56565;
         }
+        
+        /* ========== 모바일 햄버거 메뉴 ========== */
+        .mobile-menu-btn {
+            display: none;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+        
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.2);
+        }
+        
+        .mobile-nav-menu.active {
+            right: 0;
+        }
+        
+        .mobile-nav-header {
+            background: linear-gradient(135deg, #667eea 0%, #9f7aea 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .mobile-nav-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .mobile-nav-items {
+            padding: 10px 0;
+        }
+        
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .mobile-nav-item:hover, .mobile-nav-item.active {
+            background: #f0f4ff;
+            color: #667eea;
+        }
+        
+        /* ========== 모바일 반응형 (768px 이하) ========== */
+        @media (max-width: 768px) {
+            /* 헤더 */
+            .header {
+                padding: 15px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .logo {
+                font-size: 1.3em !important;
+                text-align: center;
+            }
+            
+            .logo img {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .logo > div > div {
+                font-size: 0.6em !important;
+            }
+            
+            /* 사용자 정보 영역 */
+            .user-info {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .language-switch {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+            
+            #authButtons {
+                gap: 5px !important;
+            }
+            
+            #authButtons .btn {
+                padding: 8px 12px !important;
+                font-size: 0.85em !important;
+            }
+            
+            /* 햄버거 메뉴 표시 */
+            .mobile-menu-btn {
+                display: block;
+                position: absolute;
+                right: 15px;
+                top: 15px;
+            }
+            
+            /* 기존 네비게이션 숨기기 */
+            .nav {
+                display: none;
+            }
+            
+            /* 메인 컨텐츠 */
+            .main-content {
+                padding: 0 10px;
+                margin: 15px auto;
+            }
+            
+            /* 카드 */
+            .card {
+                padding: 15px;
+                margin-bottom: 15px;
+                border-radius: 10px;
+            }
+            
+            .card h2 {
+                font-size: 1.2em;
+            }
+            
+            /* 슬라이드/배너 */
+            .hero-slide h2 {
+                font-size: 1.3em !important;
+            }
+            
+            .hero-slide h3 {
+                font-size: 1em !important;
+            }
+            
+            .hero-slide p {
+                font-size: 0.85em !important;
+            }
+            
+            /* 대시보드 그리드 */
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 15px 10px;
+            }
+            
+            .stat-value {
+                font-size: 1.8em;
+            }
+            
+            .stat-label {
+                font-size: 0.85em;
+            }
+            
+            /* 폼 */
+            .form-row {
+                grid-template-columns: 1fr !important;
+            }
+            
+            /* 버튼 그룹 */
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                width: 100%;
+            }
+            
+            /* 테이블 스크롤 */
+            .table-responsive {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 600px;
+            }
+            
+            /* 모달 */
+            .modal-content {
+                width: 95% !important;
+                max-width: none !important;
+                margin: 10px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+        
+        /* ========== 더 작은 화면 (480px 이하) ========== */
+        @media (max-width: 480px) {
+            .header {
+                padding: 12px 10px;
+            }
+            
+            .logo {
+                font-size: 1.1em !important;
+            }
+            
+            .logo img {
+                width: 35px !important;
+                height: 35px !important;
+            }
+            
+            .user-info {
+                gap: 5px;
+            }
+            
+            #authButtons .btn {
+                padding: 6px 10px !important;
+                font-size: 0.8em !important;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-value {
+                font-size: 1.5em;
+            }
+            
+            .card {
+                padding: 12px;
+            }
+            
+            .card h2 {
+                font-size: 1.1em;
+            }
+        }
     </style>
     
     <!-- Firebase SDK -->
@@ -639,7 +904,7 @@
 <body>
     <!-- 헤더 -->
     <div class="header">
-        <div class="header-content">
+        <div class="header-content" style="position: relative;">
             <div class="logo" style="display: flex; align-items: center; gap: 12px;">
                 <img src="icons/logo.png" alt="GKC 로고" style="width: 50px; height: 50px; border-radius: 8px; background: white; padding: 3px;">
                 <div>
@@ -647,6 +912,8 @@
                     <div style="font-size: 0.5em; opacity: 0.9;">Sacramento Glory Church</div>
                 </div>
             </div>
+            <!-- 모바일 햄버거 메뉴 버튼 -->
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
             <div class="user-info">
                 <div class="language-switch" onclick="toggleLanguage()">
                     🌐 <span id="langText">한국어</span>
@@ -661,6 +928,34 @@
                     <button id="signupBtn" class="btn btn-secondary" onclick="showSignupRequest()">가입신청</button>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- 모바일 네비게이션 오버레이 -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileMenu()"></div>
+    
+    <!-- 모바일 네비게이션 메뉴 -->
+    <div class="mobile-nav-menu" id="mobileNavMenu">
+        <div class="mobile-nav-header">
+            <span style="font-weight: bold;">메뉴</span>
+            <button class="mobile-nav-close" onclick="closeMobileMenu()">✕</button>
+        </div>
+        <div class="mobile-nav-items" id="mobileNavItems">
+            <div class="mobile-nav-item active" onclick="showSectionMobile('home')">🏠 홈</div>
+            <div class="mobile-nav-item" onclick="showSectionMobile('about')">⛪ 교회소개</div>
+            <div class="mobile-nav-item" onclick="showSectionMobile('worship')">🙏 예배안내</div>
+            <div class="mobile-nav-item" onclick="showSectionMobile('news')">📰 교회소식</div>
+            <div class="mobile-nav-item" onclick="showSectionMobile('sundayschool')">📖 Sunday School</div>
+            <div class="mobile-nav-item" onclick="showSectionMobile('gallery')">📷 갤러리</div>
+            <div class="mobile-nav-item member-only pastor-also" style="display:none;" onclick="showSectionMobile('my')">👤 내정보</div>
+            <div class="mobile-nav-item perm-dashboard" style="display:none;" onclick="showSectionMobile('dashboard')">📊 대시보드</div>
+            <div class="mobile-nav-item perm-attendance" style="display:none;" onclick="showSectionMobile('attendance')">✅ 출석관리</div>
+            <div class="mobile-nav-item perm-cell" style="display:none;" onclick="showSectionMobile('cell')">👥 구역관리</div>
+            <div class="mobile-nav-item perm-department" style="display:none;" onclick="showSectionMobile('department')">🏛️ 부서관리</div>
+            <div class="mobile-nav-item perm-mentor" style="display:none;" onclick="showSectionMobile('mentor')">🤝 멘토링</div>
+            <div class="mobile-nav-item perm-offering" style="display:none;" onclick="showSectionMobile('offering')">💰 재정관리</div>
+            <div class="mobile-nav-item perm-members" style="display:none;" onclick="showSectionMobile('members')">📋 교적관리</div>
+            <div class="mobile-nav-item perm-users" style="display:none;" onclick="showSectionMobile('users')">⚙️ 사용자관리</div>
         </div>
     </div>
     
@@ -12650,6 +12945,51 @@
             link.click();
             closeFinanceReportModal();
         }
+        
+        // ========== 모바일 메뉴 함수 ==========
+        function toggleMobileMenu() {
+            document.getElementById('mobileNavOverlay').classList.add('active');
+            document.getElementById('mobileNavMenu').classList.add('active');
+            document.body.style.overflow = 'hidden'; // 스크롤 방지
+        }
+        
+        function closeMobileMenu() {
+            document.getElementById('mobileNavOverlay').classList.remove('active');
+            document.getElementById('mobileNavMenu').classList.remove('active');
+            document.body.style.overflow = ''; // 스크롤 복원
+        }
+        
+        function showSectionMobile(section) {
+            showSection(section);
+            closeMobileMenu();
+            
+            // 모바일 메뉴 active 상태 업데이트
+            document.querySelectorAll('.mobile-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        // 모바일 메뉴 권한 업데이트 함수
+        function updateMobileMenuPermissions() {
+            // 기존 nav와 동일한 권한 적용
+            const navItems = document.querySelectorAll('.nav-item');
+            const mobileItems = document.querySelectorAll('.mobile-nav-item');
+            
+            mobileItems.forEach((mobileItem, index) => {
+                // 같은 클래스를 가진 메뉴 아이템 찾기
+                const classes = mobileItem.className.split(' ').filter(c => c.startsWith('perm-') || c === 'member-only' || c === 'pastor-also');
+                classes.forEach(cls => {
+                    const correspondingNavItem = document.querySelector(`.nav-item.${cls}`);
+                    if (correspondingNavItem) {
+                        mobileItem.style.display = correspondingNavItem.style.display;
+                    }
+                });
+            });
+        }
+        
+        // 기존 applyUserPermissions 함수 수정 - 모바일 메뉴도 업데이트
+        const originalApplyUserPermissions = typeof applyUserPermissions === 'function' ? applyUserPermissions : null;
         
         // PWA Service Worker 등록
         if ('serviceWorker' in navigator) {
