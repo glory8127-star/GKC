@@ -1678,16 +1678,16 @@
                 </div>
             </div>
             
-            <!-- 담당자 -->
+            <!-- Staff -->
             <div class="card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0; color: #1e3a5f; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; flex: 1;">담당자</h2>
-                    <button onclick="showAddStaffModal()" class="btn pastor-only" style="background: #ed8936; color: white; display: none;">담당자 추가</button>
+                    <h2 style="margin: 0; color: #1e3a5f; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; flex: 1;">Staff</h2>
+                    <button onclick="showAddStaffModal()" class="btn pastor-only" style="background: #ed8936; color: white; display: none;">Staff 추가</button>
                 </div>
                 
                 <div id="ssStaffGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;">
                     <div style="text-align: center; padding: 40px 20px; color: #94a3b8; grid-column: 1 / -1;">
-                        <p>등록된 담당자가 없습니다</p>
+                        <p>등록된 Staff가 없습니다</p>
                     </div>
                 </div>
             </div>
@@ -1743,11 +1743,11 @@
             </div>
         </div>
         
-        <!-- 담당자 추가 모달 -->
+        <!-- Staff 추가 모달 -->
         <div id="addStaffModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
             <div style="background: white; border-radius: 16px; padding: 30px; max-width: 400px; width: 90%; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0; color: #ed8936;">담당자 추가</h2>
+                    <h2 style="margin: 0; color: #ed8936;">Staff 추가</h2>
                     <button onclick="closeAddStaffModal()" style="background: none; border: none; font-size: 1.5em; cursor: pointer;">✕</button>
                 </div>
                 
@@ -4007,12 +4007,37 @@
                 if (sundaySchoolData) {
                     if (sundaySchoolData.staff) {
                         localStorage.setItem('ssStaff', JSON.stringify(sundaySchoolData.staff));
-                        console.log('Firebase에서 Sunday School 담당자 로드:', sundaySchoolData.staff.length + '명');
+                        console.log('Firebase에서 Sunday School Staff 로드:', sundaySchoolData.staff.length + '명');
                     }
                     if (sundaySchoolData.videos) {
                         localStorage.setItem('sundayVideos', JSON.stringify(sundaySchoolData.videos));
                         console.log('Firebase에서 Sunday School 영상 로드:', sundaySchoolData.videos.length + '개');
                     }
+                }
+                
+                // 수요예배 영상 데이터 로드
+                const wednesdayVideosData = await loadFromFirestore('wednesdayVideos');
+                if (wednesdayVideosData && wednesdayVideosData.list) {
+                    localStorage.setItem('wednesdayVideos', JSON.stringify(wednesdayVideosData.list));
+                    console.log('Firebase에서 수요예배 영상 로드:', wednesdayVideosData.list.length + '개');
+                }
+                
+                // 슬라이드쇼 데이터 로드
+                const heroSlidesData = await loadFromFirestore('heroSlides');
+                if (heroSlidesData && heroSlidesData.list) {
+                    // Firebase 데이터와 localStorage 데이터 병합
+                    const localSlides = JSON.parse(localStorage.getItem('heroSlides') || '[]');
+                    const mergedSlides = heroSlidesData.list.map((fbSlide, index) => {
+                        // localStorage에 base64 이미지가 있으면 유지
+                        const localSlide = localSlides[index];
+                        if (localSlide && localSlide.imageData && !fbSlide.imageData) {
+                            fbSlide.imageData = localSlide.imageData;
+                        }
+                        return fbSlide;
+                    });
+                    heroSlides = mergedSlides;
+                    localStorage.setItem('heroSlides', JSON.stringify(heroSlides));
+                    console.log('Firebase에서 슬라이드 로드:', heroSlides.length + '개');
                 }
                 
                 firebaseReady = true;
@@ -4024,6 +4049,8 @@
                 if (typeof loadDepartmentList === 'function') loadDepartmentList();
                 if (typeof loadSSStaff === 'function') loadSSStaff();
                 if (typeof loadSundayYoutube === 'function') loadSundayYoutube();
+                if (typeof loadWednesdayYoutube === 'function') loadWednesdayYoutube();
+                if (typeof initSlideshow === 'function') initSlideshow();
                 
             } catch (error) {
                 console.error('Firebase 데이터 로드 오류:', error);
@@ -4223,10 +4250,13 @@
                 slideDiv.className = 'hero-slide';
                 slideDiv.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: ${index === 0 ? '1' : '0'}; transition: opacity 0.8s ease-in-out; pointer-events: ${index === 0 ? 'auto' : 'none'};`;
                 
-                if (slide.type === 'image' && slide.imageData) {
+                // 이미지 URL 또는 base64 이미지
+                const imageSource = slide.imageUrl || slide.imageData;
+                
+                if (slide.type === 'image' && imageSource) {
                     // 이미지 슬라이드
                     slideDiv.innerHTML = `
-                        <div style="width: 100%; height: 100%; background: url('${slide.imageData}') center/cover no-repeat; position: relative;">
+                        <div style="width: 100%; height: 100%; background: url('${imageSource}') center/cover no-repeat; position: relative;">
                             <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4);"></div>
                             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; width: 90%;">
                                 ${slide.subtitle ? `<p style="margin: 0 0 8px 0; font-size: 0.9em; letter-spacing: 3px; opacity: 0.9; text-transform: uppercase;">${slide.subtitle}</p>` : ''}
@@ -4338,11 +4368,17 @@
             
             let html = '';
             heroSlides.forEach((slide, index) => {
+                const bgStyle = slide.type === 'image' && slide.imageData 
+                    ? `background: url('${slide.imageData}') center/cover` 
+                    : slide.type === 'image' && slide.imageUrl 
+                        ? `background: url('${slide.imageUrl}') center/cover`
+                        : `background: ${slide.background || 'linear-gradient(135deg, #1e3a5f, #2d5a87)'}`;
+                
                 html += `
                     <div style="background: #f8fafc; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0;">
                         <div style="display: flex; gap: 15px; align-items: flex-start;">
                             <!-- 미리보기 -->
-                            <div style="width: 150px; height: 90px; border-radius: 8px; overflow: hidden; flex-shrink: 0; ${slide.type === 'image' && slide.imageData ? `background: url('${slide.imageData}') center/cover` : `background: ${slide.background || 'linear-gradient(135deg, #1e3a5f, #2d5a87)'}`};">
+                            <div style="width: 150px; height: 90px; border-radius: 8px; overflow: hidden; flex-shrink: 0; ${bgStyle};">
                             </div>
                             
                             <!-- 편집 폼 -->
@@ -4352,12 +4388,16 @@
                                     <input type="text" class="form-control" value="${slide.subtitle || ''}" placeholder="부제목" onchange="updateSlideField(${index}, 'subtitle', this.value)" style="font-size: 0.9em;">
                                 </div>
                                 <input type="text" class="form-control" value="${slide.text || ''}" placeholder="본문" onchange="updateSlideField(${index}, 'text', this.value)" style="font-size: 0.9em; margin-bottom: 10px;">
-                                <input type="text" class="form-control" value="${slide.subtext || ''}" placeholder="하단 텍스트" onchange="updateSlideField(${index}, 'subtext', this.value)" style="font-size: 0.9em;">
+                                <input type="text" class="form-control" value="${slide.subtext || ''}" placeholder="하단 텍스트" onchange="updateSlideField(${index}, 'subtext', this.value)" style="font-size: 0.9em; margin-bottom: 10px;">
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="text" class="form-control" id="imageUrl_${index}" value="${slide.imageUrl || ''}" placeholder="이미지 URL 입력 (Google Drive 공유 링크)" style="font-size: 0.85em; flex: 1;">
+                                    <button onclick="setSlideImageUrl(${index})" class="btn" style="padding: 5px 10px; font-size: 0.8em; background: #38a169; color: white; white-space: nowrap;">URL 적용</button>
+                                </div>
                             </div>
                             
                             <!-- 버튼들 -->
                             <div style="display: flex; flex-direction: column; gap: 5px;">
-                                <button onclick="uploadSlideImage(${index})" class="btn" style="padding: 5px 10px; font-size: 0.8em; background: #3182ce; color: white;">이미지</button>
+                                <button onclick="uploadSlideImage(${index})" class="btn" style="padding: 5px 10px; font-size: 0.8em; background: #3182ce; color: white;">파일</button>
                                 <button onclick="changeSlideGradient(${index})" class="btn" style="padding: 5px 10px; font-size: 0.8em; background: #805ad5; color: white;">색상</button>
                                 ${index > 0 ? `<button onclick="moveSlide(${index}, -1)" class="btn" style="padding: 5px 10px; font-size: 0.8em;">↑</button>` : ''}
                                 ${index < heroSlides.length - 1 ? `<button onclick="moveSlide(${index}, 1)" class="btn" style="padding: 5px 10px; font-size: 0.8em;">↓</button>` : ''}
@@ -4421,12 +4461,39 @@
                     reader.onload = function(ev) {
                         heroSlides[index].type = 'image';
                         heroSlides[index].imageData = ev.target.result;
+                        heroSlides[index].imageUrl = ''; // 파일 업로드 시 URL 초기화
                         loadSlideEditList();
                     };
                     reader.readAsDataURL(file);
                 }
             };
             input.click();
+        }
+        
+        // 이미지 URL 설정 (Google Drive 등)
+        function setSlideImageUrl(index) {
+            let url = document.getElementById('imageUrl_' + index).value.trim();
+            
+            if (!url) {
+                alert('이미지 URL을 입력하세요.');
+                return;
+            }
+            
+            // Google Drive 링크 변환
+            if (url.includes('drive.google.com')) {
+                // https://drive.google.com/file/d/FILE_ID/view 형식
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match) {
+                    url = 'https://drive.google.com/uc?export=view&id=' + match[1];
+                }
+            }
+            
+            heroSlides[index].type = 'image';
+            heroSlides[index].imageUrl = url;
+            heroSlides[index].imageData = ''; // URL 사용 시 base64 초기화
+            
+            loadSlideEditList();
+            alert('이미지 URL이 적용되었습니다!');
         }
         
         function changeSlideGradient(index) {
@@ -4454,6 +4521,23 @@
         
         function saveSlides() {
             localStorage.setItem('heroSlides', JSON.stringify(heroSlides));
+            
+            // Firebase에도 저장 (base64 이미지 데이터 제외)
+            if (firebaseReady) {
+                const slidesForFirebase = heroSlides.map(slide => {
+                    const cleanSlide = {...slide};
+                    // base64 이미지 데이터는 제외 (용량 문제)
+                    if (cleanSlide.imageData && cleanSlide.imageData.startsWith('data:')) {
+                        cleanSlide.imageData = '';
+                    }
+                    return cleanSlide;
+                });
+                
+                db.collection('heroSlides').doc('main').set({ list: slidesForFirebase })
+                    .then(() => console.log('슬라이드 Firebase 저장 완료'))
+                    .catch(e => console.log('슬라이드 Firebase 저장 실패:', e));
+            }
+            
             renderSlides();
             currentSlideIndex = 0;
             goToSlide(0);
@@ -6921,7 +7005,7 @@
             loadSSPhotos();
         }
         
-        // 담당자 관리
+        // Staff 관리
         function loadSSStaff() {
             const staff = JSON.parse(localStorage.getItem('ssStaff') || '[]');
             const grid = document.getElementById('ssStaffGrid');
@@ -6930,7 +7014,7 @@
             if (staff.length === 0) {
                 grid.innerHTML = `
                     <div style="text-align: center; padding: 40px 20px; color: #94a3b8; grid-column: 1 / -1;">
-                        <p>등록된 담당자가 없습니다</p>
+                        <p>등록된 Staff가 없습니다</p>
                     </div>
                 `;
                 return;
@@ -7019,7 +7103,7 @@
             
             try {
                 localStorage.setItem('ssStaff', JSON.stringify(staff));
-                alert('담당자가 등록되었습니다!');
+                alert('Staff가 등록되었습니다!');
                 closeAddStaffModal();
                 loadSSStaff();
             } catch (e) {
@@ -7028,7 +7112,7 @@
         }
         
         function deleteStaff(index) {
-            if (!confirm('이 담당자를 삭제하시겠습니까?')) return;
+            if (!confirm('이 Staff를 삭제하시겠습니까?')) return;
             
             const staff = JSON.parse(localStorage.getItem('ssStaff') || '[]');
             staff.splice(index, 1);
