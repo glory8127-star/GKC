@@ -4002,6 +4002,19 @@
                     }
                 }
                 
+                // Sunday School 데이터 로드
+                const sundaySchoolData = await loadFromFirestore('sundaySchool');
+                if (sundaySchoolData) {
+                    if (sundaySchoolData.staff) {
+                        localStorage.setItem('ssStaff', JSON.stringify(sundaySchoolData.staff));
+                        console.log('Firebase에서 Sunday School 담당자 로드:', sundaySchoolData.staff.length + '명');
+                    }
+                    if (sundaySchoolData.videos) {
+                        localStorage.setItem('sundayVideos', JSON.stringify(sundaySchoolData.videos));
+                        console.log('Firebase에서 Sunday School 영상 로드:', sundaySchoolData.videos.length + '개');
+                    }
+                }
+                
                 firebaseReady = true;
                 console.log('Firebase 데이터 로드 완료');
                 
@@ -4009,6 +4022,8 @@
                 if (typeof loadMemberList === 'function') loadMemberList();
                 if (typeof loadCellList === 'function') loadCellList();
                 if (typeof loadDepartmentList === 'function') loadDepartmentList();
+                if (typeof loadSSStaff === 'function') loadSSStaff();
+                if (typeof loadSundayYoutube === 'function') loadSundayYoutube();
                 
             } catch (error) {
                 console.error('Firebase 데이터 로드 오류:', error);
