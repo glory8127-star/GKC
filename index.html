@@ -3709,6 +3709,9 @@
             <button class="user-tab" onclick="showUserTab('list')" id="userTabList" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
                 회원 목록
             </button>
+            <button class="user-tab" onclick="showUserTab('backup')" id="userTabBackup" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                💾 백업/복원
+            </button>
         </div>
         
         <!-- 가입신청 탭 -->
@@ -3752,6 +3755,54 @@
             </div>
             <div id="userListEmpty" style="text-align: center; color: #718096; padding: 40px; display: none;">
                 등록된 회원이 없습니다.
+            </div>
+        </div>
+        
+        <!-- 백업/복원 탭 -->
+        <div id="userBackupTab" class="card" style="display: none;">
+            <h3 style="margin: 0 0 20px 0; color: #667eea;">💾 데이터 백업 및 복원</h3>
+            
+            <!-- 백업 섹션 -->
+            <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #16a34a;">📤 데이터 백업 (내보내기)</h4>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+                    모든 교회 데이터를 JSON 파일로 저장합니다.<br>
+                    <strong>정기적으로 백업하는 것을 권장합니다!</strong>
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="backupAllData()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        📥 전체 백업 다운로드
+                    </button>
+                    <button onclick="backupToFirebase()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        ☁️ Firebase에 백업
+                    </button>
+                </div>
+                <div id="lastBackupInfo" style="margin-top: 15px; font-size: 0.85em; color: #666;"></div>
+            </div>
+            
+            <!-- 복원 섹션 -->
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #d97706;">📥 데이터 복원 (가져오기)</h4>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+                    ⚠️ <strong>주의:</strong> 복원하면 현재 데이터가 백업 파일의 데이터로 교체됩니다.
+                </p>
+                <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="handleRestoreFile(event)">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="document.getElementById('restoreFileInput').click()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        📂 백업 파일 선택
+                    </button>
+                    <button onclick="restoreFromFirebase()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        ☁️ Firebase에서 복원
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 백업 현황 -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #475569;">📊 현재 데이터 현황</h4>
+                <div id="dataStatusInfo" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                    <!-- 동적으로 생성됨 -->
+                </div>
             </div>
         </div>
     </div>
@@ -5090,6 +5141,251 @@
             loadSignupRequests();
         }
         
+        // ===== 백업/복원 기능 =====
+        
+        // 데이터 현황 로드
+        function loadDataStatus() {
+            const statusContainer = document.getElementById('dataStatusInfo');
+            if (!statusContainer) return;
+            
+            const dataItems = [
+                { key: 'churchMembers', name: '교인 목록', type: 'array' },
+                { key: 'registeredUsers', name: '사용자 계정', type: 'array' },
+                { key: 'departments', name: '부서', type: 'array' },
+                { key: 'churchCells', name: '구역', type: 'array' },
+                { key: 'mainAttendance', name: '주일 출석', type: 'object' },
+                { key: 'cellAttendance', name: '구역 출석', type: 'object' },
+                { key: 'churchOfferings', name: '헌금 내역', type: 'array' },
+                { key: 'churchExpenses', name: '지출 내역', type: 'array' },
+                { key: 'churchBudgets', name: '예산', type: 'array' },
+                { key: 'mentoringPairs', name: '멘토링', type: 'array' },
+                { key: 'yearlyEvents', name: '연간 행사', type: 'array' },
+                { key: 'churchGallery', name: '갤러리', type: 'array' }
+            ];
+            
+            let html = '';
+            dataItems.forEach(item => {
+                const data = localStorage.getItem(item.key);
+                let count = 0;
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        count = item.type === 'array' ? parsed.length : Object.keys(parsed).length;
+                    } catch(e) {}
+                }
+                html += `
+                    <div style="background: white; padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div style="font-weight: 600; color: #334155;">${item.name}</div>
+                        <div style="font-size: 1.2em; color: #667eea;">${count}건</div>
+                    </div>
+                `;
+            });
+            
+            statusContainer.innerHTML = html;
+            
+            // 마지막 백업 정보
+            const lastBackup = localStorage.getItem('lastBackupDate');
+            const backupInfo = document.getElementById('lastBackupInfo');
+            if (backupInfo) {
+                if (lastBackup) {
+                    backupInfo.innerHTML = `✅ 마지막 백업: ${new Date(lastBackup).toLocaleString('ko-KR')}`;
+                } else {
+                    backupInfo.innerHTML = `⚠️ 아직 백업한 적이 없습니다.`;
+                }
+            }
+        }
+        
+        // 전체 데이터 백업 (JSON 다운로드)
+        function backupAllData() {
+            const backupData = {
+                version: '1.0',
+                date: new Date().toISOString(),
+                data: {}
+            };
+            
+            // 백업할 모든 키 목록
+            const keysToBackup = [
+                'churchMembers', 'registeredUsers', 'signupRequests',
+                'departments', 'churchCells', 'cellAttendance',
+                'mainAttendance', 'visitorData', 'absentReasons',
+                'churchOfferings', 'churchExpenses', 'churchBudgets', 'paymentRequests',
+                'mentoringPairs', 'mentoringProgress',
+                'yearlyEvents', 'churchDeptTeams', 'churchOrgChart',
+                'ssStaff', 'sundayVideos', 'wednesdayVideos',
+                'heroSlides', 'churchGallery'
+            ];
+            
+            keysToBackup.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        backupData.data[key] = JSON.parse(data);
+                    } catch(e) {
+                        backupData.data[key] = data;
+                    }
+                }
+            });
+            
+            // JSON 파일로 다운로드
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const dateStr = new Date().toISOString().slice(0, 10);
+            a.download = `GKC_백업_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // 마지막 백업 날짜 저장
+            localStorage.setItem('lastBackupDate', new Date().toISOString());
+            loadDataStatus();
+            
+            alert('✅ 백업 파일이 다운로드되었습니다!');
+        }
+        
+        // Firebase에 백업
+        async function backupToFirebase() {
+            if (!confirm('현재 데이터를 Firebase 백업 저장소에 저장하시겠습니까?')) return;
+            
+            const backupData = {
+                version: '1.0',
+                date: new Date().toISOString(),
+                data: {}
+            };
+            
+            const keysToBackup = [
+                'churchMembers', 'registeredUsers', 'signupRequests',
+                'departments', 'churchCells', 'cellAttendance',
+                'mainAttendance', 'visitorData', 'absentReasons',
+                'churchOfferings', 'churchExpenses', 'churchBudgets', 'paymentRequests',
+                'mentoringPairs', 'mentoringProgress',
+                'yearlyEvents', 'churchDeptTeams', 'churchOrgChart',
+                'ssStaff', 'sundayVideos', 'wednesdayVideos',
+                'heroSlides', 'churchGallery'
+            ];
+            
+            keysToBackup.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        backupData.data[key] = JSON.parse(data);
+                    } catch(e) {
+                        backupData.data[key] = data;
+                    }
+                }
+            });
+            
+            try {
+                await db.collection('backups').doc('latest').set(backupData);
+                
+                // 날짜별 백업도 저장
+                const dateStr = new Date().toISOString().slice(0, 10);
+                await db.collection('backups').doc(dateStr).set(backupData);
+                
+                localStorage.setItem('lastBackupDate', new Date().toISOString());
+                loadDataStatus();
+                
+                alert('✅ Firebase에 백업되었습니다!\n- latest: 최신 백업\n- ' + dateStr + ': 오늘 백업');
+            } catch(error) {
+                console.error('Firebase 백업 실패:', error);
+                alert('❌ Firebase 백업 실패: ' + error.message);
+            }
+        }
+        
+        // 파일에서 복원
+        function handleRestoreFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    if (!backupData.data) {
+                        alert('❌ 유효하지 않은 백업 파일입니다.');
+                        return;
+                    }
+                    
+                    const backupDate = backupData.date ? new Date(backupData.date).toLocaleString('ko-KR') : '알 수 없음';
+                    const dataCount = Object.keys(backupData.data).length;
+                    
+                    if (!confirm(`📁 백업 파일 정보:\n- 백업 날짜: ${backupDate}\n- 데이터 항목: ${dataCount}개\n\n⚠️ 현재 데이터가 백업 파일로 교체됩니다.\n복원하시겠습니까?`)) {
+                        return;
+                    }
+                    
+                    // 데이터 복원
+                    Object.keys(backupData.data).forEach(key => {
+                        const value = backupData.data[key];
+                        localStorage.setItem(key, JSON.stringify(value));
+                    });
+                    
+                    alert('✅ 데이터가 복원되었습니다!\n페이지를 새로고침합니다.');
+                    location.reload();
+                    
+                } catch(error) {
+                    console.error('복원 실패:', error);
+                    alert('❌ 백업 파일을 읽을 수 없습니다: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            
+            // 입력 초기화 (같은 파일 다시 선택 가능하도록)
+            event.target.value = '';
+        }
+        
+        // Firebase에서 복원
+        async function restoreFromFirebase() {
+            try {
+                // 백업 목록 가져오기
+                const snapshot = await db.collection('backups').orderBy('date', 'desc').limit(5).get();
+                
+                if (snapshot.empty) {
+                    alert('❌ Firebase에 저장된 백업이 없습니다.');
+                    return;
+                }
+                
+                let backupList = '저장된 백업 목록:\n\n';
+                let backups = [];
+                snapshot.forEach((doc, idx) => {
+                    const data = doc.data();
+                    const date = data.date ? new Date(data.date).toLocaleString('ko-KR') : '알 수 없음';
+                    backups.push({ id: doc.id, data: data });
+                    backupList += `${backups.length}. ${doc.id} (${date})\n`;
+                });
+                
+                const choice = prompt(backupList + '\n복원할 백업 번호를 입력하세요 (1-' + backups.length + '):');
+                if (!choice) return;
+                
+                const idx = parseInt(choice) - 1;
+                if (isNaN(idx) || idx < 0 || idx >= backups.length) {
+                    alert('❌ 잘못된 번호입니다.');
+                    return;
+                }
+                
+                const selectedBackup = backups[idx];
+                
+                if (!confirm(`⚠️ "${selectedBackup.id}" 백업으로 복원하시겠습니까?\n현재 데이터가 교체됩니다.`)) {
+                    return;
+                }
+                
+                // 데이터 복원
+                Object.keys(selectedBackup.data.data).forEach(key => {
+                    const value = selectedBackup.data.data[key];
+                    localStorage.setItem(key, JSON.stringify(value));
+                });
+                
+                alert('✅ 데이터가 복원되었습니다!\n페이지를 새로고침합니다.');
+                location.reload();
+                
+            } catch(error) {
+                console.error('Firebase 복원 실패:', error);
+                alert('❌ Firebase 복원 실패: ' + error.message);
+            }
+        }
+        
         // 등록된 회원 목록 로드 (시트 형태)
         function loadRegisteredUsers() {
             const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
@@ -5240,29 +5536,36 @@
         function showUserTab(tab) {
             document.getElementById('userRequestsTab').style.display = tab === 'requests' ? 'block' : 'none';
             document.getElementById('userListTab').style.display = tab === 'list' ? 'block' : 'none';
+            document.getElementById('userBackupTab').style.display = tab === 'backup' ? 'block' : 'none';
             
             // 탭 버튼 스타일 업데이트
             const reqTab = document.getElementById('userTabRequests');
             const listTab = document.getElementById('userTabList');
+            const backupTab = document.getElementById('userTabBackup');
             
-            if (tab === 'requests') {
-                reqTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-                reqTab.style.color = 'white';
-                reqTab.style.border = 'none';
-                listTab.style.background = 'white';
-                listTab.style.color = '#333';
-                listTab.style.border = '1px solid #e2e8f0';
-            } else {
-                listTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-                listTab.style.color = 'white';
-                listTab.style.border = 'none';
-                reqTab.style.background = 'white';
-                reqTab.style.color = '#333';
-                reqTab.style.border = '1px solid #e2e8f0';
+            // 모든 탭 기본 스타일
+            [reqTab, listTab, backupTab].forEach(t => {
+                if (t) {
+                    t.style.background = 'white';
+                    t.style.color = '#333';
+                    t.style.border = '1px solid #e2e8f0';
+                }
+            });
+            
+            // 선택된 탭 활성화 스타일
+            const activeTab = tab === 'requests' ? reqTab : (tab === 'list' ? listTab : backupTab);
+            if (activeTab) {
+                activeTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                activeTab.style.color = 'white';
+                activeTab.style.border = 'none';
             }
             
             if (tab === 'list') {
                 loadRegisteredUsers();
+            }
+            
+            if (tab === 'backup') {
+                loadDataStatus();
             }
         }
         
