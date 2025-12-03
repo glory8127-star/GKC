@@ -3908,37 +3908,44 @@
         async function loadAllDataFromFirebase() {
             try {
                 // 교인 데이터 로드
+                // 교인 데이터 로드 (데이터 보호)
                 const membersData = await loadFromFirestore('churchMembers');
-                if (membersData && membersData.list) {
+                const localMembers = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+                const fbMembersCount = membersData?.list?.length || 0;
+                
+                if (fbMembersCount >= localMembers.length && fbMembersCount > 0) {
                     members = membersData.list;
-                } else {
-                    // localStorage에서 마이그레이션
-                    members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
-                    if (members.length > 0) {
-                        await saveToFirestore('churchMembers', { list: members });
-                    }
+                    console.log('Firebase에서 교인 로드:', fbMembersCount + '명');
+                } else if (localMembers.length > 0) {
+                    members = localMembers;
+                    await saveToFirestore('churchMembers', { list: members });
+                    console.log('localStorage 교인을 Firebase에 저장:', localMembers.length + '명');
                 }
                 
-                // 등록된 사용자 로드
+                // 등록된 사용자 로드 (데이터 보호)
                 const usersData = await loadFromFirestore('registeredUsers');
-                if (usersData && usersData.list) {
+                const localUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                const fbUsersCount = usersData?.list?.length || 0;
+                
+                if (fbUsersCount >= localUsers.length && fbUsersCount > 0) {
                     registeredUsers = usersData.list;
                     localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
-                } else {
-                    registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-                    if (registeredUsers.length > 0) {
-                        await saveToFirestore('registeredUsers', { list: registeredUsers });
-                    }
+                } else if (localUsers.length > 0) {
+                    registeredUsers = localUsers;
+                    await saveToFirestore('registeredUsers', { list: registeredUsers });
                 }
                 
-                // 가입 신청 로드
+                // 가입 신청 로드 (데이터 보호)
                 const requestsData = await loadFromFirestore('signupRequests');
-                if (requestsData && requestsData.list) {
-                    signupRequests = requestsData.list;
+                const localRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+                const fbRequestsCount = requestsData?.list?.length || 0;
+                
+                if (fbRequestsCount >= localRequests.length) {
+                    signupRequests = requestsData?.list || [];
                     localStorage.setItem('signupRequests', JSON.stringify(signupRequests));
                 } else {
-                    signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
-                    if (signupRequests.length > 0) {
+                    signupRequests = localRequests;
+                    if (localRequests.length > 0) {
                         await saveToFirestore('signupRequests', { list: signupRequests });
                     }
                 }
@@ -3956,24 +3963,29 @@
                 
                 // 주일 출석 데이터 로드 (mainAttendance)
                 const mainAttendanceData = await loadFromFirestore('mainAttendance');
-                if (mainAttendanceData && mainAttendanceData.data) {
+                const localMainAtt = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+                const fbMainAttCount = mainAttendanceData?.data ? Object.keys(mainAttendanceData.data).length : 0;
+                const localMainAttCount = Object.keys(localMainAtt).length;
+                
+                // 더 많은 데이터를 가진 쪽 사용 (빈 데이터로 덮어쓰기 방지)
+                if (fbMainAttCount >= localMainAttCount && fbMainAttCount > 0) {
                     localStorage.setItem('mainAttendance', JSON.stringify(mainAttendanceData.data));
-                } else {
-                    const localMainAtt = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
-                    if (Object.keys(localMainAtt).length > 0) {
-                        await saveToFirestore('mainAttendance', { data: localMainAtt });
-                    }
+                    console.log('Firebase에서 출석 로드:', fbMainAttCount + '일');
+                } else if (localMainAttCount > 0) {
+                    await saveToFirestore('mainAttendance', { data: localMainAtt });
+                    console.log('localStorage 출석을 Firebase에 저장:', localMainAttCount + '일');
                 }
                 
                 // 방문자 데이터 로드
                 const visitorDataFromFB = await loadFromFirestore('visitorData');
-                if (visitorDataFromFB && visitorDataFromFB.data) {
+                const localVisitor = JSON.parse(localStorage.getItem('visitorData') || '{}');
+                const fbVisitorCount = visitorDataFromFB?.data ? Object.keys(visitorDataFromFB.data).length : 0;
+                const localVisitorCount = Object.keys(localVisitor).length;
+                
+                if (fbVisitorCount >= localVisitorCount && fbVisitorCount > 0) {
                     localStorage.setItem('visitorData', JSON.stringify(visitorDataFromFB.data));
-                } else {
-                    const localVisitor = JSON.parse(localStorage.getItem('visitorData') || '{}');
-                    if (Object.keys(localVisitor).length > 0) {
-                        await saveToFirestore('visitorData', { data: localVisitor });
-                    }
+                } else if (localVisitorCount > 0) {
+                    await saveToFirestore('visitorData', { data: localVisitor });
                 }
                 
                 // 헌금 데이터 로드
@@ -3987,50 +3999,53 @@
                     }
                 }
                 
-                // 구역 데이터 로드
+                // 구역 데이터 로드 (데이터 보호)
                 const cellsData = await loadFromFirestore('cells');
-                if (cellsData && cellsData.list) {
+                const localCells = JSON.parse(localStorage.getItem('cells') || '[]');
+                const fbCellsCount = cellsData?.list?.length || 0;
+                
+                if (fbCellsCount >= localCells.length && fbCellsCount > 0) {
                     localStorage.setItem('cells', JSON.stringify(cellsData.list));
-                } else {
-                    const localCells = JSON.parse(localStorage.getItem('cells') || '[]');
-                    if (localCells.length > 0) {
-                        await saveToFirestore('cells', { list: localCells });
-                    }
+                } else if (localCells.length > 0) {
+                    await saveToFirestore('cells', { list: localCells });
                 }
                 
-                // 부서 데이터 로드
+                // 부서 데이터 로드 (데이터 보호)
                 const departmentsData = await loadFromFirestore('departments');
-                if (departmentsData && departmentsData.list) {
+                const localDepartments = JSON.parse(localStorage.getItem('departments') || '[]');
+                const fbDeptsCount = departmentsData?.list?.length || 0;
+                
+                if (fbDeptsCount >= localDepartments.length && fbDeptsCount > 0) {
                     localStorage.setItem('departments', JSON.stringify(departmentsData.list));
-                    departments = departmentsData.list; // 전역 변수도 업데이트!
-                    console.log('Firebase에서 부서 데이터 로드:', departments.length + '개');
-                } else {
-                    const localDepartments = JSON.parse(localStorage.getItem('departments') || '[]');
-                    if (localDepartments.length > 0) {
-                        await saveToFirestore('departments', { list: localDepartments });
-                    }
+                    departments = departmentsData.list;
+                    console.log('Firebase에서 부서 데이터 로드:', fbDeptsCount + '개');
+                } else if (localDepartments.length > 0) {
+                    departments = localDepartments;
+                    await saveToFirestore('departments', { list: localDepartments });
+                    console.log('localStorage 부서를 Firebase에 저장:', localDepartments.length + '개');
                 }
                 
-                // 교회 구역 데이터 로드
+                // 교회 구역 데이터 로드 (데이터 보호)
                 const churchCellsData = await loadFromFirestore('churchCells');
-                if (churchCellsData && churchCellsData.list) {
+                const localChurchCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
+                const fbChurchCellsCount = churchCellsData?.list?.length || 0;
+                
+                if (fbChurchCellsCount >= localChurchCells.length && fbChurchCellsCount > 0) {
                     localStorage.setItem('churchCells', JSON.stringify(churchCellsData.list));
-                } else {
-                    const localChurchCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
-                    if (localChurchCells.length > 0) {
-                        await saveToFirestore('churchCells', { list: localChurchCells });
-                    }
+                } else if (localChurchCells.length > 0) {
+                    await saveToFirestore('churchCells', { list: localChurchCells });
                 }
                 
-                // 구역 출석 데이터 로드
+                // 구역 출석 데이터 로드 (데이터 보호)
                 const cellAttendanceData = await loadFromFirestore('cellAttendance');
-                if (cellAttendanceData && cellAttendanceData.data) {
+                const localCellAtt = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
+                const fbCellAttCount = cellAttendanceData?.data ? Object.keys(cellAttendanceData.data).length : 0;
+                const localCellAttCount = Object.keys(localCellAtt).length;
+                
+                if (fbCellAttCount >= localCellAttCount && fbCellAttCount > 0) {
                     localStorage.setItem('cellAttendance', JSON.stringify(cellAttendanceData.data));
-                } else {
-                    const localCellAttendance = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
-                    if (Object.keys(localCellAttendance).length > 0) {
-                        await saveToFirestore('cellAttendance', { data: localCellAttendance });
-                    }
+                } else if (localCellAttCount > 0) {
+                    await saveToFirestore('cellAttendance', { data: localCellAtt });
                 }
                 
                 // Sunday School 데이터 로드
@@ -4090,40 +4105,54 @@
                 
                 // ===== 새로 추가된 Firebase 로드 =====
                 
-                // 헌금 상세 데이터 로드
+                // 헌금 상세 데이터 로드 (데이터 보호)
                 const churchOfferingsData = await loadFromFirestore('churchOfferings');
-                if (churchOfferingsData && churchOfferingsData.list) {
+                const localOfferings = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
+                const fbOfferingsCount = churchOfferingsData?.list?.length || 0;
+                
+                if (fbOfferingsCount >= localOfferings.length && fbOfferingsCount > 0) {
                     localStorage.setItem('churchOfferings', JSON.stringify(churchOfferingsData.list));
-                } else {
-                    const local = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
-                    if (local.length > 0) await saveToFirestore('churchOfferings', { list: local });
+                    console.log('Firebase에서 헌금 로드:', fbOfferingsCount + '건');
+                } else if (localOfferings.length > 0) {
+                    await saveToFirestore('churchOfferings', { list: localOfferings });
+                    console.log('localStorage 헌금을 Firebase에 저장:', localOfferings.length + '건');
                 }
                 
-                // 지출 데이터 로드
+                // 지출 데이터 로드 (데이터 보호)
                 const churchExpensesData = await loadFromFirestore('churchExpenses');
-                if (churchExpensesData && churchExpensesData.list) {
+                const localExpenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+                const fbExpensesCount = churchExpensesData?.list?.length || 0;
+                
+                if (fbExpensesCount >= localExpenses.length && fbExpensesCount > 0) {
                     localStorage.setItem('churchExpenses', JSON.stringify(churchExpensesData.list));
-                } else {
-                    const local = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
-                    if (local.length > 0) await saveToFirestore('churchExpenses', { list: local });
+                    console.log('Firebase에서 지출 로드:', fbExpensesCount + '건');
+                } else if (localExpenses.length > 0) {
+                    await saveToFirestore('churchExpenses', { list: localExpenses });
+                    console.log('localStorage 지출을 Firebase에 저장:', localExpenses.length + '건');
                 }
                 
-                // 예산 데이터 로드
+                // 예산 데이터 로드 (데이터 보호)
                 const churchBudgetsData = await loadFromFirestore('churchBudgets');
-                if (churchBudgetsData && churchBudgetsData.list) {
+                const localBudgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+                const fbBudgetsCount = churchBudgetsData?.list?.length || 0;
+                
+                if (fbBudgetsCount >= localBudgets.length && fbBudgetsCount > 0) {
                     localStorage.setItem('churchBudgets', JSON.stringify(churchBudgetsData.list));
-                } else {
-                    const local = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
-                    if (local.length > 0) await saveToFirestore('churchBudgets', { list: local });
+                    console.log('Firebase에서 예산 로드:', fbBudgetsCount + '건');
+                } else if (localBudgets.length > 0) {
+                    await saveToFirestore('churchBudgets', { list: localBudgets });
+                    console.log('localStorage 예산을 Firebase에 저장:', localBudgets.length + '건');
                 }
                 
-                // 지출 요청 데이터 로드
+                // 지출 요청 데이터 로드 (데이터 보호)
                 const paymentRequestsData = await loadFromFirestore('paymentRequests');
-                if (paymentRequestsData && paymentRequestsData.list) {
+                const localPaymentReqs = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+                const fbPaymentReqsCount = paymentRequestsData?.list?.length || 0;
+                
+                if (fbPaymentReqsCount >= localPaymentReqs.length && fbPaymentReqsCount > 0) {
                     localStorage.setItem('paymentRequests', JSON.stringify(paymentRequestsData.list));
-                } else {
-                    const local = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
-                    if (local.length > 0) await saveToFirestore('paymentRequests', { list: local });
+                } else if (localPaymentReqs.length > 0) {
+                    await saveToFirestore('paymentRequests', { list: localPaymentReqs });
                 }
                 
                 // 멘토링 페어 데이터 로드
