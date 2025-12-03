@@ -3954,6 +3954,28 @@
                     }
                 }
                 
+                // 주일 출석 데이터 로드 (mainAttendance)
+                const mainAttendanceData = await loadFromFirestore('mainAttendance');
+                if (mainAttendanceData && mainAttendanceData.data) {
+                    localStorage.setItem('mainAttendance', JSON.stringify(mainAttendanceData.data));
+                } else {
+                    const localMainAtt = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+                    if (Object.keys(localMainAtt).length > 0) {
+                        await saveToFirestore('mainAttendance', { data: localMainAtt });
+                    }
+                }
+                
+                // 방문자 데이터 로드
+                const visitorDataFromFB = await loadFromFirestore('visitorData');
+                if (visitorDataFromFB && visitorDataFromFB.data) {
+                    localStorage.setItem('visitorData', JSON.stringify(visitorDataFromFB.data));
+                } else {
+                    const localVisitor = JSON.parse(localStorage.getItem('visitorData') || '{}');
+                    if (Object.keys(localVisitor).length > 0) {
+                        await saveToFirestore('visitorData', { data: localVisitor });
+                    }
+                }
+                
                 // 헌금 데이터 로드
                 const offeringsData = await loadFromFirestore('offerings');
                 if (offeringsData && offeringsData.list) {
@@ -4066,6 +4088,98 @@
                     console.log('Firebase에서 갤러리 로드:', mergedGallery.length + '개');
                 }
                 
+                // ===== 새로 추가된 Firebase 로드 =====
+                
+                // 헌금 상세 데이터 로드
+                const churchOfferingsData = await loadFromFirestore('churchOfferings');
+                if (churchOfferingsData && churchOfferingsData.list) {
+                    localStorage.setItem('churchOfferings', JSON.stringify(churchOfferingsData.list));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
+                    if (local.length > 0) await saveToFirestore('churchOfferings', { list: local });
+                }
+                
+                // 지출 데이터 로드
+                const churchExpensesData = await loadFromFirestore('churchExpenses');
+                if (churchExpensesData && churchExpensesData.list) {
+                    localStorage.setItem('churchExpenses', JSON.stringify(churchExpensesData.list));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+                    if (local.length > 0) await saveToFirestore('churchExpenses', { list: local });
+                }
+                
+                // 예산 데이터 로드
+                const churchBudgetsData = await loadFromFirestore('churchBudgets');
+                if (churchBudgetsData && churchBudgetsData.list) {
+                    localStorage.setItem('churchBudgets', JSON.stringify(churchBudgetsData.list));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+                    if (local.length > 0) await saveToFirestore('churchBudgets', { list: local });
+                }
+                
+                // 지출 요청 데이터 로드
+                const paymentRequestsData = await loadFromFirestore('paymentRequests');
+                if (paymentRequestsData && paymentRequestsData.list) {
+                    localStorage.setItem('paymentRequests', JSON.stringify(paymentRequestsData.list));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+                    if (local.length > 0) await saveToFirestore('paymentRequests', { list: local });
+                }
+                
+                // 멘토링 페어 데이터 로드
+                const mentoringPairsData = await loadFromFirestore('mentoringPairs');
+                if (mentoringPairsData && mentoringPairsData.list) {
+                    localStorage.setItem('mentoringPairs', JSON.stringify(mentoringPairsData.list));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('mentoringPairs') || '[]');
+                    if (local.length > 0) await saveToFirestore('mentoringPairs', { list: local });
+                }
+                
+                // 멘토링 진행 데이터 로드
+                const mentoringProgressData = await loadFromFirestore('mentoringProgress');
+                if (mentoringProgressData && mentoringProgressData.data) {
+                    localStorage.setItem('mentoringProgress', JSON.stringify(mentoringProgressData.data));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('mentoringProgress') || '{}');
+                    if (Object.keys(local).length > 0) await saveToFirestore('mentoringProgress', { data: local });
+                }
+                
+                // 연간 행사 데이터 로드
+                const yearlyEventsData = await loadFromFirestore('yearlyEvents');
+                if (yearlyEventsData && yearlyEventsData.list) {
+                    localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEventsData.list));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('yearlyEvents') || '[]');
+                    if (local.length > 0) await saveToFirestore('yearlyEvents', { list: local });
+                }
+                
+                // 결석 사유 데이터 로드
+                const absentReasonsData = await loadFromFirestore('absentReasons');
+                if (absentReasonsData && absentReasonsData.data) {
+                    localStorage.setItem('absentReasons', JSON.stringify(absentReasonsData.data));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('absentReasons') || '{}');
+                    if (Object.keys(local).length > 0) await saveToFirestore('absentReasons', { data: local });
+                }
+                
+                // 부서 팀 데이터 로드
+                const churchDeptTeamsData = await loadFromFirestore('churchDeptTeams');
+                if (churchDeptTeamsData && churchDeptTeamsData.data) {
+                    localStorage.setItem('churchDeptTeams', JSON.stringify(churchDeptTeamsData.data));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
+                    if (Object.keys(local).length > 0) await saveToFirestore('churchDeptTeams', { data: local });
+                }
+                
+                // 조직도 데이터 로드
+                const churchOrgChartData = await loadFromFirestore('churchOrgChart');
+                if (churchOrgChartData && churchOrgChartData.data) {
+                    localStorage.setItem('churchOrgChart', JSON.stringify(churchOrgChartData.data));
+                } else {
+                    const local = JSON.parse(localStorage.getItem('churchOrgChart') || '{}');
+                    if (Object.keys(local).length > 0) await saveToFirestore('churchOrgChart', { data: local });
+                }
+                
                 firebaseReady = true;
                 console.log('Firebase 데이터 로드 완료');
                 
@@ -4118,6 +4232,22 @@
             }
         }
         
+        // 주일 출석 데이터 저장 (mainAttendance)
+        async function saveMainAttendanceToFirebase() {
+            const mainAtt = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+            if (firebaseReady) {
+                await saveToFirestore('mainAttendance', { data: mainAtt });
+            }
+        }
+        
+        // 방문자 데이터 저장
+        async function saveVisitorDataToFirebase() {
+            const visitors = JSON.parse(localStorage.getItem('visitorData') || '{}');
+            if (firebaseReady) {
+                await saveToFirestore('visitorData', { data: visitors });
+            }
+        }
+        
         // 헌금 데이터 저장
         async function saveOfferingsToFirebase() {
             const offerings = JSON.parse(localStorage.getItem('offerings') || '[]');
@@ -4163,6 +4293,88 @@
             const requests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
             if (firebaseReady) {
                 await saveToFirestore('signupRequests', { list: requests });
+            }
+        }
+        
+        // ===== 새로 추가된 Firebase 동기화 함수들 =====
+        
+        // 헌금 상세 데이터 저장
+        async function saveChurchOfferingsToFirebase() {
+            const offerings = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('churchOfferings', { list: offerings });
+            }
+        }
+        
+        // 지출 데이터 저장
+        async function saveChurchExpensesToFirebase() {
+            const expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('churchExpenses', { list: expenses });
+            }
+        }
+        
+        // 예산 데이터 저장
+        async function saveChurchBudgetsToFirebase() {
+            const budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('churchBudgets', { list: budgets });
+            }
+        }
+        
+        // 지출 요청 데이터 저장
+        async function savePaymentRequestsToFirebase() {
+            const requests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('paymentRequests', { list: requests });
+            }
+        }
+        
+        // 멘토링 페어 데이터 저장
+        async function saveMentoringPairsToFirebase() {
+            const pairs = JSON.parse(localStorage.getItem('mentoringPairs') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('mentoringPairs', { list: pairs });
+            }
+        }
+        
+        // 멘토링 진행 데이터 저장
+        async function saveMentoringProgressToFirebase() {
+            const progress = JSON.parse(localStorage.getItem('mentoringProgress') || '{}');
+            if (firebaseReady) {
+                await saveToFirestore('mentoringProgress', { data: progress });
+            }
+        }
+        
+        // 연간 행사 데이터 저장
+        async function saveYearlyEventsToFirebase() {
+            const events = JSON.parse(localStorage.getItem('yearlyEvents') || '[]');
+            if (firebaseReady) {
+                await saveToFirestore('yearlyEvents', { list: events });
+            }
+        }
+        
+        // 결석 사유 데이터 저장
+        async function saveAbsentReasonsToFirebase() {
+            const reasons = JSON.parse(localStorage.getItem('absentReasons') || '{}');
+            if (firebaseReady) {
+                await saveToFirestore('absentReasons', { data: reasons });
+            }
+        }
+        
+        // 부서 팀 데이터 저장
+        async function saveChurchDeptTeamsToFirebase() {
+            const teams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
+            if (firebaseReady) {
+                await saveToFirestore('churchDeptTeams', { data: teams });
+            }
+        }
+        
+        // 조직도 데이터 저장
+        async function saveChurchOrgChartToFirebase() {
+            const orgChart = JSON.parse(localStorage.getItem('churchOrgChart') || '{}');
+            if (firebaseReady) {
+                await saveToFirestore('churchOrgChart', { data: orgChart });
             }
         }
         
@@ -4820,6 +5032,7 @@
             
             users.push(newUser);
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+                saveUsersToFirebase(); // Firebase 동기화
             saveUsersToFirebase(); // Firebase 동기화
             
             // 신청 상태 변경
@@ -4947,6 +5160,7 @@
             
             users[userIndex] = user;
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+                saveUsersToFirebase(); // Firebase 동기화
             
             // 현재 로그인한 사용자의 권한이 변경되었으면 메뉴 업데이트
             if (currentUser && currentUser.id === userId) {
@@ -5101,6 +5315,7 @@
             }
             
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+                saveUsersToFirebase(); // Firebase 동기화
             saveUsersToFirebase(); // Firebase 동기화
             
             // 현재 로그인한 사용자의 권한이 변경된 경우 세션 업데이트
@@ -5123,6 +5338,7 @@
             let users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
             users = users.filter(u => u.id !== userId);
             localStorage.setItem('registeredUsers', JSON.stringify(users));
+                saveUsersToFirebase(); // Firebase 동기화
             saveUsersToFirebase(); // Firebase 동기화
             
             alert('사용자가 삭제되었습니다.');
@@ -6241,12 +6457,14 @@
             // 부서 목록에서 삭제
             departments = departments.filter(d => d.name !== deptName);
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             saveDepartmentsToFirebase(); // Firebase 동기화
             
             // 부서 팀 데이터 삭제
             let deptTeams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
             delete deptTeams[deptName];
             localStorage.setItem('churchDeptTeams', JSON.stringify(deptTeams));
+            saveChurchDeptTeamsToFirebase(); // Firebase 동기화
             
             // 모달 닫고 다시 열기
             closeOrgChartEditModal();
@@ -6409,6 +6627,7 @@
                 committee: document.getElementById('editOrgCommittee').value.trim()
             };
             localStorage.setItem('churchOrgChart', JSON.stringify(orgData));
+            saveChurchOrgChartToFirebase(); // Firebase 동기화
             
             // 부서/팀 저장
             const depts = JSON.parse(localStorage.getItem('departments') || '[]');
@@ -6438,6 +6657,7 @@
             });
             
             localStorage.setItem('churchDeptTeams', JSON.stringify(deptTeams));
+            saveChurchDeptTeamsToFirebase(); // Firebase 동기화
             
             closeOrgChartEditModal();
             loadOrgChart();
@@ -8266,6 +8486,7 @@
             }
             mentoringProgress[progressKey][week] = !mentoringProgress[progressKey][week];
             localStorage.setItem('mentoringProgress', JSON.stringify(mentoringProgress));
+            saveMentoringProgressToFirebase(); // Firebase 동기화
             loadMentoringData();
         }
         
@@ -8282,6 +8503,7 @@
                     { name: '친교부', color: '#e94560', leader: '', description: '새가족 환영 및 친교', meeting: '매주 주일 예배 후', budget: 2000, teams: [], expenses: [], eventPlan: [] }
                 ];
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             }
         }
         
@@ -8785,6 +9007,7 @@
             if (confirm('이 팀을 삭제하시겠습니까?')) {
                 departments[deptIndex].teams.splice(teamIndex, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 loadDepartmentList();
             }
         }
@@ -8815,6 +9038,7 @@
                     status: '예정'
                 });
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 loadDepartmentList();
             }
         }
@@ -8825,16 +9049,20 @@
                 const expId = departments[deptIndex].expenses[expIndex].id;
                 departments[deptIndex].expenses.splice(expIndex, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 
                 // 재정관리 지출에서도 삭제
                 let expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
                 expenses = expenses.filter(e => e.id !== expId);
                 localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                saveChurchExpensesToFirebase(); // Firebase 동기화
                 
                 // 결제요청 목록에서도 삭제
                 let paymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
                 paymentRequests = paymentRequests.filter(r => r.id !== expId);
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                savePaymentRequestsToFirebase(); // Firebase 동기화
                 
                 loadDepartmentList();
                 loadPaymentRequests();
@@ -8852,6 +9080,7 @@
                 departments[deptIndex].expenses[expIndex].requestDate = new Date().toISOString().split('T')[0];
                 departments[deptIndex].expenses[expIndex].requester = dept.leader || '미정';
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 
                 // 결제요청 목록에 추가
                 let paymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
@@ -8868,6 +9097,7 @@
                     status: 'pending'
                 });
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                savePaymentRequestsToFirebase(); // Firebase 동기화
                 
                 loadDepartmentList();
                 alert('결제 요청이 전송되었습니다.\n재정관리에서 확인 가능합니다.');
@@ -8926,6 +9156,7 @@
             }
             
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             
             // Firebase에 동기화
             saveDepartmentsToFirebase();
@@ -8962,6 +9193,7 @@
             }
             
             localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
         }
         
         // 부서 삭제
@@ -8969,6 +9201,7 @@
             if (confirm(`"${departments[index].name}" 부서를 삭제하시겠습니까?`)) {
                 departments.splice(index, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 saveDepartmentsToFirebase(); // Firebase 동기화
                 loadDepartmentList();
                 // 재정관리 부서 목록 업데이트
@@ -9101,6 +9334,7 @@
             }
             
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             closeTeamModal();
             loadDepartmentList();
         });
@@ -9110,6 +9344,7 @@
             if (confirm('이 팀을 삭제하시겠습니까?')) {
                 departments[deptIndex].teams.splice(teamIndex, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 loadTeamsList(deptIndex);
                 loadDepartmentList();
             }
@@ -9178,6 +9413,7 @@
             }
             
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             document.getElementById('newTeamMemberName').value = '';
             loadTeamMemberList(deptIndex, teamIndex);
             loadTeamsList(deptIndex);
@@ -9191,6 +9427,7 @@
             if (confirm('이 팀원을 삭제하시겠습니까?')) {
                 departments[deptIndex].teams[teamIndex].members.splice(memberIndex, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 loadTeamMemberList(deptIndex, teamIndex);
                 loadTeamsList(deptIndex);
                 loadDepartmentList();
@@ -9301,6 +9538,7 @@
             if (!departments[deptIndex].expenses) departments[deptIndex].expenses = [];
             departments[deptIndex].expenses.push(expenseData);
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             
             // 결제요청 승인 후에 재정관리 지출에 추가됨
             
@@ -9374,6 +9612,7 @@
             });
             
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             loadEventPlan(deptIndex);
         }
         
@@ -9381,6 +9620,7 @@
             const deptIndex = parseInt(document.getElementById('currentDetailDeptIndex').value);
             departments[deptIndex].eventPlan[eventIndex][field] = field === 'budget' ? parseFloat(value) || 0 : value;
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             
             // 상태 변경 시 색상 업데이트를 위해 다시 로드
             if (field === 'status') loadEventPlan(deptIndex);
@@ -9391,6 +9631,7 @@
             if (confirm('이 행사를 삭제하시겠습니까?')) {
                 departments[deptIndex].eventPlan.splice(eventIndex, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 loadEventPlan(deptIndex);
             }
         }
@@ -9484,6 +9725,7 @@
                 
                 offerings.push(offeringData);
                 localStorage.setItem('churchOfferings', JSON.stringify(offerings));
+                saveChurchOfferingsToFirebase(); // Firebase 동기화
                 
                 let alertMsg = `헌금이 등록되었습니다!\n헌금자: ${offeringData.name}\n종류: ${offeringData.type}\n결제방법: ${offeringData.payment}`;
                 if (offeringData.checkNumber) alertMsg += ` (#${offeringData.checkNumber})`;
@@ -9619,6 +9861,7 @@
             if (confirm('정말 이 헌금 내역을 삭제하시겠습니까?')) {
                 offerings.splice(index, 1);
                 localStorage.setItem('churchOfferings', JSON.stringify(offerings));
+                saveChurchOfferingsToFirebase(); // Firebase 동기화
                 loadOfferingList();
                 updateOfferingStats();
                 alert('삭제되었습니다.');
@@ -9878,6 +10121,7 @@
                 budgets = budgets.filter(b => deptData.some(d => d.name === b.name));
                 
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
             }
             
             updateDepartmentSelects();
@@ -10102,6 +10346,7 @@
                 const newBudget = parseFloat(value) || 0;
                 yearBudgets[index].budget = newBudget;
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
                 
                 // 부서관리에도 연동
                 syncBudgetToDepartment(deptName, newBudget);
@@ -10116,12 +10361,14 @@
                 const oldName = yearBudgets[index].name;
                 yearBudgets[index].name = value;
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
                 
                 // 부서관리에도 이름 변경 연동
                 const deptIndex = departments.findIndex(d => d.name === oldName);
                 if (deptIndex >= 0) {
                     departments[deptIndex].name = value;
                     localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 }
             }
         }
@@ -10137,6 +10384,7 @@
                 year: currentYear
             });
             localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
             
             // 부서관리에도 추가
             departments.push({
@@ -10151,6 +10399,7 @@
                 eventPlan: []
             });
             localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             
             loadBudgetForm();
         }
@@ -10166,12 +10415,14 @@
                 if (globalIndex > -1) {
                     budgets.splice(globalIndex, 1);
                     localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
                     
                     // 부서관리에서도 삭제
                     const deptIndex = departments.findIndex(d => d.name === deptToRemove.name);
                     if (deptIndex >= 0) {
                         departments.splice(deptIndex, 1);
                         localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                         saveDepartmentsToFirebase(); // Firebase 동기화
                     }
                     
@@ -10186,12 +10437,14 @@
             if (deptIndex >= 0) {
                 departments[deptIndex].budget = budgetAmount;
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
             }
         }
         
         // 예산 저장
         function saveBudget() {
             localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
             
             // 부서관리에도 전체 연동
             budgets.forEach(b => {
@@ -10266,6 +10519,7 @@
                 }
                 dept.categories.push(catName);
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
                 newCatInput.value = '';
                 loadDepartmentCategories();
                 alert(`"${catName}" 분류가 추가되었습니다.`);
@@ -10278,6 +10532,7 @@
             if (dept && confirm(`"${dept.categories[index]}" 분류를 삭제하시겠습니까?`)) {
                 dept.categories.splice(index, 1);
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
                 loadDepartmentCategories();
             }
         }
@@ -10418,6 +10673,7 @@
                 
                 dept.items[catName].push(itemName);
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
                 newItemInput.value = '';
                 loadCategoryItems();
                 alert(`"${itemName}" 항목이 추가되었습니다.`);
@@ -10432,6 +10688,7 @@
                 if (confirm(`"${itemName}" 항목을 삭제하시겠습니까?`)) {
                     dept.items[catName].splice(index, 1);
                     localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                saveChurchBudgetsToFirebase(); // Firebase 동기화
                     loadCategoryItems();
                 }
             }
@@ -10537,6 +10794,7 @@
                 
                 expenses.push(expenseData);
                 localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                saveChurchExpensesToFirebase(); // Firebase 동기화
                 
                 let alertMsg = `지출이 등록되었습니다!\n부서: ${expenseData.department}\n분류: ${expenseData.category}\n항목: ${expenseData.item}\n결제방법: ${expenseData.payment}`;
                 if (expenseData.checkNumber) alertMsg += ` (#${expenseData.checkNumber})`;
@@ -10624,6 +10882,7 @@
                     paymentRequests[fullIndex].approvedDate = new Date().toISOString().split('T')[0];
                 }
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                savePaymentRequestsToFirebase(); // Firebase 동기화
                 
                 // 부서 지출 결의서 상태 업데이트
                 let expData = null;
@@ -10631,6 +10890,7 @@
                     departments[req.deptIndex].expenses[req.expIndex].paymentApproved = true;
                     expData = departments[req.deptIndex].expenses[req.expIndex];
                     localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 }
                 
                 // 재정관리 지출 내역에 추가
@@ -10647,6 +10907,7 @@
                         memo: `결제승인: ${new Date().toISOString().split('T')[0]}`
                     });
                     localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                    saveChurchExpensesToFirebase(); // Firebase 동기화
                 }
                 
                 loadPaymentRequests();
@@ -10671,11 +10932,14 @@
                     paymentRequests[fullIndex].status = 'rejected';
                 }
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                savePaymentRequestsToFirebase(); // Firebase 동기화
                 
                 // 부서 지출 결의서 상태 업데이트
                 if (req.deptIndex !== undefined && req.expIndex !== undefined) {
                     departments[req.deptIndex].expenses[req.expIndex].paymentRequested = false;
                     localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
+                    saveDepartmentsToFirebase(); // Firebase 동기화
                 }
                 
                 loadPaymentRequests();
@@ -10804,6 +11068,7 @@
             if (confirm('정말 이 지출 내역을 삭제하시겠습니까?')) {
                 expenses.splice(index, 1);
                 localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                saveChurchExpensesToFirebase(); // Firebase 동기화
                 loadExpenseList();
                 updateExpenseStats();
                 updateBudgetVisualization();
@@ -10995,6 +11260,9 @@
         
         // 출석관리 섹션 로드
         function loadAttendanceSection() {
+            // Firebase에서 불러온 최신 데이터 다시 읽기
+            mainAttendance = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+            visitorData = JSON.parse(localStorage.getItem('visitorData') || '{}');
             loadYearlyAttendanceSheet();
         }
         
@@ -11400,6 +11668,7 @@
             let absentReasons = JSON.parse(localStorage.getItem('absentReasons') || '{}');
             absentReasons[`${date}_${memberName}`] = reason;
             localStorage.setItem('absentReasons', JSON.stringify(absentReasons));
+            saveAbsentReasonsToFirebase(); // Firebase 동기화
         }
         
         // 출석 토글
@@ -11411,6 +11680,7 @@
             else mainAttendance[dateStr].push(memberName);
             
             localStorage.setItem('mainAttendance', JSON.stringify(mainAttendance));
+            saveMainAttendanceToFirebase(); // Firebase 동기화
             loadYearlyAttendanceSheet();
         }
         
@@ -11418,6 +11688,7 @@
         function updateVisitor(dateStr, count) {
             visitorData[dateStr] = parseInt(count) || 0;
             localStorage.setItem('visitorData', JSON.stringify(visitorData));
+            saveVisitorDataToFirebase(); // Firebase 동기화
             loadYearlyAttendanceSheet();
         }
         
@@ -11530,6 +11801,7 @@
                     { name: '사랑', leader: '', leaderName: '', color: '#e53e3e', meeting: '매주 금요일 저녁 7시', location: '' }
                 ];
                 localStorage.setItem('churchCells', JSON.stringify(cells));
+                saveChurchCellsToFirebase(); // Firebase 동기화
             }
         }
         
@@ -11746,6 +12018,7 @@
             }
             
             localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+                saveCellAttendanceToFirebase(); // Firebase 동기화
             saveCellAttendanceToFirebase(); // Firebase 동기화
             console.log('[구역관리] 저장된 cellAttendance:', JSON.stringify(cellAttendance));
             loadCellList();
@@ -11758,6 +12031,7 @@
                 delete cellAttendance[key];
                 localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
                 saveCellAttendanceToFirebase(); // Firebase 동기화
+                saveCellAttendanceToFirebase(); // Firebase 동기화
                 loadCellList();
             }
         }
@@ -11766,6 +12040,7 @@
         function saveCellAbsentReason(date, memberName, reason) {
             absentReasons[`${date}_${memberName}`] = reason;
             localStorage.setItem('absentReasons', JSON.stringify(absentReasons));
+            saveAbsentReasonsToFirebase(); // Firebase 동기화
         }
         
         // 구역 선택 드롭다운 업데이트
@@ -11819,6 +12094,7 @@
                 cells.splice(index, 1);
                 localStorage.setItem('churchCells', JSON.stringify(cells));
                 saveChurchCellsToFirebase(); // Firebase 동기화
+                saveChurchCellsToFirebase(); // Firebase 동기화
                 loadCellList();
             }
         }
@@ -11849,6 +12125,7 @@
             }
             
             localStorage.setItem('churchCells', JSON.stringify(cells));
+                saveChurchCellsToFirebase(); // Firebase 동기화
             saveChurchCellsToFirebase(); // Firebase 동기화
             closeCellModal();
             loadCellList();
@@ -12272,6 +12549,7 @@
             }
             
             localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+            saveYearlyEventsToFirebase(); // Firebase 동기화
             
             closeYearEventModal();
             loadYearlyEventCalendar();
@@ -12284,6 +12562,7 @@
             if (index >= 0 && confirm('이 행사를 삭제하시겠습니까?')) {
                 yearlyEvents.splice(index, 1);
                 localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+                saveYearlyEventsToFirebase(); // Firebase 동기화
                 loadYearlyEventCalendar();
                 loadDepartmentList(); // 부서 목록의 월간 행사도 업데이트
             }
