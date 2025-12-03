@@ -6239,9 +6239,9 @@
             if (!confirm(`"${deptName}" 부서를 삭제하시겠습니까?\n\n⚠️ 부서 아래의 모든 팀도 함께 삭제됩니다.`)) return;
             
             // 부서 목록에서 삭제
-            let depts = JSON.parse(localStorage.getItem('departments') || '[]');
-            depts = depts.filter(d => d.name !== deptName);
-            localStorage.setItem('departments', JSON.stringify(depts));
+            departments = departments.filter(d => d.name !== deptName);
+            localStorage.setItem('departments', JSON.stringify(departments));
+            saveDepartmentsToFirebase(); // Firebase 동기화
             
             // 부서 팀 데이터 삭제
             let deptTeams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
@@ -8927,6 +8927,9 @@
             
             localStorage.setItem('departments', JSON.stringify(departments));
             
+            // Firebase에 동기화
+            saveDepartmentsToFirebase();
+            
             // 재정관리 예산과 연동
             syncBudgetWithFinance(deptData.name, deptData.budget);
             
@@ -8966,6 +8969,7 @@
             if (confirm(`"${departments[index].name}" 부서를 삭제하시겠습니까?`)) {
                 departments.splice(index, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
+                saveDepartmentsToFirebase(); // Firebase 동기화
                 loadDepartmentList();
                 // 재정관리 부서 목록 업데이트
                 updateDepartmentSelects();
@@ -10168,6 +10172,7 @@
                     if (deptIndex >= 0) {
                         departments.splice(deptIndex, 1);
                         localStorage.setItem('departments', JSON.stringify(departments));
+                        saveDepartmentsToFirebase(); // Firebase 동기화
                     }
                     
                     loadBudgetForm();
