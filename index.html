@@ -6157,9 +6157,21 @@
                 showDeptMainTab('dashboard');
             }
             
-            // 재정관리 섹션 선택 시 결제요청 목록 로드
-            if (sectionId === 'finance') {
+            // 재정관리 섹션 선택 시 데이터 로드
+            if (sectionId === 'offering') {
+                // 최신 데이터 읽기
+                offerings = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
+                expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+                budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+                
+                loadOfferingList();
+                updateOfferingStats();
+                loadExpenseList();
+                updateExpenseStats();
+                loadBudgetForm();
+                updateBudgetVisualization();
                 loadPaymentRequests();
+                updateFinanceDashboard();
             }
             
             // 대시보드 섹션 선택 시 데이터 로드
@@ -8725,6 +8737,9 @@
         
         // 부서 목록 로드 - 한눈에 보기
         function loadDepartmentList() {
+            // Firebase에서 불러온 최신 데이터 다시 읽기
+            departments = JSON.parse(localStorage.getItem('departments') || '[]');
+            
             initDefaultDepartments();
             
             const container = document.getElementById('departmentFullList');
@@ -9742,6 +9757,9 @@
         
         // 헌금 목록 로드
         function loadOfferingList() {
+            // Firebase에서 불러온 최신 데이터 다시 읽기
+            offerings = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
+            
             const container = document.getElementById('offeringList');
             if (!container) return;
             
@@ -10311,6 +10329,9 @@
         
         // 예산 편성 폼 로드
         function loadBudgetForm() {
+            // Firebase에서 불러온 최신 데이터 다시 읽기
+            budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+            
             const container = document.getElementById('budgetFormContainer');
             const currentYear = new Date().getFullYear();
             
@@ -10950,6 +10971,9 @@
         
         // 지출 목록 로드
         function loadExpenseList() {
+            // Firebase에서 불러온 최신 데이터 다시 읽기
+            expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+            
             const container = document.getElementById('expenseList');
             if (!container) return;
             
@@ -11826,6 +11850,11 @@
         
         // 구역 목록 로드
         function loadCellList() {
+            // Firebase에서 불러온 최신 데이터 다시 읽기
+            cells = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            cellAttendance = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
+            absentReasons = JSON.parse(localStorage.getItem('absentReasons') || '{}');
+            
             initDefaultCells();
             
             const container = document.getElementById('cellList');
