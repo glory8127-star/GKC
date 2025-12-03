@@ -1887,7 +1887,16 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>사진 선택</label>
+                    <label>이미지 URL (Imgur 등)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="photoImageUrl" class="form-control" placeholder="https://i.imgur.com/abc123.jpg" style="flex: 1;">
+                        <button onclick="previewPhotoUrl()" class="btn" style="background: #38a169; color: white; white-space: nowrap;">미리보기</button>
+                    </div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.8em; color: #718096;">💡 Imgur에 이미지 업로드 후 URL을 붙여넣으세요 (PC/폰 동기화됨)</p>
+                </div>
+                
+                <div class="form-group">
+                    <label>또는 파일 선택 (PC에서만 보임)</label>
                     <div id="photoDropZone" style="border: 2px dashed #cbd5e0; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('photoFileInput').click()">
                         <div style="font-size: 3em; margin-bottom: 10px;">🖼️</div>
                         <p style="margin: 0; color: #718096;">클릭하여 사진을 선택하세요</p>
@@ -4040,6 +4049,23 @@
                     console.log('Firebase에서 슬라이드 로드:', heroSlides.length + '개');
                 }
                 
+                // 갤러리 데이터 로드
+                const galleryData = await loadFromFirestore('churchGallery');
+                if (galleryData && galleryData.list) {
+                    // Firebase 데이터와 localStorage 데이터 병합
+                    const localGallery = JSON.parse(localStorage.getItem('churchGallery') || '[]');
+                    const mergedGallery = galleryData.list.map((fbPhoto, index) => {
+                        // localStorage에 base64 이미지가 있으면 유지
+                        const localPhoto = localGallery.find(p => p.uploadedAt === fbPhoto.uploadedAt);
+                        if (localPhoto && localPhoto.image && !fbPhoto.image) {
+                            fbPhoto.image = localPhoto.image;
+                        }
+                        return fbPhoto;
+                    });
+                    localStorage.setItem('churchGallery', JSON.stringify(mergedGallery));
+                    console.log('Firebase에서 갤러리 로드:', mergedGallery.length + '개');
+                }
+                
                 firebaseReady = true;
                 console.log('Firebase 데이터 로드 완료');
                 
@@ -4051,6 +4077,7 @@
                 if (typeof loadSundayYoutube === 'function') loadSundayYoutube();
                 if (typeof loadWednesdayYoutube === 'function') loadWednesdayYoutube();
                 if (typeof initSlideshow === 'function') initSlideshow();
+                if (typeof loadGallery === 'function') loadGallery();
                 
             } catch (error) {
                 console.error('Firebase 데이터 로드 오류:', error);
@@ -7268,10 +7295,15 @@
             let html = '';
             
             photos.forEach((photo, index) => {
+                // imageUrl 또는 image (base64) 사용
+                const imageSrc = photo.imageUrl || photo.image;
+                
+                if (!imageSrc) return; // 이미지가 없으면 스킵
+                
                 html += `
                     <div class="gallery-item" data-category="${photo.category}" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                        <div style="position: relative; cursor: pointer;" onclick="viewPhoto('${photo.image}')">
-                            <img src="${photo.image}" style="width: 100%; height: 180px; object-fit: cover;">
+                        <div style="position: relative; cursor: pointer;" onclick="viewPhoto('${imageSrc.replace(/'/g, "\\'")}')">
+                            <img src="${imageSrc}" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f1f5f9%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>이미지 없음</text></svg>'">
                             <div style="position: absolute; top: 10px; left: 10px; background: ${getCategoryColor(photo.category)}; color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.75em;">${getCategoryName(photo.category)}</div>
                         </div>
                         <div style="padding: 15px;">
@@ -7284,7 +7316,7 @@
                 `;
             });
             
-            grid.innerHTML = html;
+            grid.innerHTML = html || '<div style="text-align: center; padding: 60px 20px; color: #94a3b8; grid-column: 1 / -1;"><p>표시할 사진이 없습니다</p></div>';
         }
         
         function getCategoryColor(category) {
@@ -7343,6 +7375,8 @@
         function closeAddPhotoModal() {
             document.getElementById('addPhotoModal').style.display = 'none';
             photoFileData = null;
+            document.getElementById('photoImageUrl').value = '';
+            document.getElementById('photoPreviewContainer').innerHTML = '';
         }
         
         function handlePhotoFile(input) {
@@ -7411,11 +7445,27 @@
             reader.readAsDataURL(file);
         }
         
+        // 사진 URL 미리보기
+        function previewPhotoUrl() {
+            const url = document.getElementById('photoImageUrl').value.trim();
+            if (!url) {
+                alert('이미지 URL을 입력하세요.');
+                return;
+            }
+            
+            const container = document.getElementById('photoPreviewContainer');
+            container.innerHTML = `
+                <img src="${url}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px;" onerror="this.parentElement.innerHTML='<p style=\\'color: red;\\'>이미지를 불러올 수 없습니다.</p>'">
+                <p style="margin-top: 8px; font-size: 0.8em; color: #16a34a;">✅ URL 이미지가 적용됩니다</p>
+            `;
+        }
+        
         function savePhoto() {
             const title = document.getElementById('photoTitle').value.trim();
             const date = document.getElementById('photoDate').value;
             const category = document.getElementById('photoCategory').value;
             const description = document.getElementById('photoDescription').value.trim();
+            const imageUrl = document.getElementById('photoImageUrl').value.trim();
             
             if (!title) {
                 alert('제목을 입력해주세요.');
@@ -7425,8 +7475,8 @@
                 alert('날짜를 선택해주세요.');
                 return;
             }
-            if (!photoFileData) {
-                alert('사진을 선택해주세요.');
+            if (!photoFileData && !imageUrl) {
+                alert('이미지 URL을 입력하거나 사진을 선택해주세요.');
                 return;
             }
             
@@ -7436,7 +7486,8 @@
                 date: date,
                 category: category,
                 description: description,
-                image: photoFileData,
+                image: photoFileData || '',
+                imageUrl: imageUrl || '',
                 uploadedAt: new Date().toISOString()
             });
             
@@ -7445,6 +7496,10 @@
             
             try {
                 localStorage.setItem('churchGallery', JSON.stringify(photos));
+                
+                // Firebase에도 저장 (base64 이미지 제외)
+                saveGalleryToFirebase();
+                
                 alert('사진이 등록되었습니다!');
                 closeAddPhotoModal();
                 loadGallery();
@@ -7453,12 +7508,36 @@
             }
         }
         
+        // 갤러리 Firebase 저장
+        function saveGalleryToFirebase() {
+            if (!firebaseReady) return;
+            
+            const photos = JSON.parse(localStorage.getItem('churchGallery') || '[]');
+            
+            // base64 이미지 제외한 데이터만 저장
+            const photosForFirebase = photos.map(photo => {
+                const cleanPhoto = {...photo};
+                if (cleanPhoto.image && cleanPhoto.image.startsWith('data:')) {
+                    cleanPhoto.image = ''; // base64 제외
+                }
+                return cleanPhoto;
+            });
+            
+            db.collection('churchGallery').doc('main').set({ list: photosForFirebase })
+                .then(() => console.log('갤러리 Firebase 저장 완료'))
+                .catch(e => console.log('갤러리 Firebase 저장 실패:', e));
+        }
+        
         function deletePhoto(index) {
             if (!confirm('이 사진을 삭제하시겠습니까?')) return;
             
             const photos = JSON.parse(localStorage.getItem('churchGallery') || '[]');
             photos.splice(index, 1);
             localStorage.setItem('churchGallery', JSON.stringify(photos));
+            
+            // Firebase에도 저장
+            saveGalleryToFirebase();
+            
             loadGallery();
         }
         
