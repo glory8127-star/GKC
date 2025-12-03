@@ -13514,16 +13514,37 @@
         // 기존 applyUserPermissions 함수 수정 - 모바일 메뉴도 업데이트
         const originalApplyUserPermissions = typeof applyUserPermissions === 'function' ? applyUserPermissions : null;
         
-        // PWA Service Worker 등록
+        // PWA Service Worker 등록 + 자동 업데이트
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js')
                     .then((registration) => {
                         console.log('GKC ServiceWorker 등록 성공:', registration.scope);
+                        
+                        // 1분마다 업데이트 체크
+                        setInterval(() => {
+                            registration.update();
+                        }, 60000);
+                        
+                        // 새 버전 감지 시 자동 새로고침
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('새 버전 감지! 자동 새로고침...');
+                                    window.location.reload();
+                                }
+                            });
+                        });
                     })
                     .catch((error) => {
                         console.log('GKC ServiceWorker 등록 실패:', error);
                     });
+            });
+            
+            // 서비스워커 변경 감지 시 즉시 새로고침
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                window.location.reload();
             });
         }
     </script>
