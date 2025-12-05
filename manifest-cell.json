@@ -1,0 +1,22 @@
+{
+    "name": "GKC 구역관리",
+    "short_name": "구역관리",
+    "description": "Sacramento Glory Korean Church 구역관리 앱",
+    "start_url": "/cell.html",
+    "display": "standalone",
+    "background_color": "#4f46e5",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "https://sacglory.church/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://sacglory.church/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
