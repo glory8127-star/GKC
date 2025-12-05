@@ -2306,9 +2306,72 @@
                 </div>
             </div>
             
-            <!-- 구역 목록 -->
-            <div id="cellList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                <!-- 구역 카드가 여기에 표시됩니다 -->
+            <!-- 탭 네비게이션 -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button class="cell-tab-btn" onclick="showCellTab('list')" id="cellTabList" style="background: linear-gradient(135deg, #3182ce, #2c5282); color: white; padding: 12px 25px; border: none; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                    👥 구역 목록
+                </button>
+                <button class="cell-tab-btn" onclick="showCellTab('reports')" id="cellTabReports" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                    📋 구역예배 보고서
+                </button>
+            </div>
+            
+            <!-- 구역 목록 탭 -->
+            <div id="cellListTab">
+                <div id="cellList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- 구역 카드가 여기에 표시됩니다 -->
+                </div>
+            </div>
+            
+            <!-- 구역예배 보고서 탭 -->
+            <div id="cellReportsTab" style="display: none;">
+                <!-- 날짜 선택 -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <label style="font-weight: 600;">📅 날짜 선택:</label>
+                        <input type="date" class="form-control" id="cellReportDate" style="width: auto;" onchange="loadCellReportsView()">
+                        <button class="btn btn-secondary" onclick="setReportDateToThisSunday()" style="padding: 10px 15px;">이번 주일</button>
+                    </div>
+                </div>
+                
+                <!-- 전체 현황 요약 -->
+                <div class="card" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); color: white; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: white;">📊 구역예배 현황</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                        <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 2em; font-weight: bold;" id="reportSubmitCount">0/0</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">보고서 제출</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 2em; font-weight: bold;" id="reportTotalAttendance">0</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">총 참석</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 2em; font-weight: bold;" id="reportTotalOffering">$0</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">총 헌금</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 2em; font-weight: bold;" id="reportAvgRate">0%</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">평균 출석률</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 구역별 보고서 목록 -->
+                <div class="card">
+                    <h3 style="margin: 0 0 20px 0; color: #3182ce;">📋 구역별 보고서</h3>
+                    <div id="cellReportsList">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+                
+                <!-- 금주 기도제목 -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3 style="margin: 0 0 20px 0; color: #d69e2e;">🙏 금주 기도제목</h3>
+                    <div id="cellPrayerList">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -12178,6 +12241,255 @@
             const month = String(sunday.getMonth() + 1).padStart(2, '0');
             const date = String(sunday.getDate()).padStart(2, '0');
             return `${year}-${month}-${date}`;
+        }
+        
+        // 구역관리 탭 전환
+        function showCellTab(tab) {
+            document.getElementById('cellListTab').style.display = tab === 'list' ? 'block' : 'none';
+            document.getElementById('cellReportsTab').style.display = tab === 'reports' ? 'block' : 'none';
+            
+            const listBtn = document.getElementById('cellTabList');
+            const reportsBtn = document.getElementById('cellTabReports');
+            
+            if (tab === 'list') {
+                listBtn.style.background = 'linear-gradient(135deg, #3182ce, #2c5282)';
+                listBtn.style.color = 'white';
+                listBtn.style.border = 'none';
+                reportsBtn.style.background = 'white';
+                reportsBtn.style.color = '#333';
+                reportsBtn.style.border = '1px solid #e2e8f0';
+            } else {
+                reportsBtn.style.background = 'linear-gradient(135deg, #3182ce, #2c5282)';
+                reportsBtn.style.color = 'white';
+                reportsBtn.style.border = 'none';
+                listBtn.style.background = 'white';
+                listBtn.style.color = '#333';
+                listBtn.style.border = '1px solid #e2e8f0';
+                
+                // 보고서 탭 선택 시 날짜 초기화 및 로드
+                setReportDateToThisSunday();
+            }
+        }
+        
+        // 이번 주일 날짜 설정
+        function setReportDateToThisSunday() {
+            const today = new Date();
+            const sunday = new Date(today);
+            sunday.setDate(today.getDate() - today.getDay());
+            
+            const dateStr = sunday.toISOString().split('T')[0];
+            document.getElementById('cellReportDate').value = dateStr;
+            loadCellReportsView();
+        }
+        
+        // 구역 보고서 목록 로드
+        async function loadCellReportsView() {
+            const dateStr = document.getElementById('cellReportDate').value;
+            if (!dateStr) return;
+            
+            // Firebase에서 보고서 데이터 로드
+            let cellReports = {};
+            try {
+                const reportsDoc = await db.collection('cellReports').doc('main').get();
+                if (reportsDoc.exists) {
+                    cellReports = reportsDoc.data().data || {};
+                }
+            } catch (error) {
+                console.error('보고서 로드 오류:', error);
+            }
+            
+            // 구역 데이터 확인
+            const cellsData = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            const membersData = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            const cellAttData = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
+            
+            let submitted = 0;
+            let totalAttendance = 0;
+            let totalOffering = 0;
+            let totalRate = 0;
+            let prayers = [];
+            
+            let listHtml = '';
+            
+            cellsData.forEach(cell => {
+                const key = `${cell.name}_${dateStr}`;
+                const report = cellReports[key];
+                const attendance = cellAttData[key] || [];
+                
+                // 구역원 수 계산
+                const cellMembers = membersData.filter(m => {
+                    const memberCell = (m.cell || '').replace('구역', '');
+                    return memberCell === cell.name || m.cell === cell.name + '구역';
+                });
+                const totalMembers = cellMembers.length + (cell.leaderName ? 1 : 0);
+                const attendanceRate = totalMembers > 0 ? Math.round((attendance.length / totalMembers) * 100) : 0;
+                
+                totalRate += attendanceRate;
+                totalAttendance += attendance.length;
+                
+                if (report) {
+                    submitted++;
+                    totalOffering += report.offering || 0;
+                    if (report.prayer) {
+                        prayers.push({ cell: cell.name, prayer: report.prayer });
+                    }
+                }
+                
+                listHtml += `
+                    <div style="display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; gap: 15px;">
+                        <div style="min-width: 80px;">
+                            <div style="font-weight: 600; color: #1e293b;">${cell.name}구역</div>
+                            <div style="font-size: 0.8em; color: #64748b;">${cell.leaderName || '-'}</div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.85em; color: #64748b; margin-bottom: 5px;">
+                                출석 ${attendance.length}/${totalMembers}명 (${attendanceRate}%)
+                            </div>
+                            <div style="height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: ${attendanceRate}%; background: linear-gradient(135deg, #10b981, #059669); border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            ${report ? 
+                                `<span style="background: #dcfce7; color: #16a34a; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600;">✅ 제출</span>` :
+                                `<span style="background: #fef3c7; color: #d97706; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600;">⏳ 미제출</span>`
+                            }
+                        </div>
+                        ${report ? 
+                            `<button onclick="viewCellReportDetail('${cell.name}', '${dateStr}')" style="background: #3182ce; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer;">상세</button>` :
+                            ''
+                        }
+                    </div>
+                `;
+            });
+            
+            // 통계 업데이트
+            document.getElementById('reportSubmitCount').textContent = `${submitted}/${cellsData.length}`;
+            document.getElementById('reportTotalAttendance').textContent = totalAttendance;
+            document.getElementById('reportTotalOffering').textContent = '$' + totalOffering;
+            document.getElementById('reportAvgRate').textContent = cellsData.length > 0 ? Math.round(totalRate / cellsData.length) + '%' : '0%';
+            
+            // 목록 렌더링
+            document.getElementById('cellReportsList').innerHTML = listHtml || '<p style="text-align: center; color: #94a3b8; padding: 40px;">구역 데이터가 없습니다.</p>';
+            
+            // 기도제목 렌더링
+            let prayerHtml = '';
+            prayers.forEach(p => {
+                prayerHtml += `
+                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 10px; border-radius: 0 8px 8px 0;">
+                        <div style="font-weight: 600; color: #92400e; font-size: 0.9em;">${p.cell}구역</div>
+                        <div style="color: #78350f; margin-top: 8px; white-space: pre-wrap;">${p.prayer}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('cellPrayerList').innerHTML = prayerHtml || '<p style="text-align: center; color: #94a3b8; padding: 20px;">제출된 기도제목이 없습니다.</p>';
+        }
+        
+        // 구역 보고서 상세 보기
+        async function viewCellReportDetail(cellName, dateStr) {
+            // Firebase에서 보고서 데이터 로드
+            let cellReports = {};
+            try {
+                const reportsDoc = await db.collection('cellReports').doc('main').get();
+                if (reportsDoc.exists) {
+                    cellReports = reportsDoc.data().data || {};
+                }
+            } catch (error) {
+                console.error('보고서 로드 오류:', error);
+                return;
+            }
+            
+            const key = `${cellName}_${dateStr}`;
+            const report = cellReports[key];
+            
+            if (!report) {
+                alert('보고서를 찾을 수 없습니다.');
+                return;
+            }
+            
+            const date = new Date(dateStr);
+            const dateLabel = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+            
+            const detailHtml = `
+                <div style="padding: 25px;">
+                    <h2 style="margin: 0 0 20px 0; color: #3182ce;">${cellName}구역 예배 보고서</h2>
+                    <p style="color: #64748b; margin-bottom: 20px;">${dateLabel}</p>
+                    
+                    <div style="display: grid; gap: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.85em; color: #64748b;">예배 장소</div>
+                                <div style="font-weight: 600; margin-top: 5px;">${report.place || '-'}</div>
+                            </div>
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.85em; color: #64748b;">예배 시간</div>
+                                <div style="font-weight: 600; margin-top: 5px;">${report.time || '-'}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 0.85em; color: #64748b;">인도자</div>
+                            <div style="font-weight: 600; margin-top: 5px;">${report.leader || '-'}</div>
+                        </div>
+                        
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 0.85em; color: #64748b;">찬양</div>
+                            <div style="font-weight: 600; margin-top: 5px;">${report.hymn || '-'}</div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.85em; color: #64748b;">성경 본문</div>
+                                <div style="font-weight: 600; margin-top: 5px;">${report.scripture || '-'}</div>
+                            </div>
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.85em; color: #64748b;">말씀 제목</div>
+                                <div style="font-weight: 600; margin-top: 5px;">${report.title || '-'}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="background: #dcfce7; padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.85em; color: #16a34a;">참석자 (${report.attendance?.length || 0}명)</div>
+                                <div style="font-weight: 600; margin-top: 5px;">${report.attendance?.join(', ') || '-'}</div>
+                            </div>
+                            <div style="background: #dbeafe; padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.85em; color: #2563eb;">구역 헌금</div>
+                                <div style="font-weight: 600; margin-top: 5px; font-size: 1.2em;">$${report.offering || 0}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #fef3c7; padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 0.85em; color: #d97706; font-weight: 600;">🙏 기도제목</div>
+                            <div style="margin-top: 10px; white-space: pre-wrap;">${report.prayer || '-'}</div>
+                        </div>
+                        
+                        <div style="background: #f1f5f9; padding: 15px; border-radius: 10px;">
+                            <div style="font-size: 0.85em; color: #475569; font-weight: 600;">📝 특이사항 / 나눔</div>
+                            <div style="margin-top: 10px; white-space: pre-wrap;">${report.notes || '-'}</div>
+                        </div>
+                        
+                        <div style="font-size: 0.8em; color: #94a3b8; text-align: right; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                            제출: ${report.submittedBy || '-'} | ${report.submittedAt ? new Date(report.submittedAt).toLocaleString('ko-KR') : '-'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 모달로 표시
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #3182ce, #2c5282); display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="margin: 0;">구역예배 보고서</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()" style="color: white; font-size: 1.5em; background: none; border: none; cursor: pointer;">&times;</button>
+                    </div>
+                    ${detailHtml}
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
         
         // 구역 목록 로드
