@@ -4336,11 +4336,133 @@
                 if (typeof initSlideshow === 'function') initSlideshow();
                 if (typeof loadGallery === 'function') loadGallery();
                 
+                // ===== 실시간 동기화 리스너 설정 =====
+                setupRealtimeListeners();
+                
             } catch (error) {
                 console.error('Firebase 데이터 로드 오류:', error);
                 // 오류 시 localStorage 사용
                 members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
             }
+        }
+        
+        // ===== 실시간 동기화 리스너 =====
+        function setupRealtimeListeners() {
+            console.log('🔄 실시간 동기화 리스너 설정 중...');
+            
+            // 교인 데이터 실시간 동기화
+            db.collection('churchMembers').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 교인 데이터 실시간 업데이트:', newData.length + '명');
+                        members = newData;
+                        localStorage.setItem('churchMembers', JSON.stringify(newData));
+                        if (typeof loadMemberList === 'function') loadMemberList();
+                        if (typeof loadCellList === 'function') loadCellList();
+                    }
+                }
+            });
+            
+            // 구역 출석 실시간 동기화
+            db.collection('cellAttendance').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    const currentData = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 구역 출석 실시간 업데이트');
+                        cellAttendance = newData;
+                        localStorage.setItem('cellAttendance', JSON.stringify(newData));
+                        if (typeof loadCellList === 'function') loadCellList();
+                    }
+                }
+            });
+            
+            // 구역 보고서 실시간 동기화
+            db.collection('cellReports').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    console.log('🔄 구역 보고서 실시간 업데이트');
+                    // 보고서 탭이 열려있으면 자동 새로고침
+                    if (document.getElementById('cellReportsTab')?.style.display !== 'none') {
+                        loadCellReportsView();
+                    }
+                }
+            });
+            
+            // 주일 출석 실시간 동기화
+            db.collection('mainAttendance').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    const currentData = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 주일 출석 실시간 업데이트');
+                        mainAttendance = newData;
+                        localStorage.setItem('mainAttendance', JSON.stringify(newData));
+                        if (typeof loadAttendanceSection === 'function') loadAttendanceSection();
+                    }
+                }
+            });
+            
+            // 헌금 데이터 실시간 동기화
+            db.collection('churchOfferings').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 헌금 데이터 실시간 업데이트:', newData.length + '건');
+                        offerings = newData;
+                        localStorage.setItem('churchOfferings', JSON.stringify(newData));
+                        if (typeof loadOfferingList === 'function') loadOfferingList();
+                        if (typeof updateOfferingStats === 'function') updateOfferingStats();
+                    }
+                }
+            });
+            
+            // 지출 데이터 실시간 동기화
+            db.collection('churchExpenses').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 지출 데이터 실시간 업데이트:', newData.length + '건');
+                        expenses = newData;
+                        localStorage.setItem('churchExpenses', JSON.stringify(newData));
+                        if (typeof loadExpenseList === 'function') loadExpenseList();
+                        if (typeof updateExpenseStats === 'function') updateExpenseStats();
+                    }
+                }
+            });
+            
+            // 부서 데이터 실시간 동기화
+            db.collection('departments').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('departments') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 부서 데이터 실시간 업데이트:', newData.length + '개');
+                        departments = newData;
+                        localStorage.setItem('departments', JSON.stringify(newData));
+                        if (typeof loadDepartmentList === 'function') loadDepartmentList();
+                    }
+                }
+            });
+            
+            // 구역 데이터 실시간 동기화
+            db.collection('churchCells').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchCells') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 구역 데이터 실시간 업데이트:', newData.length + '개');
+                        cells = newData;
+                        localStorage.setItem('churchCells', JSON.stringify(newData));
+                        if (typeof loadCellList === 'function') loadCellList();
+                    }
+                }
+            });
+            
+            console.log('✅ 실시간 동기화 리스너 설정 완료!');
         }
         
         // 교인 데이터 저장 (Firebase + localStorage 동기화)
