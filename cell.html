@@ -982,6 +982,9 @@
             // 데이터 로드
             await loadData();
             
+            // 실시간 동기화 리스너 설정
+            setupRealtimeListeners();
+            
             // 구역 선택 초기화
             initCellSelector();
             
@@ -1026,6 +1029,77 @@
                 console.error('데이터 로드 오류:', error);
                 showToast('데이터를 불러오는 중 오류가 발생했습니다');
             }
+        }
+        
+        // 실시간 동기화 리스너 설정
+        function setupRealtimeListeners() {
+            console.log('🔄 실시간 동기화 리스너 설정 중...');
+            
+            // 구역 출석 실시간 동기화
+            db.collection('cellAttendance').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    if (JSON.stringify(newData) !== JSON.stringify(cellAttendance)) {
+                        console.log('🔄 구역 출석 실시간 업데이트');
+                        cellAttendance = newData;
+                        loadAttendance();
+                    }
+                }
+            });
+            
+            // 구역 보고서 실시간 동기화
+            db.collection('cellReports').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    if (JSON.stringify(newData) !== JSON.stringify(cellReports)) {
+                        console.log('🔄 구역 보고서 실시간 업데이트');
+                        cellReports = newData;
+                        if (currentUser.role === '관리자') {
+                            loadOverview();
+                        }
+                        loadHistory();
+                    }
+                }
+            });
+            
+            // 결석 사유 실시간 동기화
+            db.collection('absentReasons').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    if (JSON.stringify(newData) !== JSON.stringify(absentReasons)) {
+                        console.log('🔄 결석 사유 실시간 업데이트');
+                        absentReasons = newData;
+                        loadAttendance();
+                    }
+                }
+            });
+            
+            // 교인 데이터 실시간 동기화
+            db.collection('churchMembers').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    if (JSON.stringify(newData) !== JSON.stringify(members)) {
+                        console.log('🔄 교인 데이터 실시간 업데이트:', newData.length + '명');
+                        members = newData;
+                        loadAttendance();
+                    }
+                }
+            });
+            
+            // 구역 데이터 실시간 동기화
+            db.collection('churchCells').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    if (JSON.stringify(newData) !== JSON.stringify(cells)) {
+                        console.log('🔄 구역 데이터 실시간 업데이트:', newData.length + '개');
+                        cells = newData;
+                        initCellSelector();
+                    }
+                }
+            });
+            
+            console.log('✅ 실시간 동기화 리스너 설정 완료!');
+            showToast('🔄 실시간 동기화 활성화됨');
         }
         
         // 구역 선택 초기화
