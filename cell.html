@@ -496,6 +496,21 @@
             display: none !important;
         }
         
+        /* 오프라인 상태 */
+        body.offline .header {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+        
+        body.offline .header::after {
+            content: '📴 오프라인';
+            position: absolute;
+            right: 100px;
+            font-size: 0.75em;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+        
         /* 관리자 전체 현황 */
         .overview-card {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
@@ -1600,6 +1615,69 @@
                 toast.classList.remove('show');
             }, 3000);
         }
+        
+        // ===== 서비스워커 등록 =====
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker-cell.js')
+                .then(reg => {
+                    console.log('[Cell App] 서비스워커 등록 완료');
+                    
+                    // 업데이트 체크
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('[Cell App] 새 버전 발견, 업데이트 중...');
+                                showToast('🔄 앱 업데이트 중...');
+                                newWorker.postMessage('skipWaiting');
+                            }
+                        });
+                    });
+                })
+                .catch(err => console.error('[Cell App] 서비스워커 등록 실패:', err));
+            
+            // 새 서비스워커 활성화 시 새로고침
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('[Cell App] 새 버전 적용, 새로고침');
+                window.location.reload();
+            });
+            
+            // 1분마다 업데이트 체크
+            setInterval(() => {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) reg.update();
+                });
+            }, 60000);
+        }
+        
+        // ===== 네트워크 상태 표시 =====
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                document.body.classList.remove('offline');
+                console.log('[Cell App] 온라인 상태');
+            } else {
+                document.body.classList.add('offline');
+                showToast('📴 오프라인 모드 - 저장된 데이터로 작동 중');
+                console.log('[Cell App] 오프라인 상태');
+            }
+        }
+        
+        window.addEventListener('online', () => {
+            updateOnlineStatus();
+            showToast('✅ 온라인 복귀 - 데이터 동기화 중...');
+            // 온라인 복귀 시 데이터 다시 로드
+            if (currentUser) {
+                loadData().then(() => {
+                    loadAttendance();
+                    showToast('✅ 동기화 완료!');
+                });
+            }
+        });
+        
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // 초기 상태 체크
+        updateOnlineStatus();
     </script>
 </body>
 </html>
