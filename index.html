@@ -4350,6 +4350,8 @@
         function setupRealtimeListeners() {
             console.log('🔄 실시간 동기화 리스너 설정 중...');
             
+            // ===== 교인/사용자 관련 =====
+            
             // 교인 데이터 실시간 동기화
             db.collection('churchMembers').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().list) {
@@ -4360,6 +4362,63 @@
                         members = newData;
                         localStorage.setItem('churchMembers', JSON.stringify(newData));
                         if (typeof loadMemberList === 'function') loadMemberList();
+                        if (typeof loadCellList === 'function') loadCellList();
+                        if (typeof updateMemberStats === 'function') updateMemberStats();
+                    }
+                }
+            });
+            
+            // 사용자 데이터 실시간 동기화
+            db.collection('registeredUsers').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 사용자 데이터 실시간 업데이트:', newData.length + '명');
+                        localStorage.setItem('registeredUsers', JSON.stringify(newData));
+                        if (typeof loadUserList === 'function') loadUserList();
+                    }
+                }
+            });
+            
+            // 가입신청 데이터 실시간 동기화
+            db.collection('signupRequests').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 가입신청 데이터 실시간 업데이트:', newData.length + '건');
+                        localStorage.setItem('signupRequests', JSON.stringify(newData));
+                        if (typeof loadSignupRequests === 'function') loadSignupRequests();
+                    }
+                }
+            });
+            
+            // 방문자 데이터 실시간 동기화
+            db.collection('visitorData').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    const currentData = JSON.parse(localStorage.getItem('visitorData') || '{}');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 방문자 데이터 실시간 업데이트');
+                        visitorData = newData;
+                        localStorage.setItem('visitorData', JSON.stringify(newData));
+                        if (typeof loadAttendanceSection === 'function') loadAttendanceSection();
+                    }
+                }
+            });
+            
+            // ===== 구역 관련 =====
+            
+            // 구역 데이터 실시간 동기화
+            db.collection('churchCells').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchCells') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 구역 데이터 실시간 업데이트:', newData.length + '개');
+                        cells = newData;
+                        localStorage.setItem('churchCells', JSON.stringify(newData));
                         if (typeof loadCellList === 'function') loadCellList();
                     }
                 }
@@ -4383,12 +4442,27 @@
             db.collection('cellReports').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().data) {
                     console.log('🔄 구역 보고서 실시간 업데이트');
-                    // 보고서 탭이 열려있으면 자동 새로고침
                     if (document.getElementById('cellReportsTab')?.style.display !== 'none') {
                         loadCellReportsView();
                     }
                 }
             });
+            
+            // 결석 사유 실시간 동기화
+            db.collection('absentReasons').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    const currentData = JSON.parse(localStorage.getItem('absentReasons') || '{}');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 결석 사유 실시간 업데이트');
+                        absentReasons = newData;
+                        localStorage.setItem('absentReasons', JSON.stringify(newData));
+                        if (typeof loadCellList === 'function') loadCellList();
+                    }
+                }
+            });
+            
+            // ===== 출석 관련 =====
             
             // 주일 출석 실시간 동기화
             db.collection('mainAttendance').doc('main').onSnapshot(doc => {
@@ -4403,6 +4477,8 @@
                     }
                 }
             });
+            
+            // ===== 재정 관련 =====
             
             // 헌금 데이터 실시간 동기화
             db.collection('churchOfferings').doc('main').onSnapshot(doc => {
@@ -4434,6 +4510,36 @@
                 }
             });
             
+            // 예산 데이터 실시간 동기화
+            db.collection('churchBudgets').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 예산 데이터 실시간 업데이트:', newData.length + '건');
+                        budgets = newData;
+                        localStorage.setItem('churchBudgets', JSON.stringify(newData));
+                        if (typeof loadBudgetForm === 'function') loadBudgetForm();
+                    }
+                }
+            });
+            
+            // 지급요청 데이터 실시간 동기화
+            db.collection('paymentRequests').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 지급요청 데이터 실시간 업데이트:', newData.length + '건');
+                        paymentRequests = newData;
+                        localStorage.setItem('paymentRequests', JSON.stringify(newData));
+                        if (typeof loadPaymentRequests === 'function') loadPaymentRequests();
+                    }
+                }
+            });
+            
+            // ===== 부서/조직 관련 =====
+            
             // 부서 데이터 실시간 동기화
             db.collection('departments').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().list) {
@@ -4448,21 +4554,118 @@
                 }
             });
             
-            // 구역 데이터 실시간 동기화
-            db.collection('churchCells').doc('main').onSnapshot(doc => {
-                if (doc.exists && doc.data().list) {
-                    const newData = doc.data().list;
-                    const currentData = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            // 조직도 데이터 실시간 동기화
+            db.collection('churchOrgChart').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    const currentData = JSON.parse(localStorage.getItem('churchOrgChart') || '{}');
                     if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
-                        console.log('🔄 구역 데이터 실시간 업데이트:', newData.length + '개');
-                        cells = newData;
-                        localStorage.setItem('churchCells', JSON.stringify(newData));
-                        if (typeof loadCellList === 'function') loadCellList();
+                        console.log('🔄 조직도 데이터 실시간 업데이트');
+                        localStorage.setItem('churchOrgChart', JSON.stringify(newData));
+                        if (typeof loadOrgChart === 'function') loadOrgChart();
                     }
                 }
             });
             
-            console.log('✅ 실시간 동기화 리스너 설정 완료!');
+            // ===== 교육/멘토링 관련 =====
+            
+            // 교육 데이터 실시간 동기화
+            db.collection('educationData').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('educationData') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 교육 데이터 실시간 업데이트:', newData.length + '명');
+                        localStorage.setItem('educationData', JSON.stringify(newData));
+                        if (typeof loadEducationList === 'function') loadEducationList();
+                    }
+                }
+            });
+            
+            // 멘토링 데이터 실시간 동기화
+            db.collection('mentoringData').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('mentoringData') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 멘토링 데이터 실시간 업데이트:', newData.length + '쌍');
+                        localStorage.setItem('mentoringData', JSON.stringify(newData));
+                        if (typeof loadMentoringList === 'function') loadMentoringList();
+                    }
+                }
+            });
+            
+            // ===== 행사/이벤트 관련 =====
+            
+            // 행사 데이터 실시간 동기화
+            db.collection('churchEvents').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchEvents') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 행사 데이터 실시간 업데이트:', newData.length + '개');
+                        localStorage.setItem('churchEvents', JSON.stringify(newData));
+                        if (typeof loadEvents === 'function') loadEvents();
+                        if (typeof loadCalendar === 'function') loadCalendar();
+                    }
+                }
+            });
+            
+            // ===== 미디어 관련 =====
+            
+            // 주일 설교 실시간 동기화
+            db.collection('sundaySermons').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('sundaySermons') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 주일 설교 실시간 업데이트:', newData.length + '개');
+                        localStorage.setItem('sundaySermons', JSON.stringify(newData));
+                        if (typeof loadSundayYoutube === 'function') loadSundayYoutube();
+                    }
+                }
+            });
+            
+            // 수요 설교 실시간 동기화
+            db.collection('wednesdaySermons').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('wednesdaySermons') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 수요 설교 실시간 업데이트:', newData.length + '개');
+                        localStorage.setItem('wednesdaySermons', JSON.stringify(newData));
+                        if (typeof loadWednesdayYoutube === 'function') loadWednesdayYoutube();
+                    }
+                }
+            });
+            
+            // 갤러리 실시간 동기화
+            db.collection('churchGallery').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchGallery') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 갤러리 실시간 업데이트:', newData.length + '개');
+                        localStorage.setItem('churchGallery', JSON.stringify(newData));
+                        if (typeof loadGallery === 'function') loadGallery();
+                    }
+                }
+            });
+            
+            // 슬라이드쇼 실시간 동기화
+            db.collection('churchSlideshow').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('churchSlideshow') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 슬라이드쇼 실시간 업데이트:', newData.length + '개');
+                        localStorage.setItem('churchSlideshow', JSON.stringify(newData));
+                        if (typeof initSlideshow === 'function') initSlideshow();
+                    }
+                }
+            });
+            
+            console.log('✅ 실시간 동기화 리스너 설정 완료! (22개 데이터 타입)');
         }
         
         // 교인 데이터 저장 (Firebase + localStorage 동기화)
