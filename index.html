@@ -4169,10 +4169,13 @@
                         localStorage.setItem('ssStaff', JSON.stringify(sundaySchoolData.staff));
                         console.log('Firebase에서 Sunday School Staff 로드:', sundaySchoolData.staff.length + '명');
                     }
-                    if (sundaySchoolData.videos) {
-                        localStorage.setItem('sundayVideos', JSON.stringify(sundaySchoolData.videos));
-                        console.log('Firebase에서 Sunday School 영상 로드:', sundaySchoolData.videos.length + '개');
-                    }
+                }
+                
+                // 주일예배 영상 데이터 로드
+                const sundayVideosData = await loadFromFirestore('sundayVideos');
+                if (sundayVideosData && sundayVideosData.list) {
+                    localStorage.setItem('sundayVideos', JSON.stringify(sundayVideosData.list));
+                    console.log('Firebase에서 주일예배 영상 로드:', sundayVideosData.list.length + '개');
                 }
                 
                 // 수요예배 영상 데이터 로드
@@ -4491,6 +4494,7 @@
                         localStorage.setItem('churchOfferings', JSON.stringify(newData));
                         if (typeof loadOfferingList === 'function') loadOfferingList();
                         if (typeof updateOfferingStats === 'function') updateOfferingStats();
+                        if (typeof loadDashboard === 'function') loadDashboard();
                     }
                 }
             });
@@ -4506,6 +4510,7 @@
                         localStorage.setItem('churchExpenses', JSON.stringify(newData));
                         if (typeof loadExpenseList === 'function') loadExpenseList();
                         if (typeof updateExpenseStats === 'function') updateExpenseStats();
+                        if (typeof loadDashboard === 'function') loadDashboard();
                     }
                 }
             });
@@ -4550,6 +4555,7 @@
                         departments = newData;
                         localStorage.setItem('departments', JSON.stringify(newData));
                         if (typeof loadDepartmentList === 'function') loadDepartmentList();
+                        if (typeof loadDashboard === 'function') loadDashboard();
                     }
                 }
             });
@@ -4563,6 +4569,7 @@
                         console.log('🔄 조직도 데이터 실시간 업데이트');
                         localStorage.setItem('churchOrgChart', JSON.stringify(newData));
                         if (typeof loadOrgChart === 'function') loadOrgChart();
+                        if (typeof loadDashboard === 'function') loadDashboard();
                     }
                 }
             });
@@ -4583,14 +4590,15 @@
             });
             
             // 멘토링 데이터 실시간 동기화
-            db.collection('mentoringData').doc('main').onSnapshot(doc => {
+            db.collection('mentoringPairs').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().list) {
                     const newData = doc.data().list;
-                    const currentData = JSON.parse(localStorage.getItem('mentoringData') || '[]');
+                    const currentData = JSON.parse(localStorage.getItem('mentoringPairs') || '[]');
                     if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
                         console.log('🔄 멘토링 데이터 실시간 업데이트:', newData.length + '쌍');
-                        localStorage.setItem('mentoringData', JSON.stringify(newData));
+                        localStorage.setItem('mentoringPairs', JSON.stringify(newData));
                         if (typeof loadMentoringList === 'function') loadMentoringList();
+                        if (typeof loadDashboard === 'function') loadDashboard();
                     }
                 }
             });
@@ -4614,26 +4622,26 @@
             // ===== 미디어 관련 =====
             
             // 주일 설교 실시간 동기화
-            db.collection('sundaySermons').doc('main').onSnapshot(doc => {
+            db.collection('sundayVideos').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().list) {
                     const newData = doc.data().list;
-                    const currentData = JSON.parse(localStorage.getItem('sundaySermons') || '[]');
+                    const currentData = JSON.parse(localStorage.getItem('sundayVideos') || '[]');
                     if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
                         console.log('🔄 주일 설교 실시간 업데이트:', newData.length + '개');
-                        localStorage.setItem('sundaySermons', JSON.stringify(newData));
+                        localStorage.setItem('sundayVideos', JSON.stringify(newData));
                         if (typeof loadSundayYoutube === 'function') loadSundayYoutube();
                     }
                 }
             });
             
             // 수요 설교 실시간 동기화
-            db.collection('wednesdaySermons').doc('main').onSnapshot(doc => {
+            db.collection('wednesdayVideos').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().list) {
                     const newData = doc.data().list;
-                    const currentData = JSON.parse(localStorage.getItem('wednesdaySermons') || '[]');
+                    const currentData = JSON.parse(localStorage.getItem('wednesdayVideos') || '[]');
                     if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
                         console.log('🔄 수요 설교 실시간 업데이트:', newData.length + '개');
-                        localStorage.setItem('wednesdaySermons', JSON.stringify(newData));
+                        localStorage.setItem('wednesdayVideos', JSON.stringify(newData));
                         if (typeof loadWednesdayYoutube === 'function') loadWednesdayYoutube();
                     }
                 }
@@ -6933,94 +6941,121 @@
         
         // 대시보드 로드
         function loadDashboard() {
-            // 데이터 로드
+            // 데이터 로드 (최신 데이터로 다시 읽기)
             const offerings = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
             const expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+            const membersData = JSON.parse(localStorage.getItem('churchMembers') || '[]');
             
             // 기본 통계
-            document.getElementById('dashTotal').textContent = members.length;
+            document.getElementById('dashTotal').textContent = membersData.length;
             
             // 이번 주일 출석
             const thisSunday = getThisSundayForDashboard();
             const attendees = getAttendanceForDate(thisSunday);
             const weekAttend = attendees.length;
-            const weekAbsent = members.length - weekAttend;
+            const weekAbsent = membersData.length - weekAttend;
             
             document.getElementById('dashThisSunday').textContent = weekAttend;
             document.getElementById('dashWeekAttend').textContent = weekAttend + '명';
             document.getElementById('dashWeekAbsent').textContent = weekAbsent + '명';
             
             // 금주 출석률 계산
-            const avgRate = members.length > 0 ? Math.round((weekAttend / members.length) * 100) : 0;
+            const avgRate = membersData.length > 0 ? Math.round((weekAttend / membersData.length) * 100) : 0;
             document.getElementById('dashAvgRate').textContent = avgRate + '%';
             
-            // 이번달 재정
+            // ===== 재정 현황 (수입/지출/잔액 계산) =====
             const thisMonth = new Date().toISOString().slice(0, 7);
-            const monthIncome = offerings.filter(o => o.date.startsWith(thisMonth))
-                .reduce((sum, o) => sum + o.amount, 0);
-            const monthExpense = expenses.filter(e => e.date.startsWith(thisMonth))
-                .reduce((sum, e) => sum + e.amount, 0);
+            const monthIncome = offerings.filter(o => o.date && o.date.startsWith(thisMonth))
+                .reduce((sum, o) => sum + (parseFloat(o.amount) || 0), 0);
+            const monthExpense = expenses.filter(e => e.date && e.date.startsWith(thisMonth))
+                .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
             
-            document.getElementById('dashMonthIncome').textContent = '$' + monthIncome.toLocaleString();
+            // 전체 잔액 계산 (모든 수입 - 모든 지출)
+            const totalIncome = offerings.reduce((sum, o) => sum + (parseFloat(o.amount) || 0), 0);
+            const totalExpense = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+            const totalBalance = totalIncome - totalExpense;
+            
+            const dashMonthIncomeEl = document.getElementById('dashMonthIncome');
+            if (dashMonthIncomeEl) dashMonthIncomeEl.textContent = '$' + monthIncome.toLocaleString();
             document.getElementById('dashMonthIncomeVal').textContent = '$' + monthIncome.toLocaleString();
             document.getElementById('dashMonthExpenseVal').textContent = '$' + monthExpense.toLocaleString();
-            document.getElementById('dashBalanceVal').textContent = '$' + (monthIncome - monthExpense).toLocaleString();
+            document.getElementById('dashBalanceVal').textContent = '$' + totalBalance.toLocaleString();
             
-            // 구역 현황
+            // ===== 구역 현황 =====
             const cellsData = JSON.parse(localStorage.getItem('churchCells') || '[]');
             let cellHtml = '';
             cellsData.forEach(cell => {
-                const cellMembers = members.filter(m => m.cell === cell.name || m.cell === cell.name + '구역');
+                const cellMembers = membersData.filter(m => {
+                    const memberCell = (m.cell || '').replace('구역', '');
+                    return memberCell === cell.name || m.cell === cell.name + '구역';
+                });
                 cellHtml += `
                     <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
-                        <span style="color: ${cell.color}; font-weight: 500;">${cell.name}구역</span>
+                        <span style="color: ${cell.color || '#3182ce'}; font-weight: 500;">${cell.name}구역</span>
                         <span style="font-weight: 600;">${cellMembers.length}명</span>
                     </div>
                 `;
             });
             document.getElementById('dashCellSummary').innerHTML = cellHtml || '<p style="color: #999; font-size: 0.9em;">구역 데이터 없음</p>';
             
-            // 부서 현황
+            // ===== 부서 현황 (전체 부서 표시) =====
             const depts = JSON.parse(localStorage.getItem('departments') || '[]');
             let deptHtml = '';
-            depts.slice(0, 4).forEach(dept => {
-                const deptMembers = members.filter(m => m.department === dept.name);
-                deptHtml += `
-                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
-                        <span>${dept.name}</span>
-                        <span style="font-weight: 600;">${deptMembers.length}명</span>
-                    </div>
-                `;
-            });
-            if (depts.length > 4) {
-                deptHtml += `<div style="padding: 6px 0; color: #666; font-size: 0.85em;">외 ${depts.length - 4}개 부서...</div>`;
+            if (depts.length > 0) {
+                deptHtml = '<div style="max-height: 200px; overflow-y: auto;">';
+                depts.forEach(dept => {
+                    // 부서에 직접 members 배열이 있으면 사용, 아니면 교인 데이터에서 찾기
+                    let memberCount = 0;
+                    if (dept.members && Array.isArray(dept.members)) {
+                        memberCount = dept.members.length;
+                    } else {
+                        memberCount = membersData.filter(m => m.department === dept.name).length;
+                    }
+                    deptHtml += `
+                        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
+                            <span>${dept.name}</span>
+                            <span style="font-weight: 600;">${memberCount}명</span>
+                        </div>
+                    `;
+                });
+                deptHtml += '</div>';
             }
             document.getElementById('dashDeptSummary').innerHTML = deptHtml || '<p style="color: #999; font-size: 0.9em;">부서 데이터 없음</p>';
             
-            // 멘토링 현황
+            // ===== 멘토링 현황 =====
             const mentorPairs = JSON.parse(localStorage.getItem('mentoringPairs') || '[]');
-            const activePairs = mentorPairs.filter(p => p.status === '진행중').length;
-            const completedPairs = mentorPairs.filter(p => p.status === '완료').length;
-            document.getElementById('dashMentorSummary').innerHTML = `
-                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
-                    <span>진행중</span>
-                    <span style="font-weight: 600; color: #38a169;">${activePairs}쌍</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
-                    <span>완료</span>
-                    <span style="font-weight: 600; color: #4f46e5;">${completedPairs}쌍</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                    <span>총 멘토링</span>
-                    <span style="font-weight: 600;">${mentorPairs.length}쌍</span>
-                </div>
-            `;
+            const activePairs = mentorPairs.filter(p => p.status === '진행중' || p.status === 'active').length;
+            const completedPairs = mentorPairs.filter(p => p.status === '완료' || p.status === 'completed').length;
+            const pendingPairs = mentorPairs.filter(p => !p.status || p.status === '대기' || p.status === 'pending').length;
+            
+            let mentorHtml = '';
+            if (mentorPairs.length > 0) {
+                mentorHtml = `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
+                        <span>진행중</span>
+                        <span style="font-weight: 600; color: #38a169;">${activePairs}쌍</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
+                        <span>완료</span>
+                        <span style="font-weight: 600; color: #4f46e5;">${completedPairs}쌍</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                        <span>총 멘토링</span>
+                        <span style="font-weight: 600;">${mentorPairs.length}쌍</span>
+                    </div>
+                `;
+            } else {
+                mentorHtml = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 10px;">등록된 멘토링이 없습니다</p>';
+            }
+            document.getElementById('dashMentorSummary').innerHTML = mentorHtml;
             
             // 새가족 명단 연동 - loadMemberDashboard()에서 dashNewFamilySummary도 업데이트
             loadMemberDashboard();
             
             // 교회 조직도 로드
             loadOrgChart();
+            
+            console.log('📊 대시보드 로드 완료 - 헌금:', offerings.length + '건, 지출:', expenses.length + '건, 멘토링:', mentorPairs.length + '쌍, 부서:', depts.length + '개');
         }
         
         // 교회 조직도 로드
@@ -7653,6 +7688,12 @@
                 videos.unshift({ id: videoId, url: url, date: today });
                 if (videos.length > 20) videos.pop();
                 localStorage.setItem('sundayVideos', JSON.stringify(videos));
+                
+                // Firebase에도 저장
+                if (firebaseReady) {
+                    saveToFirestore('sundayVideos', { list: videos });
+                    console.log('주일예배 영상 Firebase 저장 완료');
+                }
             }
             
             loadSundayYoutube();
@@ -7705,6 +7746,12 @@
             const videos = JSON.parse(localStorage.getItem('sundayVideos') || '[]');
             videos.splice(index, 1);
             localStorage.setItem('sundayVideos', JSON.stringify(videos));
+            
+            // Firebase에도 저장
+            if (firebaseReady) {
+                saveToFirestore('sundayVideos', { list: videos });
+            }
+            
             loadSundayYoutube();
         }
         
@@ -7723,6 +7770,12 @@
                 videos.unshift({ id: videoId, url: url, date: today });
                 if (videos.length > 20) videos.pop();
                 localStorage.setItem('wednesdayVideos', JSON.stringify(videos));
+                
+                // Firebase에도 저장
+                if (firebaseReady) {
+                    saveToFirestore('wednesdayVideos', { list: videos });
+                    console.log('수요예배 영상 Firebase 저장 완료');
+                }
             }
             
             loadWednesdayYoutube();
@@ -7775,6 +7828,12 @@
             const videos = JSON.parse(localStorage.getItem('wednesdayVideos') || '[]');
             videos.splice(index, 1);
             localStorage.setItem('wednesdayVideos', JSON.stringify(videos));
+            
+            // Firebase에도 저장
+            if (firebaseReady) {
+                saveToFirestore('wednesdayVideos', { list: videos });
+            }
+            
             loadWednesdayYoutube();
         }
         
