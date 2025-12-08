@@ -2878,6 +2878,8 @@
                                     <option value="십일조">십일조</option>
                                     <option value="감사헌금">감사헌금</option>
                                     <option value="주일헌금">주일헌금</option>
+                                    <option value="절기헌금">절기헌금</option>
+                                    <option value="지정헌금">지정헌금</option>
                                     <option value="건축헌금">건축헌금</option>
                                     <option value="선교헌금">선교헌금</option>
                                     <option value="구제헌금">구제헌금</option>
@@ -2933,6 +2935,8 @@
                                     <option value="십일조">십일조</option>
                                     <option value="감사헌금">감사헌금</option>
                                     <option value="주일헌금">주일헌금</option>
+                                    <option value="절기헌금">절기헌금</option>
+                                    <option value="지정헌금">지정헌금</option>
                                     <option value="건축헌금">건축헌금</option>
                                     <option value="선교헌금">선교헌금</option>
                                     <option value="구제헌금">구제헌금</option>
@@ -10506,11 +10510,15 @@
                 const payment = document.getElementById('offeringPayment').value;
                 const checkNumber = document.getElementById('offeringCheckNumber').value.trim();
                 
+                // 현재 값 저장 (다음 입력 시 유지할 값들)
+                const lastDate = document.getElementById('offeringDate').value;
+                const lastType = document.getElementById('offeringType').value;
+                
                 const offeringData = {
                     id: Date.now(),
-                    date: document.getElementById('offeringDate').value,
+                    date: lastDate,
                     name: document.getElementById('offeringName').value,
-                    type: document.getElementById('offeringType').value,
+                    type: lastType,
                     amount: parseFloat(document.getElementById('offeringAmount').value),
                     payment: payment,
                     checkNumber: payment === 'Check' ? checkNumber : '',
@@ -10526,9 +10534,17 @@
                 alertMsg += `\n금액: $${offeringData.amount.toFixed(2)}`;
                 alert(alertMsg);
                 
-                this.reset();
-                document.getElementById('offeringDate').valueAsDate = new Date();
+                // 이름, 금액, 메모만 초기화 (날짜, 종류는 유지)
+                document.getElementById('offeringName').value = '';
+                document.getElementById('offeringAmount').value = '';
+                document.getElementById('offeringMemo').value = '';
+                document.getElementById('offeringCheckNumber').value = '';
                 document.getElementById('offeringCheckNumber').style.display = 'none';
+                
+                // 날짜와 종류는 마지막 입력값 유지
+                document.getElementById('offeringDate').value = lastDate;
+                document.getElementById('offeringType').value = lastType;
+                
                 loadOfferingList();
                 updateOfferingStats();
             });
@@ -10767,7 +10783,7 @@
             }
             
             // 헌금 종류 목록
-            const offeringTypes = ['십일조', '감사헌금', '주일헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const offeringTypes = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
             
             // 교인별 헌금 집계 (교적관리 연동)
             const memberOfferingMap = {};
@@ -11580,11 +11596,16 @@
                 const payment = document.getElementById('expensePayment').value;
                 const checkNumber = document.getElementById('expenseCheckNumber').value.trim();
                 
+                // 현재 값 저장 (다음 입력 시 유지할 값들)
+                const lastDate = document.getElementById('expenseDate').value;
+                const lastDepartment = document.getElementById('expenseDepartment').value;
+                const lastCategory = document.getElementById('expenseCategory').value;
+                
                 const expenseData = {
                     id: Date.now(),
-                    date: document.getElementById('expenseDate').value,
-                    department: document.getElementById('expenseDepartment').value,
-                    category: document.getElementById('expenseCategory').value,
+                    date: lastDate,
+                    department: lastDepartment,
+                    category: lastCategory,
                     item: itemValue,
                     amount: parseFloat(document.getElementById('expenseAmount').value),
                     payment: payment,
@@ -11601,12 +11622,24 @@
                 alertMsg += `\n금액: $${expenseData.amount.toFixed(2)}`;
                 alert(alertMsg);
                 
-                this.reset();
-                document.getElementById('expenseDate').valueAsDate = new Date();
-                document.getElementById('expenseCategory').innerHTML = '<option value="">부서를 먼저 선택하세요</option>';
-                document.getElementById('expenseItemSelect').innerHTML = '<option value="">분류를 먼저 선택하세요</option>';
-                document.getElementById('expenseItemCustom').style.display = 'none';
+                // 금액, 메모, 항목만 초기화 (날짜, 부서, 분류는 유지)
+                document.getElementById('expenseAmount').value = '';
+                document.getElementById('expenseMemo').value = '';
+                document.getElementById('expenseCheckNumber').value = '';
                 document.getElementById('expenseCheckNumber').style.display = 'none';
+                
+                // 항목 선택 초기화 (분류는 유지)
+                if (itemSelect) itemSelect.value = '';
+                if (itemCustom) {
+                    itemCustom.value = '';
+                    itemCustom.style.display = 'none';
+                }
+                
+                // 날짜, 부서, 분류는 마지막 입력값 유지
+                document.getElementById('expenseDate').value = lastDate;
+                document.getElementById('expenseDepartment').value = lastDepartment;
+                document.getElementById('expenseCategory').value = lastCategory;
+                
                 loadExpenseList();
                 updateExpenseStats();
                 updateBudgetVisualization();
@@ -13714,7 +13747,7 @@
             }
             
             // 종류별 집계
-            const types = ['십일조', '감사헌금', '주일헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
             const colors = ['#48bb78', '#4299e1', '#ed8936', '#9f7aea', '#f56565', '#38b2ac', '#d69e2e', '#718096'];
             const typeTotals = {};
             types.forEach(t => typeTotals[t] = 0);
@@ -13953,7 +13986,7 @@
             });
             
             // 영어 컬럼명 매핑
-            const types = ['십일조', '감사헌금', '주일헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
             const typesEn = ['Tithe', 'Thanksgiving', 'Sunday', 'Building', 'Mission', 'Benevolence', 'Special', 'Other'];
             
             let html = `
@@ -14061,7 +14094,7 @@
                 memberTotals[o.name].details[o.type] = (memberTotals[o.name].details[o.type] || 0) + o.amount;
             });
             
-            const types = ['십일조', '감사헌금', '주일헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
             const typesEn = ['Tithe', 'Thanksgiving', 'Sunday', 'Building', 'Mission', 'Benevolence', 'Special', 'Other'];
             
             // CSV 생성
@@ -14187,7 +14220,7 @@
                         <tbody>
                 `;
                 
-                const types = ['십일조', '감사헌금', '주일헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+                const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
                 types.forEach(type => {
                     const count = filteredIncome.filter(o => o.type === type).length;
                     const amount = typeTotals[type] || 0;
@@ -14424,7 +14457,7 @@
                 csv += '=== 수입 내역 (종류별 합계) ===\n';
                 csv += '헌금 종류,건수,금액\n';
                 
-                const types = ['십일조', '감사헌금', '주일헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+                const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
                 types.forEach(type => {
                     const items = filteredIncome.filter(o => o.type === type);
                     if (items.length > 0) {
