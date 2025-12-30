@@ -8330,6 +8330,29 @@
             return match ? match[1] : null;
         }
         
+        // imgur URL 자동 변환 (페이지 링크 → Direct Link)
+        function convertImgurUrl(url) {
+            if (!url) return url;
+            
+            // 이미 i.imgur.com 형식이면 그대로 반환
+            if (url.includes('i.imgur.com')) {
+                // 확장자가 없으면 .jpg 추가
+                if (!url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                    return url + '.jpg';
+                }
+                return url;
+            }
+            
+            // imgur.com/xxxxx 형식을 i.imgur.com/xxxxx.jpg로 변환
+            const imgurMatch = url.match(/(?:https?:\/\/)?(?:www\.)?imgur\.com\/([a-zA-Z0-9]+)/);
+            if (imgurMatch) {
+                return `https://i.imgur.com/${imgurMatch[1]}.jpg`;
+            }
+            
+            // 다른 형식은 그대로 반환
+            return url;
+        }
+        
         // Glory Clip 영상 목록 로드
         function loadGloryClipYoutube() {
             const videos = JSON.parse(localStorage.getItem('gloryClipVideos') || '[]');
@@ -9202,7 +9225,9 @@
             let html = '';
             photos.forEach((photo, index) => {
                 // 여러 이미지가 있으면 첫 번째 이미지를 썸네일로 사용
-                const images = photo.images || (photo.image ? [photo.image] : []);
+                let images = photo.images || (photo.image ? [photo.image] : []);
+                // imgur URL 자동 변환 적용
+                images = images.map(url => convertImgurUrl(url));
                 const thumbnailSrc = images[0] || '';
                 const imageCount = images.length;
                 
@@ -9233,7 +9258,9 @@
             const photo = photos[index];
             if (!photo) return;
             
-            const images = photo.images || (photo.image ? [photo.image] : []);
+            let images = photo.images || (photo.image ? [photo.image] : []);
+            // imgur URL 자동 변환 적용
+            images = images.map(url => convertImgurUrl(url));
             if (images.length === 0) return;
             
             // 단일 이미지면 기존 뷰어 사용
@@ -9333,13 +9360,13 @@
             const date = document.getElementById('ssPhotoDate').value;
             const description = document.getElementById('ssPhotoDescription').value.trim();
             
-            // 모든 링크 수집
+            // 모든 링크 수집 (imgur 자동 변환 적용)
             const links = document.querySelectorAll('.ss-photo-link');
             const images = [];
             links.forEach(input => {
                 const url = input.value.trim();
                 if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                    images.push(url);
+                    images.push(convertImgurUrl(url));
                 }
             });
             
@@ -9411,7 +9438,9 @@
             
             photos.forEach((photo, index) => {
                 // 여러 이미지 지원: images 배열 또는 기존 imageUrl/image 사용
-                const images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
+                let images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
+                // imgur URL 자동 변환 적용
+                images = images.map(url => convertImgurUrl(url));
                 const thumbnailSrc = images[0] || '';
                 const imageCount = images.length;
                 
@@ -9443,7 +9472,9 @@
             const photo = photos[index];
             if (!photo) return;
             
-            const images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
+            let images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
+            // imgur URL 자동 변환 적용
+            images = images.map(url => convertImgurUrl(url));
             if (images.length === 0) return;
             
             // 단일 이미지면 기존 뷰어 사용
@@ -9587,13 +9618,13 @@
             const category = document.getElementById('photoCategory').value;
             const description = document.getElementById('photoDescription').value.trim();
             
-            // 모든 링크 수집
+            // 모든 링크 수집 (imgur 자동 변환 적용)
             const links = document.querySelectorAll('.gallery-photo-link');
             const images = [];
             links.forEach(input => {
                 const url = input.value.trim();
                 if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                    images.push(url);
+                    images.push(convertImgurUrl(url));
                 }
             });
             
