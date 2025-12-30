@@ -8559,25 +8559,25 @@
             const students = JSON.parse(localStorage.getItem('nextGenStudents') || '[]');
             const tbody = document.getElementById('studentListBody');
             const searchTerm = document.getElementById('studentSearchInput')?.value.toLowerCase() || '';
-            const gradeFilter = document.getElementById('studentGradeFilter')?.value || 'all';
-            const classFilter = document.getElementById('studentClassFilter')?.value || 'all';
+            const gradeFilterVal = document.getElementById('studentGradeFilter')?.value || 'all';
+            const classFilterVal = document.getElementById('studentClassFilter')?.value || 'all';
             
             // 필터링
             let filteredStudents = students.filter(s => {
                 const matchSearch = s.name.toLowerCase().includes(searchTerm) || 
                                   (s.englishName || '').toLowerCase().includes(searchTerm);
-                const matchGrade = gradeFilter === 'all' || s.grade === gradeFilter;
-                const matchClass = classFilter === 'all' || s.class === classFilter;
+                const matchGrade = gradeFilterVal === 'all' || s.grade === gradeFilterVal;
+                const matchClass = classFilterVal === 'all' || s.class === classFilterVal;
                 return matchSearch && matchGrade && matchClass;
             });
             
             // 반 필터 목록 업데이트
-            const classFilter Elem = document.getElementById('studentClassFilter');
+            const classFilterElem = document.getElementById('studentClassFilter');
             if (classFilterElem) {
                 const classes = [...new Set(students.map(s => s.class).filter(c => c))];
                 let classOptions = '<option value="all">전체 반</option>';
                 classes.forEach(c => {
-                    classOptions += `<option value="${c}" ${classFilter === c ? 'selected' : ''}>${c}</option>`;
+                    classOptions += `<option value="${c}" ${classFilterVal === c ? 'selected' : ''}>${c}</option>`;
                 });
                 classFilterElem.innerHTML = classOptions;
             }
