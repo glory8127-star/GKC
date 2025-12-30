@@ -899,6 +899,11 @@
         
         // 전역 데이터 변수
         let firebaseReady = false;
+        
+        // 금액 포맷팅 함수 ($1,000.00 형식)
+        function formatMoney(amount) {
+            return '$' + parseFloat(amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
     </script>
 </head>
 <body>
@@ -3129,10 +3134,6 @@
                                 <input type="date" class="form-control" id="offeringDate" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">헌금자 이름 *</label>
-                                <input type="text" class="form-control" id="offeringName" required placeholder="이름 입력">
-                            </div>
-                            <div class="form-group">
                                 <label class="form-label">헌금 종류 *</label>
                                 <select class="form-control" id="offeringType" required>
                                     <option value="">선택</option>
@@ -3147,6 +3148,10 @@
                                     <option value="특별헌금">특별헌금</option>
                                     <option value="기타">기타</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">헌금자 이름 *</label>
+                                <input type="text" class="form-control" id="offeringName" required placeholder="이름 입력">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">금액 ($) *</label>
@@ -3187,6 +3192,34 @@
                                     <option value="quarter">이번 분기</option>
                                     <option value="year">올해</option>
                                     <option value="all">전체</option>
+                                    <optgroup label="── 월별 조회 ──">
+                                        <option value="2025-01">2025년 1월</option>
+                                        <option value="2025-02">2025년 2월</option>
+                                        <option value="2025-03">2025년 3월</option>
+                                        <option value="2025-04">2025년 4월</option>
+                                        <option value="2025-05">2025년 5월</option>
+                                        <option value="2025-06">2025년 6월</option>
+                                        <option value="2025-07">2025년 7월</option>
+                                        <option value="2025-08">2025년 8월</option>
+                                        <option value="2025-09">2025년 9월</option>
+                                        <option value="2025-10">2025년 10월</option>
+                                        <option value="2025-11">2025년 11월</option>
+                                        <option value="2025-12">2025년 12월</option>
+                                    </optgroup>
+                                    <optgroup label="── 2024년 ──">
+                                        <option value="2024-01">2024년 1월</option>
+                                        <option value="2024-02">2024년 2월</option>
+                                        <option value="2024-03">2024년 3월</option>
+                                        <option value="2024-04">2024년 4월</option>
+                                        <option value="2024-05">2024년 5월</option>
+                                        <option value="2024-06">2024년 6월</option>
+                                        <option value="2024-07">2024년 7월</option>
+                                        <option value="2024-08">2024년 8월</option>
+                                        <option value="2024-09">2024년 9월</option>
+                                        <option value="2024-10">2024년 10월</option>
+                                        <option value="2024-11">2024년 11월</option>
+                                        <option value="2024-12">2024년 12월</option>
+                                    </optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -3338,6 +3371,34 @@
                                     <option value="quarter">이번 분기</option>
                                     <option value="year">올해</option>
                                     <option value="all">전체</option>
+                                    <optgroup label="── 월별 조회 ──">
+                                        <option value="2025-01">2025년 1월</option>
+                                        <option value="2025-02">2025년 2월</option>
+                                        <option value="2025-03">2025년 3월</option>
+                                        <option value="2025-04">2025년 4월</option>
+                                        <option value="2025-05">2025년 5월</option>
+                                        <option value="2025-06">2025년 6월</option>
+                                        <option value="2025-07">2025년 7월</option>
+                                        <option value="2025-08">2025년 8월</option>
+                                        <option value="2025-09">2025년 9월</option>
+                                        <option value="2025-10">2025년 10월</option>
+                                        <option value="2025-11">2025년 11월</option>
+                                        <option value="2025-12">2025년 12월</option>
+                                    </optgroup>
+                                    <optgroup label="── 2024년 ──">
+                                        <option value="2024-01">2024년 1월</option>
+                                        <option value="2024-02">2024년 2월</option>
+                                        <option value="2024-03">2024년 3월</option>
+                                        <option value="2024-04">2024년 4월</option>
+                                        <option value="2024-05">2024년 5월</option>
+                                        <option value="2024-06">2024년 6월</option>
+                                        <option value="2024-07">2024년 7월</option>
+                                        <option value="2024-08">2024년 8월</option>
+                                        <option value="2024-09">2024년 9월</option>
+                                        <option value="2024-10">2024년 10월</option>
+                                        <option value="2024-11">2024년 11월</option>
+                                        <option value="2024-12">2024년 12월</option>
+                                    </optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -11347,6 +11408,13 @@
                     const d = new Date(o.date);
                     return d.getFullYear() === currentYear;
                 });
+            } else if (period.match(/^\d{4}-\d{2}$/)) {
+                // 특정 월 조회 (YYYY-MM 형식)
+                const [targetYear, targetMonth] = period.split('-').map(Number);
+                filteredOfferings = filteredOfferings.filter(o => {
+                    const d = new Date(o.date);
+                    return d.getFullYear() === targetYear && d.getMonth() === targetMonth - 1;
+                });
             }
             
             // 종류 필터
@@ -11392,7 +11460,7 @@
                         <td>${offering.date}</td>
                         <td>${offering.name}</td>
                         <td><span class="badge badge-info">${offering.type}</span></td>
-                        <td>$${offering.amount.toFixed(2)}</td>
+                        <td>${formatMoney(offering.amount)}</td>
                         <td>${paymentDisplay}</td>
                         <td>${offering.memo || '-'}</td>
                         <td>
@@ -11407,7 +11475,7 @@
                         <tfoot>
                             <tr style="background: #f7fafc; font-weight: bold;">
                                 <td colspan="3">합계</td>
-                                <td>$${total.toFixed(2)}</td>
+                                <td>${formatMoney(total)}</td>
                                 <td colspan="3"></td>
                             </tr>
                         </tfoot>
@@ -12577,6 +12645,13 @@
                     const d = new Date(e.date);
                     return d.getFullYear() === currentYear;
                 });
+            } else if (period.match(/^\d{4}-\d{2}$/)) {
+                // 특정 월 조회 (YYYY-MM 형식)
+                const [targetYear, targetMonth] = period.split('-').map(Number);
+                filteredExpenses = filteredExpenses.filter(e => {
+                    const d = new Date(e.date);
+                    return d.getFullYear() === targetYear && d.getMonth() === targetMonth - 1;
+                });
             }
             
             // 부서 필터
@@ -12623,7 +12698,7 @@
                         <td><span class="badge badge-info">${expense.department || '-'}</span></td>
                         <td>${expense.category}</td>
                         <td>${expense.item}</td>
-                        <td style="color: #e53e3e;">$${expense.amount.toFixed(2)}</td>
+                        <td style="color: #e53e3e;">${formatMoney(expense.amount)}</td>
                         <td>${paymentDisplay}</td>
                         <td>
                             <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" onclick="deleteExpense(${originalIndex})">삭제</button>
@@ -12637,7 +12712,7 @@
                         <tfoot>
                             <tr style="background: #f7fafc; font-weight: bold;">
                                 <td colspan="4">합계</td>
-                                <td style="color: #e53e3e;">$${total.toFixed(2)}</td>
+                                <td style="color: #e53e3e;">${formatMoney(total)}</td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
