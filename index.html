@@ -1541,7 +1541,10 @@
                     주일예배영상
                 </div>
                 <div class="worship-tab" onclick="showWorshipTab('wednesday')" id="worshipTabWednesday" style="flex: 1; padding: 15px 20px; text-align: center; cursor: pointer; font-weight: 600; background: #f8f9fa; color: #666; border-left: 1px solid #e2e8f0;">
-                    수요 경배와 찬양 영상
+                    수요 경배와 찬양
+                </div>
+                <div class="worship-tab" onclick="showWorshipTab('gloryclip')" id="worshipTabGloryClip" style="flex: 1; padding: 15px 20px; text-align: center; cursor: pointer; font-weight: 600; background: #f8f9fa; color: #666; border-left: 1px solid #e2e8f0;">
+                    🎬 Glory Clip
                 </div>
             </div>
             
@@ -1633,6 +1636,29 @@
                 <!-- 영상 목록 -->
                 <div id="wednesdayVideoList">
                     <p style="color: #999; text-align: center; padding: 30px;">등록된 영상이 없습니다</p>
+                </div>
+            </div>
+            
+            <!-- Glory Clip 탭 -->
+            <div id="worshipGloryClipTab" class="worship-content card" style="border-radius: 0 0 15px 15px; margin-top: 0; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 style="margin: 0 0 5px 0; color: #2d3748;">🎬 Glory Clip</h2>
+                        <p style="color: #718096; margin: 0;">말씀의 핵심을 짧게 만나보세요</p>
+                    </div>
+                </div>
+                
+                <!-- 유튜브 영상 추가 (관리자 전용) -->
+                <div class="pastor-only" style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="gloryClipYoutubeUrl" placeholder="유튜브 Shorts URL 입력" class="form-control" style="flex: 1; min-width: 250px;">
+                        <button onclick="setGloryClipYoutube()" class="btn btn-primary">추가</button>
+                    </div>
+                </div>
+                
+                <!-- 영상 목록 (숏츠 스타일) -->
+                <div id="gloryClipVideoList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                    <p style="color: #999; text-align: center; padding: 30px; grid-column: 1/-1;">등록된 Glory Clip이 없습니다</p>
                 </div>
             </div>
         </div>
@@ -4592,6 +4618,13 @@
                     console.log('Firebase에서 수요예배 영상 로드:', wednesdayVideosData.list.length + '개');
                 }
                 
+                // Glory Clip 영상 로드
+                const gloryClipVideosData = await loadFromFirestore('gloryClipVideos');
+                if (gloryClipVideosData && gloryClipVideosData.list) {
+                    localStorage.setItem('gloryClipVideos', JSON.stringify(gloryClipVideosData.list));
+                    console.log('Firebase에서 Glory Clip 로드:', gloryClipVideosData.list.length + '개');
+                }
+                
                 // 슬라이드쇼 데이터 로드
                 const heroSlidesData = await loadFromFirestore('heroSlides');
                 if (heroSlidesData && heroSlidesData.list) {
@@ -5050,6 +5083,19 @@
                         console.log('🔄 수요 설교 실시간 업데이트:', newData.length + '개');
                         localStorage.setItem('wednesdayVideos', JSON.stringify(newData));
                         if (typeof loadWednesdayYoutube === 'function') loadWednesdayYoutube();
+                    }
+                }
+            });
+            
+            // Glory Clip 실시간 동기화
+            db.collection('gloryClipVideos').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().list) {
+                    const newData = doc.data().list;
+                    const currentData = JSON.parse(localStorage.getItem('gloryClipVideos') || '[]');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 Glory Clip 실시간 업데이트:', newData.length + '개');
+                        localStorage.setItem('gloryClipVideos', JSON.stringify(newData));
+                        if (typeof loadGloryClipYoutube === 'function') loadGloryClipYoutube();
                     }
                 }
             });
@@ -6014,7 +6060,7 @@
                 'churchOfferings', 'churchExpenses', 'churchBudgets', 'paymentRequests',
                 'mentoringPairs', 'mentoringProgress',
                 'yearlyEvents', 'churchDeptTeams', 'churchOrgChart',
-                'ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos',
+                'ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos', 'gloryClipVideos',
                 'heroSlides', 'churchGallery'
             ];
             
@@ -6065,7 +6111,7 @@
                 'churchOfferings', 'churchExpenses', 'churchBudgets', 'paymentRequests',
                 'mentoringPairs', 'mentoringProgress',
                 'yearlyEvents', 'churchDeptTeams', 'churchOrgChart',
-                'ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos',
+                'ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos', 'gloryClipVideos',
                 'heroSlides', 'churchGallery'
             ];
             
@@ -8038,6 +8084,7 @@
             document.getElementById('worshipTimeTab').style.display = 'none';
             document.getElementById('worshipSundayTab').style.display = 'none';
             document.getElementById('worshipWednesdayTab').style.display = 'none';
+            document.getElementById('worshipGloryClipTab').style.display = 'none';
             
             // 모든 탭 버튼 비활성화
             document.getElementById('worshipTabTime').style.background = '#f8f9fa';
@@ -8046,6 +8093,8 @@
             document.getElementById('worshipTabSunday').style.color = '#666';
             document.getElementById('worshipTabWednesday').style.background = '#f8f9fa';
             document.getElementById('worshipTabWednesday').style.color = '#666';
+            document.getElementById('worshipTabGloryClip').style.background = '#f8f9fa';
+            document.getElementById('worshipTabGloryClip').style.color = '#666';
             
             // 선택된 탭 표시
             if (tab === 'time') {
@@ -8062,6 +8111,11 @@
                 document.getElementById('worshipTabWednesday').style.background = '#1e3a5f';
                 document.getElementById('worshipTabWednesday').style.color = 'white';
                 loadWednesdayYoutube();
+            } else if (tab === 'gloryclip') {
+                document.getElementById('worshipGloryClipTab').style.display = 'block';
+                document.getElementById('worshipTabGloryClip').style.background = '#1e3a5f';
+                document.getElementById('worshipTabGloryClip').style.color = 'white';
+                loadGloryClipYoutube();
             }
         }
         
@@ -8242,6 +8296,89 @@
             }
             
             loadWednesdayYoutube();
+        }
+        
+        // Glory Clip 영상 추가
+        function setGloryClipYoutube() {
+            const url = document.getElementById('gloryClipYoutubeUrl').value.trim();
+            const videoId = extractYoutubeId(url) || extractShortsId(url);
+            
+            if (!videoId && url) {
+                alert('올바른 유튜브 URL을 입력해주세요.');
+                return;
+            }
+            
+            const videos = JSON.parse(localStorage.getItem('gloryClipVideos') || '[]');
+            if (videoId) {
+                const today = new Date().toISOString().split('T')[0];
+                videos.unshift({ id: videoId, date: today });
+                localStorage.setItem('gloryClipVideos', JSON.stringify(videos));
+                
+                // Firebase에도 저장
+                if (firebaseReady) {
+                    saveToFirestore('gloryClipVideos', { list: videos });
+                }
+            }
+            
+            document.getElementById('gloryClipYoutubeUrl').value = '';
+            loadGloryClipYoutube();
+        }
+        
+        // YouTube Shorts ID 추출
+        function extractShortsId(url) {
+            if (!url) return null;
+            const shortsPattern = /youtube\.com\/shorts\/([^&\?\/]+)/;
+            const match = url.match(shortsPattern);
+            return match ? match[1] : null;
+        }
+        
+        // Glory Clip 영상 목록 로드
+        function loadGloryClipYoutube() {
+            const videos = JSON.parse(localStorage.getItem('gloryClipVideos') || '[]');
+            const container = document.getElementById('gloryClipVideoList');
+            
+            if (videos.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 30px; grid-column: 1/-1;">등록된 Glory Clip이 없습니다</p>';
+                return;
+            }
+            
+            let html = '';
+            videos.forEach((v, i) => {
+                html += `
+                    <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+                        <a href="https://www.youtube.com/shorts/${v.id}" target="_blank" style="text-decoration: none; color: inherit;">
+                            <div style="position: relative; width: 100%; padding-top: 177.78%; background: #000;">
+                                <img src="https://img.youtube.com/vi/${v.id}/mqdefault.jpg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
+                                <div style="position: absolute; top: 8px; left: 8px; background: linear-gradient(135deg, #ff0000, #cc0000); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.7em; font-weight: 600;">🎬 Glory Clip</div>
+                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 15px 10px 10px;">
+                                    <div style="color: white; font-size: 0.85em;">${v.date}</div>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="pastor-only" style="padding: 8px; text-align: center; display: none;">
+                            <button onclick="deleteGloryClipVideo(${i})" class="btn btn-danger" style="padding: 5px 15px; font-size: 0.8em;">삭제</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            updatePastorUI();
+        }
+        
+        // Glory Clip 영상 삭제
+        function deleteGloryClipVideo(index) {
+            if (!confirm('이 Glory Clip을 삭제하시겠습니까?')) return;
+            const videos = JSON.parse(localStorage.getItem('gloryClipVideos') || '[]');
+            videos.splice(index, 1);
+            localStorage.setItem('gloryClipVideos', JSON.stringify(videos));
+            
+            // Firebase에도 저장
+            if (firebaseReady) {
+                saveToFirestore('gloryClipVideos', { list: videos });
+            }
+            
+            loadGloryClipYoutube();
         }
         
         // 홈 화면 최신 예배 영상 표시
