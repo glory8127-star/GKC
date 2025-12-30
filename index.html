@@ -1934,14 +1934,14 @@
         
         <!-- 다음세대부 사진 추가 모달 -->
         <div id="addSSPhotoModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-            <div style="background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="background: white; border-radius: 16px; padding: 30px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0; color: #ed8936;">다음세대부 사진 추가</h2>
                     <button onclick="closeAddSSPhotoModal()" style="background: none; border: none; font-size: 1.5em; cursor: pointer;">✕</button>
                 </div>
                 
                 <div class="form-group">
-                    <label>제목</label>
+                    <label>제목 *</label>
                     <input type="text" id="ssPhotoTitle" class="form-control" placeholder="예: 2025년 여름성경학교">
                 </div>
                 
@@ -1951,14 +1951,18 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>사진 선택</label>
-                    <div id="ssPhotoDropZone" style="border: 2px dashed #cbd5e0; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer;" onclick="document.getElementById('ssPhotoFileInput').click()">
-                        <div style="font-size: 3em; margin-bottom: 10px;">🖼️</div>
-                        <p style="margin: 0; color: #718096;">클릭하여 사진을 선택하세요</p>
-                        <div id="ssPhotoPreviewContainer" style="margin-top: 15px;"></div>
+                    <label>이미지 링크 (imgur 등) *</label>
+                    <div id="ssPhotoLinksContainer">
+                        <div class="ss-photo-link-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" class="form-control ss-photo-link" placeholder="https://i.imgur.com/xxxxx.jpg" style="flex: 1;">
+                            <button type="button" onclick="removeSSPhotoLink(this)" class="btn btn-danger" style="padding: 8px 12px;">✕</button>
+                        </div>
                     </div>
-                    <input type="file" id="ssPhotoFileInput" accept="image/*" style="display: none;" onchange="handleSSPhotoFile(this)">
+                    <button type="button" onclick="addSSPhotoLink()" class="btn" style="background: #48bb78; color: white; width: 100%; margin-top: 5px;">+ 이미지 링크 추가</button>
+                    <p style="font-size: 0.8em; color: #718096; margin-top: 8px;">💡 imgur.com에서 이미지 업로드 후 "Direct Link"를 복사하세요</p>
                 </div>
+                
+                <div id="ssPhotoPreviewContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px;"></div>
                 
                 <div class="form-group">
                     <label>설명 (선택)</label>
@@ -2201,14 +2205,14 @@
         
         <!-- 사진 추가 모달 -->
         <div id="addPhotoModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-            <div style="background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="background: white; border-radius: 16px; padding: 30px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0; color: #667eea;">사진 추가</h2>
+                    <h2 style="margin: 0; color: #667eea;">📷 사진 추가</h2>
                     <button onclick="closeAddPhotoModal()" style="background: none; border: none; font-size: 1.5em; cursor: pointer;">✕</button>
                 </div>
                 
                 <div class="form-group">
-                    <label>제목</label>
+                    <label>제목 *</label>
                     <input type="text" id="photoTitle" class="form-control" placeholder="예: 2025년 부활절 예배">
                 </div>
                 
@@ -2228,24 +2232,18 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>이미지 URL (Imgur 등)</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="photoImageUrl" class="form-control" placeholder="https://i.imgur.com/abc123.jpg" style="flex: 1;">
-                        <button onclick="previewPhotoUrl()" class="btn" style="background: #38a169; color: white; white-space: nowrap;">미리보기</button>
+                    <label>이미지 링크 (imgur 등) *</label>
+                    <div id="galleryPhotoLinksContainer">
+                        <div class="gallery-photo-link-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" class="form-control gallery-photo-link" placeholder="https://i.imgur.com/xxxxx.jpg" style="flex: 1;" oninput="previewGalleryPhotoLinks()">
+                            <button type="button" onclick="removeGalleryPhotoLink(this)" class="btn btn-danger" style="padding: 8px 12px;">✕</button>
+                        </div>
                     </div>
-                    <p style="margin: 5px 0 0 0; font-size: 0.8em; color: #718096;">💡 Imgur에 이미지 업로드 후 URL을 붙여넣으세요 (PC/폰 동기화됨)</p>
+                    <button type="button" onclick="addGalleryPhotoLink()" class="btn" style="background: #48bb78; color: white; width: 100%; margin-top: 5px;">+ 이미지 링크 추가</button>
+                    <p style="font-size: 0.8em; color: #718096; margin-top: 8px;">💡 imgur.com에서 이미지 업로드 후 "Direct Link"를 복사하세요</p>
                 </div>
                 
-                <div class="form-group">
-                    <label>또는 파일 선택 (PC에서만 보임)</label>
-                    <div id="photoDropZone" style="border: 2px dashed #cbd5e0; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('photoFileInput').click()">
-                        <div style="font-size: 3em; margin-bottom: 10px;">🖼️</div>
-                        <p style="margin: 0; color: #718096;">클릭하여 사진을 선택하세요</p>
-                        <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #a0aec0;">JPG, PNG 파일 (최대 5MB)</p>
-                        <div id="photoPreviewContainer" style="margin-top: 15px;"></div>
-                    </div>
-                    <input type="file" id="photoFileInput" accept="image/*" style="display: none;" onchange="handlePhotoFile(this)">
-                </div>
+                <div id="galleryPhotoPreviewContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px;"></div>
                 
                 <div class="form-group">
                     <label>설명 (선택)</label>
@@ -9197,10 +9195,18 @@
             
             let html = '';
             photos.forEach((photo, index) => {
+                // 여러 이미지가 있으면 첫 번째 이미지를 썸네일로 사용
+                const images = photo.images || (photo.image ? [photo.image] : []);
+                const thumbnailSrc = images[0] || '';
+                const imageCount = images.length;
+                
+                if (!thumbnailSrc) return;
+                
                 html += `
                     <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #fed7aa;">
-                        <div style="cursor: pointer;" onclick="viewPhoto('${photo.image}')">
-                            <img src="${photo.image}" style="width: 100%; height: 180px; object-fit: cover;">
+                        <div style="cursor: pointer; position: relative;" onclick="viewSSPhotoAlbum(${index})">
+                            <img src="${thumbnailSrc}" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f1f5f9%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>이미지 로드 실패</text></svg>'">
+                            ${imageCount > 1 ? `<div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.8em;">📷 ${imageCount}장</div>` : ''}
                         </div>
                         <div style="padding: 15px;">
                             <h4 style="margin: 0 0 8px 0; color: #c2410c; font-size: 1em;">${photo.title}</h4>
@@ -9215,46 +9221,105 @@
             grid.innerHTML = html;
         }
         
+        // 다음세대부 앨범 보기 (여러 이미지)
+        function viewSSPhotoAlbum(index) {
+            const photos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
+            const photo = photos[index];
+            if (!photo) return;
+            
+            const images = photo.images || (photo.image ? [photo.image] : []);
+            if (images.length === 0) return;
+            
+            // 단일 이미지면 기존 뷰어 사용
+            if (images.length === 1) {
+                viewPhoto(images[0]);
+                return;
+            }
+            
+            // 여러 이미지면 앨범 뷰어 표시
+            let html = `
+                <div id="albumViewer" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.5);">
+                        <h3 style="margin: 0; color: white;">${photo.title} (${images.length}장)</h3>
+                        <button onclick="document.getElementById('albumViewer').remove()" style="background: none; border: none; color: white; font-size: 2em; cursor: pointer;">✕</button>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto;">
+            `;
+            
+            images.forEach((img, i) => {
+                html += `
+                    <div style="cursor: pointer;" onclick="viewPhoto('${img.replace(/'/g, "\\'")}')">
+                        <img src="${img}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onerror="this.parentElement.style.display='none'">
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+        
         function showAddSSPhotoModal() {
             document.getElementById('addSSPhotoModal').style.display = 'flex';
             document.getElementById('ssPhotoTitle').value = '';
             document.getElementById('ssPhotoDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('ssPhotoDescription').value = '';
             document.getElementById('ssPhotoPreviewContainer').innerHTML = '';
-            document.getElementById('ssPhotoDropZone').style.borderColor = '#cbd5e0';
-            ssPhotoFileData = null;
+            
+            // 링크 입력란 초기화
+            document.getElementById('ssPhotoLinksContainer').innerHTML = `
+                <div class="ss-photo-link-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" class="form-control ss-photo-link" placeholder="https://i.imgur.com/xxxxx.jpg" style="flex: 1;" oninput="previewSSPhotoLinks()">
+                    <button type="button" onclick="removeSSPhotoLink(this)" class="btn btn-danger" style="padding: 8px 12px;">✕</button>
+                </div>
+            `;
         }
         
         function closeAddSSPhotoModal() {
             document.getElementById('addSSPhotoModal').style.display = 'none';
-            ssPhotoFileData = null;
         }
         
-        function handleSSPhotoFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            if (!file.type.startsWith('image/')) {
-                alert('이미지 파일만 업로드 가능합니다.');
-                input.value = '';
-                return;
+        // 이미지 링크 추가
+        function addSSPhotoLink() {
+            const container = document.getElementById('ssPhotoLinksContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'ss-photo-link-row';
+            newRow.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
+            newRow.innerHTML = `
+                <input type="text" class="form-control ss-photo-link" placeholder="https://i.imgur.com/xxxxx.jpg" style="flex: 1;" oninput="previewSSPhotoLinks()">
+                <button type="button" onclick="removeSSPhotoLink(this)" class="btn btn-danger" style="padding: 8px 12px;">✕</button>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        // 이미지 링크 삭제
+        function removeSSPhotoLink(btn) {
+            const container = document.getElementById('ssPhotoLinksContainer');
+            if (container.children.length > 1) {
+                btn.parentElement.remove();
+                previewSSPhotoLinks();
             }
+        }
+        
+        // 이미지 미리보기
+        function previewSSPhotoLinks() {
+            const links = document.querySelectorAll('.ss-photo-link');
+            const previewContainer = document.getElementById('ssPhotoPreviewContainer');
+            let html = '';
             
-            if (file.size > 5 * 1024 * 1024) {
-                alert('파일 크기는 5MB 이하만 가능합니다.');
-                input.value = '';
-                return;
-            }
+            links.forEach(input => {
+                const url = input.value.trim();
+                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'">`;
+                }
+            });
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                ssPhotoFileData = e.target.result;
-                document.getElementById('ssPhotoPreviewContainer').innerHTML = `
-                    <img src="${ssPhotoFileData}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px;">
-                `;
-                document.getElementById('ssPhotoDropZone').style.borderColor = '#ed8936';
-            };
-            reader.readAsDataURL(file);
+            previewContainer.innerHTML = html;
         }
         
         function saveSSPhoto() {
@@ -9262,38 +9327,44 @@
             const date = document.getElementById('ssPhotoDate').value;
             const description = document.getElementById('ssPhotoDescription').value.trim();
             
+            // 모든 링크 수집
+            const links = document.querySelectorAll('.ss-photo-link');
+            const images = [];
+            links.forEach(input => {
+                const url = input.value.trim();
+                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    images.push(url);
+                }
+            });
+            
             if (!title) {
                 alert('제목을 입력해주세요.');
                 return;
             }
-            if (!date) {
-                alert('날짜를 선택해주세요.');
-                return;
-            }
-            if (!ssPhotoFileData) {
-                alert('사진을 선택해주세요.');
+            if (images.length === 0) {
+                alert('최소 하나의 이미지 링크를 입력해주세요.');
                 return;
             }
             
             const photos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
             photos.unshift({
                 title: title,
-                date: date,
+                date: date || new Date().toISOString().split('T')[0],
                 description: description,
-                image: ssPhotoFileData,
+                images: images,
                 uploadedAt: new Date().toISOString()
             });
             
-            if (photos.length > 30) photos.pop();
+            localStorage.setItem('ssPhotos', JSON.stringify(photos));
             
-            try {
-                localStorage.setItem('ssPhotos', JSON.stringify(photos));
-                alert('사진이 등록되었습니다!');
-                closeAddSSPhotoModal();
-                loadSSPhotos();
-            } catch (e) {
-                alert('저장 공간이 부족합니다. 일부 사진을 삭제해주세요.');
+            // Firebase 동기화
+            if (firebaseReady) {
+                saveToFirestore('ssPhotos', { list: photos });
             }
+            
+            alert('사진이 등록되었습니다!');
+            closeAddSSPhotoModal();
+            loadSSPhotos();
         }
         
         function deleteSSPhoto(index) {
@@ -9302,6 +9373,12 @@
             const photos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
             photos.splice(index, 1);
             localStorage.setItem('ssPhotos', JSON.stringify(photos));
+            
+            // Firebase 동기화
+            if (firebaseReady) {
+                saveToFirestore('ssPhotos', { list: photos });
+            }
+            
             loadSSPhotos();
         }
         
@@ -9327,16 +9404,19 @@
             let html = '';
             
             photos.forEach((photo, index) => {
-                // imageUrl 또는 image (base64) 사용
-                const imageSrc = photo.imageUrl || photo.image;
+                // 여러 이미지 지원: images 배열 또는 기존 imageUrl/image 사용
+                const images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
+                const thumbnailSrc = images[0] || '';
+                const imageCount = images.length;
                 
-                if (!imageSrc) return; // 이미지가 없으면 스킵
+                if (!thumbnailSrc) return; // 이미지가 없으면 스킵
                 
                 html += `
                     <div class="gallery-item" data-category="${photo.category}" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                        <div style="position: relative; cursor: pointer;" onclick="viewPhoto('${imageSrc.replace(/'/g, "\\'")}')">
-                            <img src="${imageSrc}" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f1f5f9%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>이미지 없음</text></svg>'">
+                        <div style="position: relative; cursor: pointer;" onclick="viewGalleryAlbum(${index})">
+                            <img src="${thumbnailSrc}" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f1f5f9%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>이미지 로드 실패</text></svg>'">
                             <div style="position: absolute; top: 10px; left: 10px; background: ${getCategoryColor(photo.category)}; color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.75em;">${getCategoryName(photo.category)}</div>
+                            ${imageCount > 1 ? `<div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.8em;">📷 ${imageCount}장</div>` : ''}
                         </div>
                         <div style="padding: 15px;">
                             <h4 style="margin: 0 0 8px 0; color: #1e3a5f; font-size: 1em;">${photo.title}</h4>
@@ -9349,6 +9429,49 @@
             });
             
             grid.innerHTML = html || '<div style="text-align: center; padding: 60px 20px; color: #94a3b8; grid-column: 1 / -1;"><p>표시할 사진이 없습니다</p></div>';
+        }
+        
+        // 갤러리 앨범 보기 (여러 이미지)
+        function viewGalleryAlbum(index) {
+            const photos = JSON.parse(localStorage.getItem('churchGallery') || '[]');
+            const photo = photos[index];
+            if (!photo) return;
+            
+            const images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
+            if (images.length === 0) return;
+            
+            // 단일 이미지면 기존 뷰어 사용
+            if (images.length === 1) {
+                viewPhoto(images[0]);
+                return;
+            }
+            
+            // 여러 이미지면 앨범 뷰어 표시
+            let html = `
+                <div id="galleryAlbumViewer" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.5);">
+                        <h3 style="margin: 0; color: white;">${photo.title} (${images.length}장)</h3>
+                        <button onclick="document.getElementById('galleryAlbumViewer').remove()" style="background: none; border: none; color: white; font-size: 2em; cursor: pointer;">✕</button>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto;">
+            `;
+            
+            images.forEach((img, i) => {
+                html += `
+                    <div style="cursor: pointer;" onclick="viewPhoto('${img.replace(/'/g, "\\'")}')">
+                        <img src="${img}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onerror="this.parentElement.style.display='none'">
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', html);
         }
         
         function getCategoryColor(category) {
@@ -9399,97 +9522,57 @@
             document.getElementById('photoDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('photoCategory').value = 'worship';
             document.getElementById('photoDescription').value = '';
-            document.getElementById('photoPreviewContainer').innerHTML = '';
-            document.getElementById('photoDropZone').style.borderColor = '#cbd5e0';
-            photoFileData = null;
+            document.getElementById('galleryPhotoPreviewContainer').innerHTML = '';
+            
+            // 링크 입력란 초기화
+            document.getElementById('galleryPhotoLinksContainer').innerHTML = `
+                <div class="gallery-photo-link-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" class="form-control gallery-photo-link" placeholder="https://i.imgur.com/xxxxx.jpg" style="flex: 1;" oninput="previewGalleryPhotoLinks()">
+                    <button type="button" onclick="removeGalleryPhotoLink(this)" class="btn btn-danger" style="padding: 8px 12px;">✕</button>
+                </div>
+            `;
         }
         
         function closeAddPhotoModal() {
             document.getElementById('addPhotoModal').style.display = 'none';
-            photoFileData = null;
-            document.getElementById('photoImageUrl').value = '';
-            document.getElementById('photoPreviewContainer').innerHTML = '';
         }
         
-        function handlePhotoFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            if (!file.type.startsWith('image/')) {
-                alert('이미지 파일만 업로드 가능합니다.');
-                input.value = '';
-                return;
-            }
-            
-            if (file.size > 5 * 1024 * 1024) {
-                alert('파일 크기는 5MB 이하만 가능합니다.');
-                input.value = '';
-                return;
-            }
-            
-            // 이미지 자동 리사이즈 및 압축
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    // 최대 크기 설정 (가로 1200px, 세로 900px)
-                    const maxWidth = 1200;
-                    const maxHeight = 900;
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    // 비율 유지하면서 리사이즈
-                    if (width > maxWidth) {
-                        height = Math.round(height * maxWidth / width);
-                        width = maxWidth;
-                    }
-                    if (height > maxHeight) {
-                        width = Math.round(width * maxHeight / height);
-                        height = maxHeight;
-                    }
-                    
-                    // Canvas로 리사이즈
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // JPEG로 압축 (품질 0.7 = 70%)
-                    photoFileData = canvas.toDataURL('image/jpeg', 0.7);
-                    
-                    // 압축 결과 표시
-                    const originalSize = (file.size / 1024).toFixed(1);
-                    const compressedSize = (photoFileData.length * 0.75 / 1024).toFixed(1);
-                    
-                    document.getElementById('photoPreviewContainer').innerHTML = `
-                        <img src="${photoFileData}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px;">
-                        <div style="margin-top: 8px; font-size: 0.8em; color: #666;">
-                            📐 ${width} x ${height}px | 
-                            📦 ${originalSize}KB → <span style="color: #16a34a; font-weight: 600;">${compressedSize}KB</span>
-                            (${Math.round((1 - compressedSize/originalSize) * 100)}% 압축)
-                        </div>
-                    `;
-                    document.getElementById('photoDropZone').style.borderColor = '#16a34a';
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        // 사진 URL 미리보기
-        function previewPhotoUrl() {
-            const url = document.getElementById('photoImageUrl').value.trim();
-            if (!url) {
-                alert('이미지 URL을 입력하세요.');
-                return;
-            }
-            
-            const container = document.getElementById('photoPreviewContainer');
-            container.innerHTML = `
-                <img src="${url}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px;" onerror="this.parentElement.innerHTML='<p style=\\'color: red;\\'>이미지를 불러올 수 없습니다.</p>'">
-                <p style="margin-top: 8px; font-size: 0.8em; color: #16a34a;">✅ URL 이미지가 적용됩니다</p>
+        // 갤러리 이미지 링크 추가
+        function addGalleryPhotoLink() {
+            const container = document.getElementById('galleryPhotoLinksContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'gallery-photo-link-row';
+            newRow.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
+            newRow.innerHTML = `
+                <input type="text" class="form-control gallery-photo-link" placeholder="https://i.imgur.com/xxxxx.jpg" style="flex: 1;" oninput="previewGalleryPhotoLinks()">
+                <button type="button" onclick="removeGalleryPhotoLink(this)" class="btn btn-danger" style="padding: 8px 12px;">✕</button>
             `;
+            container.appendChild(newRow);
+        }
+        
+        // 갤러리 이미지 링크 삭제
+        function removeGalleryPhotoLink(btn) {
+            const container = document.getElementById('galleryPhotoLinksContainer');
+            if (container.children.length > 1) {
+                btn.parentElement.remove();
+                previewGalleryPhotoLinks();
+            }
+        }
+        
+        // 갤러리 이미지 미리보기
+        function previewGalleryPhotoLinks() {
+            const links = document.querySelectorAll('.gallery-photo-link');
+            const previewContainer = document.getElementById('galleryPhotoPreviewContainer');
+            let html = '';
+            
+            links.forEach(input => {
+                const url = input.value.trim();
+                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'">`;
+                }
+            });
+            
+            previewContainer.innerHTML = html;
         }
         
         function savePhoto() {
@@ -9497,29 +9580,33 @@
             const date = document.getElementById('photoDate').value;
             const category = document.getElementById('photoCategory').value;
             const description = document.getElementById('photoDescription').value.trim();
-            const imageUrl = document.getElementById('photoImageUrl').value.trim();
+            
+            // 모든 링크 수집
+            const links = document.querySelectorAll('.gallery-photo-link');
+            const images = [];
+            links.forEach(input => {
+                const url = input.value.trim();
+                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    images.push(url);
+                }
+            });
             
             if (!title) {
                 alert('제목을 입력해주세요.');
                 return;
             }
-            if (!date) {
-                alert('날짜를 선택해주세요.');
-                return;
-            }
-            if (!photoFileData && !imageUrl) {
-                alert('이미지 URL을 입력하거나 사진을 선택해주세요.');
+            if (images.length === 0) {
+                alert('최소 하나의 이미지 링크를 입력해주세요.');
                 return;
             }
             
             const photos = JSON.parse(localStorage.getItem('churchGallery') || '[]');
             photos.unshift({
                 title: title,
-                date: date,
+                date: date || new Date().toISOString().split('T')[0],
                 category: category,
                 description: description,
-                image: photoFileData || '',
-                imageUrl: imageUrl || '',
+                images: images,
                 uploadedAt: new Date().toISOString()
             });
             
