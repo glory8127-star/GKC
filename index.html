@@ -8361,7 +8361,13 @@
             });
             
             container.innerHTML = html;
-            updatePastorUI();
+            
+            // 관리자인 경우 삭제 버튼 표시
+            if (currentUser && currentUser.role === '관리자') {
+                container.querySelectorAll('.pastor-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+            }
         }
         
         // Glory Clip 영상 삭제
