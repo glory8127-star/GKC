@@ -9208,11 +9208,25 @@
         
         // 다음세대부 행사 사진 관리
         function loadSSPhotos() {
-            const photos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
+            // 다음세대부 전용 사진
+            const ssPhotos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
+            // 갤러리에서 다음세대부 카테고리 사진도 가져오기
+            const galleryPhotos = JSON.parse(localStorage.getItem('churchGallery') || '[]')
+                .filter(p => p.category === 'sundayschool');
+            
+            // 두 데이터 합치기 (갤러리 사진에 source 표시)
+            const allPhotos = [
+                ...ssPhotos.map((p, i) => ({ ...p, source: 'ss', originalIndex: i })),
+                ...galleryPhotos.map((p, i) => ({ ...p, source: 'gallery', originalIndex: i }))
+            ];
+            
+            // 날짜순 정렬 (최신순)
+            allPhotos.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             const grid = document.getElementById('ssPhotoGrid');
             const isPastor = currentUser && currentUser.role === '관리자';
             
-            if (photos.length === 0) {
+            if (allPhotos.length === 0) {
                 grid.innerHTML = `
                     <div style="text-align: center; padding: 40px 20px; color: #94a3b8; grid-column: 1 / -1;">
                         <div style="font-size: 3em; margin-bottom: 10px;">📷</div>
@@ -9223,9 +9237,9 @@
             }
             
             let html = '';
-            photos.forEach((photo, index) => {
+            allPhotos.forEach((photo, index) => {
                 // 여러 이미지가 있으면 첫 번째 이미지를 썸네일로 사용
-                let images = photo.images || (photo.image ? [photo.image] : []);
+                let images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
                 // imgur URL 자동 변환 적용
                 images = images.map(url => convertImgurUrl(url));
                 const thumbnailSrc = images[0] || '';
@@ -9233,32 +9247,40 @@
                 
                 if (!thumbnailSrc) return;
                 
+                // 삭제 함수는 source에 따라 다르게 호출
+                const deleteFunc = photo.source === 'gallery' 
+                    ? `deletePhoto(${photo.originalIndex})` 
+                    : `deleteSSPhoto(${photo.originalIndex})`;
+                
                 html += `
                     <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #fed7aa;">
-                        <div style="cursor: pointer; position: relative;" onclick="viewSSPhotoAlbum(${index})">
+                        <div style="cursor: pointer; position: relative;" onclick="viewSSPhotoAlbumCombined(${index})">
                             <img src="${thumbnailSrc}" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f1f5f9%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>이미지 로드 실패</text></svg>'">
                             ${imageCount > 1 ? `<div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.8em;">📷 ${imageCount}장</div>` : ''}
+                            ${photo.source === 'gallery' ? `<div style="position: absolute; top: 10px; left: 10px; background: #667eea; color: white; padding: 4px 8px; border-radius: 10px; font-size: 0.7em;">갤러리</div>` : ''}
                         </div>
                         <div style="padding: 15px;">
                             <h4 style="margin: 0 0 8px 0; color: #c2410c; font-size: 1em;">${photo.title}</h4>
                             <p style="margin: 0 0 8px 0; color: #64748b; font-size: 0.85em;">${photo.date}</p>
                             ${photo.description ? `<p style="margin: 0; color: #94a3b8; font-size: 0.85em;">${photo.description}</p>` : ''}
-                            ${isPastor ? `<button onclick="deleteSSPhoto(${index})" style="margin-top: 10px; background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">삭제</button>` : ''}
+                            ${isPastor ? `<button onclick="${deleteFunc}; setTimeout(loadSSPhotos, 100);" style="margin-top: 10px; background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">삭제</button>` : ''}
                         </div>
                     </div>
                 `;
             });
             
             grid.innerHTML = html;
+            
+            // 합쳐진 사진 목록을 전역에 저장 (앨범 보기용)
+            window.combinedSSPhotos = allPhotos;
         }
         
-        // 다음세대부 앨범 보기 (여러 이미지)
-        function viewSSPhotoAlbum(index) {
-            const photos = JSON.parse(localStorage.getItem('ssPhotos') || '[]');
-            const photo = photos[index];
+        // 다음세대부 앨범 보기 (합쳐진 목록에서)
+        function viewSSPhotoAlbumCombined(index) {
+            const photo = window.combinedSSPhotos ? window.combinedSSPhotos[index] : null;
             if (!photo) return;
             
-            let images = photo.images || (photo.image ? [photo.image] : []);
+            let images = photo.images || (photo.imageUrl ? [photo.imageUrl] : (photo.image ? [photo.image] : []));
             // imgur URL 자동 변환 적용
             images = images.map(url => convertImgurUrl(url));
             if (images.length === 0) return;
