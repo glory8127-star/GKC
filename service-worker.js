@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gkc-cache-v32';
+const CACHE_NAME = 'gkc-cache-v33';
 const urlsToCache = [
     '/',
     '/index.html',
