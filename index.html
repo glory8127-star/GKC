@@ -3195,6 +3195,7 @@
                                     <option value="선교헌금">선교헌금</option>
                                     <option value="구제헌금">구제헌금</option>
                                     <option value="특별헌금">특별헌금</option>
+                                    <option value="작정헌금">작정헌금</option>
                                     <option value="기타">기타</option>
                                 </select>
                             </div>
@@ -3284,6 +3285,7 @@
                                     <option value="선교헌금">선교헌금</option>
                                     <option value="구제헌금">구제헌금</option>
                                     <option value="특별헌금">특별헌금</option>
+                                    <option value="작정헌금">작정헌금</option>
                                 </select>
                             </div>
                             <div class="form-group" style="align-self: flex-end;">
@@ -3514,8 +3516,10 @@
                 <div id="budgetFormContainer" style="padding: 20px; max-height: 400px; overflow-y: auto;">
                     <!-- 예산 편성 폼이 동적으로 생성됨 -->
                 </div>
+                <div style="padding: 10px 20px; background: #fffbeb; border-top: 1px solid #fcd34d; text-align: center;">
+                    <span style="color: #92400e; font-size: 0.9em;">💡 부서 추가/삭제는 <strong>[부서관리]</strong>에서 해주세요.</span>
+                </div>
                 <div class="btn-group" style="justify-content: center;">
-                    <button class="btn btn-success" onclick="addBudgetDepartment()">+ 부서 추가</button>
                     <button class="btn btn-primary" onclick="saveBudget()">저장</button>
                     <button class="btn btn-secondary" onclick="closeBudgetModal()">닫기</button>
                 </div>
@@ -11666,7 +11670,7 @@
             }
             
             // 헌금 종류 목록
-            const offeringTypes = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const offeringTypes = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
             
             // 교인별 헌금 집계 (교적관리 연동)
             const memberOfferingMap = {};
@@ -12023,37 +12027,82 @@
         function loadBudgetForm() {
             // Firebase에서 불러온 최신 데이터 다시 읽기
             budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+            const deptData = JSON.parse(localStorage.getItem('departments') || '[]');
             
             const container = document.getElementById('budgetFormContainer');
             const modalYearSelect = document.getElementById('budgetModalYear');
             const selectedYear = modalYearSelect ? parseInt(modalYearSelect.value) : new Date().getFullYear();
             
-            const yearBudgets = budgets.filter(b => b.year === selectedYear);
-            
-            let html = '';
-            yearBudgets.forEach((dept, index) => {
-                // 전체 budgets에서의 실제 인덱스 찾기
-                const realIndex = budgets.findIndex(b => b.name === dept.name && b.year === selectedYear);
-                html += `
-                    <div class="budget-item" style="background: #f7fafc; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <input type="text" class="form-control" value="${dept.name}" 
-                                   onchange="updateBudgetDeptName(${realIndex}, this.value)"
-                                   style="width: 200px; font-weight: 600;">
-                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="removeBudgetDepartment(${realIndex})">삭제</button>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">연간 예산 ($)</label>
-                            <input type="text" class="form-control" value="${dept.budget.toLocaleString()}" 
-                                   onchange="updateBudgetAmount(${realIndex}, this.value)"
-                                   oninput="formatAmountInput(this)"
-                                   placeholder="0" inputmode="decimal">
-                        </div>
+            if (deptData.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <div style="font-size: 3em; margin-bottom: 15px;">📋</div>
+                        <p style="margin-bottom: 10px;">등록된 부서가 없습니다.</p>
+                        <p style="font-size: 0.9em; color: #999;">먼저 <strong>[부서관리]</strong>에서 부서를 추가해주세요.</p>
                     </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #e2e8f0;">
+                            <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #cbd5e0;">부서명</th>
+                            <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #cbd5e0; width: 200px;">${selectedYear}년 예산</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            deptData.forEach((dept) => {
+                // 해당 부서의 선택된 년도 예산 찾기
+                let budgetItem = budgets.find(b => b.name === dept.name && b.year === selectedYear);
+                
+                // 없으면 새로 생성
+                if (!budgetItem) {
+                    budgetItem = {
+                        name: dept.name,
+                        budget: 0,
+                        categories: ['기타'],
+                        year: selectedYear
+                    };
+                    budgets.push(budgetItem);
+                }
+                
+                const realIndex = budgets.findIndex(b => b.name === dept.name && b.year === selectedYear);
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 10px; height: 10px; border-radius: 50%; background: ${dept.color || '#667eea'};"></div>
+                                <span style="font-weight: 600;">${dept.name}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 12px;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="color: #666;">$</span>
+                                <input type="text" class="form-control" value="${budgetItem.budget > 0 ? budgetItem.budget.toLocaleString() : ''}" 
+                                       onchange="updateBudgetAmount(${realIndex}, this.value)"
+                                       oninput="formatAmountInput(this)"
+                                       placeholder="0" inputmode="decimal"
+                                       style="text-align: right;">
+                            </div>
+                        </td>
+                    </tr>
                 `;
             });
             
-            container.innerHTML = html || `<p style="text-align: center; color: #666;">${selectedYear}년 예산이 없습니다. [+ 부서 추가] 버튼을 클릭하세요.</p>`;
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+            
+            // 새로 추가된 예산 항목 저장
+            localStorage.setItem('churchBudgets', JSON.stringify(budgets));
         }
         
         // 부서 예산 금액 업데이트
@@ -14671,7 +14720,7 @@
             }
             
             // 종류별 집계
-            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
             const colors = ['#48bb78', '#4299e1', '#ed8936', '#9f7aea', '#f56565', '#38b2ac', '#d69e2e', '#718096'];
             const typeTotals = {};
             types.forEach(t => typeTotals[t] = 0);
@@ -14910,7 +14959,7 @@
             });
             
             // 영어 컬럼명 매핑
-            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
             const typesEn = ['Tithe', 'Thanksgiving', 'Sunday', 'Building', 'Mission', 'Benevolence', 'Special', 'Other'];
             
             let html = `
@@ -15018,7 +15067,7 @@
                 memberTotals[o.name].details[o.type] = (memberTotals[o.name].details[o.type] || 0) + o.amount;
             });
             
-            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
             const typesEn = ['Tithe', 'Thanksgiving', 'Sunday', 'Building', 'Mission', 'Benevolence', 'Special', 'Other'];
             
             // CSV 생성
@@ -15144,7 +15193,7 @@
                         <tbody>
                 `;
                 
-                const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+                const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
                 types.forEach(type => {
                     const count = filteredIncome.filter(o => o.type === type).length;
                     const amount = typeTotals[type] || 0;
@@ -15381,7 +15430,7 @@
                 csv += '=== 수입 내역 (종류별 합계) ===\n';
                 csv += '헌금 종류,건수,금액\n';
                 
-                const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '기타'];
+                const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
                 types.forEach(type => {
                     const items = filteredIncome.filter(o => o.type === type);
                     if (items.length > 0) {
