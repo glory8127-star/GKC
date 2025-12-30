@@ -4994,6 +4994,7 @@
                         localStorage.setItem('departments', JSON.stringify(newData));
                         if (typeof loadDepartmentList === 'function') loadDepartmentList();
                         if (typeof loadDashboard === 'function') loadDashboard();
+                        if (typeof loadOrgChart === 'function') loadOrgChart(); // 조직도 업데이트
                     }
                 }
             });
@@ -7553,9 +7554,9 @@
             const membersEl = document.getElementById('orgMembers');
             if (membersEl) membersEl.textContent = memberCount > 0 ? memberCount + '명' : members.length + '명';
             
-            // 부서 및 팀 표시
+            // 부서 및 팀 표시 (departments.teams + churchDeptTeams 병합)
             const depts = JSON.parse(localStorage.getItem('departments') || '[]');
-            const deptTeams = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
+            const deptTeamsFromOrg = JSON.parse(localStorage.getItem('churchDeptTeams') || '{}');
             const deptContainer = document.getElementById('orgDepartmentsWithTeams');
             
             if (deptContainer) {
@@ -7576,7 +7577,18 @@
                             <tbody>
                                 <tr>
                                     ${depts.map(dept => {
-                                        const teams = deptTeams[dept.name] || [];
+                                        // 부서관리의 teams와 조직도의 churchDeptTeams를 병합
+                                        const teamsFromDept = dept.teams || [];
+                                        const teamsFromOrg = deptTeamsFromOrg[dept.name] || [];
+                                        
+                                        // 팀 이름 기준으로 중복 제거하며 병합
+                                        const teamMap = new Map();
+                                        teamsFromDept.forEach(t => teamMap.set(t.name, t));
+                                        teamsFromOrg.forEach(t => {
+                                            if (!teamMap.has(t.name)) teamMap.set(t.name, t);
+                                        });
+                                        const teams = Array.from(teamMap.values());
+                                        
                                         return `
                                             <td style="width: ${colWidth}%; padding: 10px 8px; text-align: center; vertical-align: top; border-right: 1px solid #e2e8f0; background: #f8fafc;">
                                                 ${teams.length > 0 ? teams.map(team => `
@@ -10970,6 +10982,9 @@
                 localStorage.setItem('departments', JSON.stringify(departments));
                 saveDepartmentsToFirebase(); // Firebase 동기화
                 loadDepartmentList();
+                
+                // 조직도도 업데이트
+                if (typeof loadOrgChart === 'function') loadOrgChart();
             }
         }
         
@@ -11295,9 +11310,12 @@
             }
             
             localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
+            saveDepartmentsToFirebase(); // Firebase 동기화
             closeTeamModal();
             loadDepartmentList();
+            
+            // 조직도도 업데이트
+            if (typeof loadOrgChart === 'function') loadOrgChart();
         });
         
         function deleteTeam(teamIndex) {
@@ -11308,6 +11326,9 @@
                 saveDepartmentsToFirebase(); // Firebase 동기화
                 loadTeamsList(deptIndex);
                 loadDepartmentList();
+                
+                // 조직도도 업데이트
+                if (typeof loadOrgChart === 'function') loadOrgChart();
             }
         }
         
