@@ -904,6 +904,55 @@
         function formatMoney(amount) {
             return '$' + parseFloat(amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
+        
+        // 금액 입력 시 자동 콤마 추가
+        function formatAmountInput(input) {
+            // 커서 위치 저장
+            let cursorPos = input.selectionStart;
+            let oldLength = input.value.length;
+            
+            // 숫자와 소수점만 남기기
+            let value = input.value.replace(/[^\d.]/g, '');
+            
+            // 소수점이 여러 개면 첫 번째만 유지
+            let parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            // 정수 부분과 소수 부분 분리
+            parts = value.split('.');
+            let intPart = parts[0] || '';
+            let decPart = parts.length > 1 ? parts[1] : '';
+            
+            // 정수 부분에 천 단위 콤마 추가
+            if (intPart) {
+                intPart = parseInt(intPart, 10).toLocaleString('en-US');
+            }
+            
+            // 소수점 이하 2자리까지만
+            if (decPart.length > 2) {
+                decPart = decPart.substring(0, 2);
+            }
+            
+            // 최종 값 설정
+            if (parts.length > 1) {
+                input.value = intPart + '.' + decPart;
+            } else {
+                input.value = intPart;
+            }
+            
+            // 커서 위치 조정
+            let newLength = input.value.length;
+            cursorPos = cursorPos + (newLength - oldLength);
+            if (cursorPos < 0) cursorPos = 0;
+            input.setSelectionRange(cursorPos, cursorPos);
+        }
+        
+        // 콤마 제거 후 숫자 반환
+        function parseAmount(value) {
+            return parseFloat((value || '0').replace(/,/g, '')) || 0;
+        }
     </script>
 </head>
 <body>
@@ -3155,7 +3204,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">금액 ($) *</label>
-                                <input type="number" class="form-control" id="offeringAmount" required placeholder="0.00" step="0.01" min="0">
+                                <input type="text" class="form-control" id="offeringAmount" required placeholder="0.00" oninput="formatAmountInput(this)" inputmode="decimal">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">결제 방법</label>
@@ -3334,7 +3383,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">금액 ($) *</label>
-                                <input type="number" class="form-control" id="expenseAmount" required placeholder="0.00" step="0.01" min="0">
+                                <input type="text" class="form-control" id="expenseAmount" required placeholder="0.00" oninput="formatAmountInput(this)" inputmode="decimal">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">결제 방법</label>
@@ -3431,7 +3480,15 @@
                 
                 <!-- 부서별 예산 현황 시각화 (맨 아래) -->
                 <div class="card" style="margin-top: 20px;">
-                    <h2>📊 부서별 예산 현황 (${new Date().getFullYear()}년)</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                        <h2 style="margin: 0;">📊 부서별 예산 현황</h2>
+                        <select id="budgetYearSelect" onchange="updateBudgetVisualization()" class="form-control" style="width: auto; min-width: 120px;">
+                            <option value="2024">2024년</option>
+                            <option value="2025" selected>2025년</option>
+                            <option value="2026">2026년</option>
+                            <option value="2027">2027년</option>
+                        </select>
+                    </div>
                     <div id="budgetVisualization">
                         <p style="text-align: center; color: #666;">예산이 편성되지 않았습니다. [예산 편성] 버튼을 클릭하세요.</p>
                     </div>
@@ -3443,9 +3500,18 @@
         <div id="budgetModal" class="modal">
             <div class="modal-content" style="max-width: 700px;">
                 <div class="modal-header">
-                    <h2>💰 ${new Date().getFullYear()}년 예산 편성</h2>
+                    <h2>💰 예산 편성</h2>
                 </div>
-                <div id="budgetFormContainer">
+                <div style="padding: 15px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <label class="form-label" style="margin-bottom: 8px; font-weight: 600;">년도 선택</label>
+                    <select id="budgetModalYear" onchange="loadBudgetForm()" class="form-control" style="max-width: 200px;">
+                        <option value="2024">2024년</option>
+                        <option value="2025">2025년</option>
+                        <option value="2026">2026년</option>
+                        <option value="2027">2027년</option>
+                    </select>
+                </div>
+                <div id="budgetFormContainer" style="padding: 20px; max-height: 400px; overflow-y: auto;">
                     <!-- 예산 편성 폼이 동적으로 생성됨 -->
                 </div>
                 <div class="btn-group" style="justify-content: center;">
@@ -11329,7 +11395,7 @@
                     date: lastDate,
                     name: document.getElementById('offeringName').value,
                     type: lastType,
-                    amount: parseFloat(document.getElementById('offeringAmount').value),
+                    amount: parseAmount(document.getElementById('offeringAmount').value),
                     payment: payment,
                     checkNumber: payment === 'Check' ? checkNumber : '',
                     memo: document.getElementById('offeringMemo').value
@@ -11851,18 +11917,19 @@
             const container = document.getElementById('budgetVisualization');
             if (!container) return;
             
-            const currentYear = new Date().getFullYear();
-            const yearBudgets = budgets.filter(b => b.year === currentYear);
+            const yearSelect = document.getElementById('budgetYearSelect');
+            const selectedYear = yearSelect ? parseInt(yearSelect.value) : new Date().getFullYear();
+            const yearBudgets = budgets.filter(b => b.year === selectedYear);
             
             if (yearBudgets.length === 0 || yearBudgets.every(b => b.budget === 0)) {
-                container.innerHTML = '<p style="text-align: center; color: #666;">예산이 편성되지 않았습니다. [예산 편성] 버튼을 클릭하세요.</p>';
+                container.innerHTML = `<p style="text-align: center; color: #666;">${selectedYear}년 예산이 편성되지 않았습니다. [예산 편성] 버튼을 클릭하세요.</p>`;
                 return;
             }
             
-            // 올해 지출 집계
+            // 해당 년도 지출 집계
             const yearExpenses = expenses.filter(e => {
                 const d = new Date(e.date);
-                return d.getFullYear() === currentYear;
+                return d.getFullYear() === selectedYear;
             });
             
             let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
@@ -11881,7 +11948,7 @@
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                 <span style="font-weight: 600;">${dept.name}</span>
                                 <span style="color: ${isOver ? '#e53e3e' : '#4a5568'};">
-                                    $${spent.toLocaleString()} / $${dept.budget.toLocaleString()} 
+                                    ${formatMoney(spent)} / ${formatMoney(dept.budget)} 
                                     (${percent.toFixed(1)}%)
                                 </span>
                             </div>
@@ -11896,9 +11963,9 @@
                                 ${isOver ? `<div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #e53e3e; font-weight: 600;">⚠️ 초과</div>` : ''}
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85em; color: #718096;">
-                                <span>지출: $${spent.toLocaleString()}</span>
+                                <span>지출: ${formatMoney(spent)}</span>
                                 <span style="color: ${remaining < 0 ? '#e53e3e' : '#48bb78'};">
-                                    잔여: ${remaining < 0 ? '-' : ''}$${Math.abs(remaining).toLocaleString()}
+                                    잔여: ${remaining < 0 ? '-' : ''}${formatMoney(Math.abs(remaining))}
                                 </span>
                             </div>
                         </div>
@@ -11909,9 +11976,16 @@
             html += '</div>';
             container.innerHTML = html;
             
-            // 상단 통계 카드 업데이트
-            const totalBudget = yearBudgets.reduce((sum, b) => sum + b.budget, 0);
-            const totalExpense = yearExpenses.reduce((sum, e) => sum + e.amount, 0);
+            // 상단 통계 카드 업데이트 (현재 년도 기준)
+            const currentYear = new Date().getFullYear();
+            const currentYearBudgets = budgets.filter(b => b.year === currentYear);
+            const currentYearExpenses = expenses.filter(e => {
+                const d = new Date(e.date);
+                return d.getFullYear() === currentYear;
+            });
+            
+            const totalBudget = currentYearBudgets.reduce((sum, b) => sum + b.budget, 0);
+            const totalExpense = currentYearExpenses.reduce((sum, e) => sum + e.amount, 0);
             const remainingBudget = totalBudget - totalExpense;
             const executionRate = totalBudget > 0 ? (totalExpense / totalBudget * 100) : 0;
             
@@ -11920,10 +11994,10 @@
             const remainingBudgetEl = document.getElementById('remainingBudgetYear');
             const executionRateEl = document.getElementById('budgetExecutionRate');
             
-            if (totalBudgetEl) totalBudgetEl.textContent = '$' + totalBudget.toLocaleString();
-            if (totalExpenseEl) totalExpenseEl.textContent = '$' + totalExpense.toLocaleString();
+            if (totalBudgetEl) totalBudgetEl.textContent = formatMoney(totalBudget);
+            if (totalExpenseEl) totalExpenseEl.textContent = formatMoney(totalExpense);
             if (remainingBudgetEl) {
-                remainingBudgetEl.textContent = (remainingBudget < 0 ? '-$' : '$') + Math.abs(remainingBudget).toLocaleString();
+                remainingBudgetEl.textContent = (remainingBudget < 0 ? '-' : '') + formatMoney(Math.abs(remainingBudget));
                 remainingBudgetEl.style.color = remainingBudget < 0 ? '#fbd38d' : 'white';
             }
             if (executionRateEl) executionRateEl.textContent = executionRate.toFixed(1) + '%';
@@ -11931,6 +12005,12 @@
         
         // 예산 편성 모달 표시
         function showBudgetModal() {
+            // 현재 예산 현황에서 선택된 년도를 모달에 반영
+            const yearSelect = document.getElementById('budgetYearSelect');
+            const modalYearSelect = document.getElementById('budgetModalYear');
+            if (yearSelect && modalYearSelect) {
+                modalYearSelect.value = yearSelect.value;
+            }
             document.getElementById('budgetModal').classList.add('active');
             loadBudgetForm();
         }
@@ -11945,39 +12025,43 @@
             budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
             
             const container = document.getElementById('budgetFormContainer');
-            const currentYear = new Date().getFullYear();
+            const modalYearSelect = document.getElementById('budgetModalYear');
+            const selectedYear = modalYearSelect ? parseInt(modalYearSelect.value) : new Date().getFullYear();
+            
+            const yearBudgets = budgets.filter(b => b.year === selectedYear);
             
             let html = '';
-            budgets.filter(b => b.year === currentYear).forEach((dept, index) => {
+            yearBudgets.forEach((dept, index) => {
+                // 전체 budgets에서의 실제 인덱스 찾기
+                const realIndex = budgets.findIndex(b => b.name === dept.name && b.year === selectedYear);
                 html += `
                     <div class="budget-item" style="background: #f7fafc; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <input type="text" class="form-control" value="${dept.name}" 
-                                   onchange="updateBudgetDeptName(${index}, this.value)"
+                                   onchange="updateBudgetDeptName(${realIndex}, this.value)"
                                    style="width: 200px; font-weight: 600;">
-                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="removeBudgetDepartment(${index})">삭제</button>
+                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="removeBudgetDepartment(${realIndex})">삭제</button>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label">연간 예산 ($)</label>
-                            <input type="number" class="form-control" value="${dept.budget}" 
-                                   onchange="updateBudgetAmount(${index}, this.value)"
-                                   placeholder="0" min="0" step="100">
+                            <input type="text" class="form-control" value="${dept.budget.toLocaleString()}" 
+                                   onchange="updateBudgetAmount(${realIndex}, this.value)"
+                                   oninput="formatAmountInput(this)"
+                                   placeholder="0" inputmode="decimal">
                         </div>
                     </div>
                 `;
             });
             
-            container.innerHTML = html || '<p style="text-align: center; color: #666;">부서가 없습니다. [+ 부서 추가] 버튼을 클릭하세요.</p>';
+            container.innerHTML = html || `<p style="text-align: center; color: #666;">${selectedYear}년 예산이 없습니다. [+ 부서 추가] 버튼을 클릭하세요.</p>`;
         }
         
         // 부서 예산 금액 업데이트
         function updateBudgetAmount(index, value) {
-            const currentYear = new Date().getFullYear();
-            const yearBudgets = budgets.filter(b => b.year === currentYear);
-            if (yearBudgets[index]) {
-                const deptName = yearBudgets[index].name;
-                const newBudget = parseFloat(value) || 0;
-                yearBudgets[index].budget = newBudget;
+            if (budgets[index]) {
+                const deptName = budgets[index].name;
+                const newBudget = parseAmount(value);
+                budgets[index].budget = newBudget;
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
                 saveChurchBudgetsToFirebase(); // Firebase 동기화
                 
@@ -11988,11 +12072,9 @@
         
         // 부서 이름 업데이트
         function updateBudgetDeptName(index, value) {
-            const currentYear = new Date().getFullYear();
-            const yearBudgets = budgets.filter(b => b.year === currentYear);
-            if (yearBudgets[index]) {
-                const oldName = yearBudgets[index].name;
-                yearBudgets[index].name = value;
+            if (budgets[index]) {
+                const oldName = budgets[index].name;
+                budgets[index].name = value;
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
                 saveChurchBudgetsToFirebase(); // Firebase 동기화
                 
@@ -12001,66 +12083,76 @@
                 if (deptIndex >= 0) {
                     departments[deptIndex].name = value;
                     localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
+                    saveDepartmentsToFirebase(); // Firebase 동기화
                 }
             }
         }
         
         // 부서 추가
         function addBudgetDepartment() {
-            const currentYear = new Date().getFullYear();
-            const newDeptName = '새 부서 ' + (budgets.length + 1);
+            const modalYearSelect = document.getElementById('budgetModalYear');
+            const selectedYear = modalYearSelect ? parseInt(modalYearSelect.value) : new Date().getFullYear();
+            const yearBudgets = budgets.filter(b => b.year === selectedYear);
+            const newDeptName = '새 부서 ' + (yearBudgets.length + 1);
+            
             budgets.push({
                 name: newDeptName,
                 budget: 0,
                 categories: ['기타'],
-                year: currentYear
+                year: selectedYear
             });
             localStorage.setItem('churchBudgets', JSON.stringify(budgets));
-                saveChurchBudgetsToFirebase(); // Firebase 동기화
+            saveChurchBudgetsToFirebase(); // Firebase 동기화
             
-            // 부서관리에도 추가
-            departments.push({
-                name: newDeptName,
-                color: '#667eea',
-                leader: '',
-                description: '',
-                meeting: '',
-                budget: 0,
-                teams: [],
-                expenses: [],
-                eventPlan: []
-            });
-            localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
+            // 부서관리에도 추가 (현재 년도인 경우에만)
+            if (selectedYear === new Date().getFullYear()) {
+                const existingDept = departments.find(d => d.name === newDeptName);
+                if (!existingDept) {
+                    departments.push({
+                        name: newDeptName,
+                        color: '#667eea',
+                        leader: '',
+                        description: '',
+                        meeting: '',
+                        budget: 0,
+                        teams: [],
+                        expenses: [],
+                        eventPlan: []
+                    });
+                    localStorage.setItem('departments', JSON.stringify(departments));
+                    saveDepartmentsToFirebase(); // Firebase 동기화
+                }
+            }
             
             loadBudgetForm();
         }
         
         // 부서 삭제
         function removeBudgetDepartment(index) {
-            const currentYear = new Date().getFullYear();
-            const yearBudgets = budgets.filter(b => b.year === currentYear);
-            const deptToRemove = yearBudgets[index];
+            const deptToRemove = budgets[index];
+            if (!deptToRemove) return;
             
-            if (confirm(`"${deptToRemove.name}" 부서를 삭제하시겠습니까?`)) {
-                const globalIndex = budgets.findIndex(b => b.name === deptToRemove.name && b.year === currentYear);
-                if (globalIndex > -1) {
-                    budgets.splice(globalIndex, 1);
-                    localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+            if (confirm(`"${deptToRemove.name}" 부서의 ${deptToRemove.year}년 예산을 삭제하시겠습니까?`)) {
+                budgets.splice(index, 1);
+                localStorage.setItem('churchBudgets', JSON.stringify(budgets));
                 saveChurchBudgetsToFirebase(); // Firebase 동기화
-                    
-                    // 부서관리에서도 삭제
-                    const deptIndex = departments.findIndex(d => d.name === deptToRemove.name);
-                    if (deptIndex >= 0) {
-                        departments.splice(deptIndex, 1);
-                        localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
-                        saveDepartmentsToFirebase(); // Firebase 동기화
+                
+                // 현재 년도이고 해당 년도에 다른 예산이 없으면 부서관리에서도 삭제
+                const currentYear = new Date().getFullYear();
+                if (deptToRemove.year === currentYear) {
+                    const hasOtherBudget = budgets.some(b => b.name === deptToRemove.name);
+                    if (!hasOtherBudget) {
+                        const deptIndex = departments.findIndex(d => d.name === deptToRemove.name);
+                        if (deptIndex >= 0) {
+                            departments.splice(deptIndex, 1);
+                            localStorage.setItem('departments', JSON.stringify(departments));
+                            saveDepartmentsToFirebase(); // Firebase 동기화
+                        }
                     }
-                    
-                    loadBudgetForm();
                 }
+                
+                loadBudgetForm();
+                updateBudgetVisualization();
             }
         }
         
@@ -12077,17 +12169,25 @@
         // 예산 저장
         function saveBudget() {
             localStorage.setItem('churchBudgets', JSON.stringify(budgets));
-                saveChurchBudgetsToFirebase(); // Firebase 동기화
+            saveChurchBudgetsToFirebase(); // Firebase 동기화
             
-            // 부서관리에도 전체 연동
-            budgets.forEach(b => {
+            // 부서관리에도 전체 연동 (현재 년도만)
+            const currentYear = new Date().getFullYear();
+            budgets.filter(b => b.year === currentYear).forEach(b => {
                 syncBudgetToDepartment(b.name, b.budget);
             });
+            
+            // 예산 현황의 년도 선택을 모달에서 선택한 년도로 동기화
+            const modalYearSelect = document.getElementById('budgetModalYear');
+            const yearSelect = document.getElementById('budgetYearSelect');
+            if (modalYearSelect && yearSelect) {
+                yearSelect.value = modalYearSelect.value;
+            }
             
             updateDepartmentSelects();
             updateBudgetVisualization();
             closeBudgetModal();
-            alert('예산이 저장되었습니다.\n부서관리에도 연동되었습니다.');
+            alert('예산이 저장되었습니다.');
         }
         
         // 분류 관리 모달 표시
@@ -12424,7 +12524,7 @@
                     department: lastDepartment,
                     category: lastCategory,
                     item: itemValue,
-                    amount: parseFloat(document.getElementById('expenseAmount').value),
+                    amount: parseAmount(document.getElementById('expenseAmount').value),
                     payment: payment,
                     checkNumber: payment === 'Check' ? checkNumber : '',
                     memo: document.getElementById('expenseMemo').value
