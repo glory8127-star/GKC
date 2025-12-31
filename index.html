@@ -2576,9 +2576,9 @@
                     </div>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
                         <select id="attendanceYear" class="form-control" style="width: auto; padding: 8px;" onchange="loadYearlyAttendanceSheet()">
+                            <option value="2026">2026년</option>
                             <option value="2025">2025년</option>
                             <option value="2024">2024년</option>
-                            <option value="2026">2026년</option>
                         </select>
                         <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 10px 18px; border-radius: 10px;">
                             <div style="font-size: 1.5em; font-weight: bold;" id="totalMemberCount">0</div>
@@ -2594,6 +2594,27 @@
                         </div>
                         <button onclick="printYearlyAttendance()" class="btn" style="background: white; color: #38a169; font-weight: 600; padding: 10px 18px; font-size: 0.9em;">
                             🖨️ 인쇄
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 구역 스냅샷 관리 (관리자 전용) -->
+            <div class="card pastor-only" style="display: none; margin-bottom: 15px; background: #fffbeb; border: 1px solid #fcd34d;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="margin: 0; color: #92400e;">📁 연도별 구역 스냅샷 관리</h3>
+                        <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #a16207;">연도가 바뀌어도 해당 연도의 구역 구조로 출석을 볼 수 있습니다.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="saveCurrentCellsToYear()" class="btn" style="background: #f59e0b; color: white; padding: 8px 15px;">
+                            💾 현재 구역 → <span id="snapshotYearLabel">2026</span>년으로 저장
+                        </button>
+                        <button onclick="showCellSnapshotStatus()" class="btn" style="background: #3b82f6; color: white; padding: 8px 15px;">
+                            📊 스냅샷 현황
+                        </button>
+                        <button onclick="deleteYearAttendance(document.getElementById('attendanceYear').value)" class="btn" style="background: #dc2626; color: white; padding: 8px 15px;">
+                            🗑️ <span id="deleteYearLabel">2026</span>년 출석 삭제
                         </button>
                     </div>
                 </div>
@@ -3904,6 +3925,7 @@
                             </div>
                             <input type="file" id="memberPhoto" accept="image/*" style="display: none;" onchange="handleMemberPhotoUpload(event)">
                             <input type="hidden" id="memberPhotoData" value="">
+                            <input type="hidden" id="memberCellData" value=""> <!-- 기존 구역 값 보존용 -->
                         </div>
                         <div style="flex: 1;">
                             <div class="form-row">
@@ -4007,13 +4029,7 @@
                                    inputmode="latin" autocapitalize="off" lang="en" style="ime-mode: disabled;"
                                    placeholder="95825" maxlength="10">
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">구역</label>
-                            <select class="form-control" id="memberCell">
-                                <option value="">선택</option>
-                                <!-- 구역 목록이 동적으로 로드됩니다 -->
-                            </select>
-                        </div>
+                        <!-- 구역은 구역관리에서 배정 -->
                     </div>
                     
                     <div class="form-row">
@@ -4568,6 +4584,20 @@
                     localStorage.setItem('churchCells', JSON.stringify(churchCellsData.list));
                 } else if (localChurchCells.length > 0) {
                     await saveToFirestore('churchCells', { list: localChurchCells });
+                }
+                
+                // 연도별 구역 스냅샷 로드
+                const cellsHistoryData = await loadFromFirestore('churchCellsHistory');
+                if (cellsHistoryData) {
+                    localStorage.setItem('churchCellsHistory', JSON.stringify(cellsHistoryData));
+                    console.log('Firebase에서 구역 스냅샷 로드:', Object.keys(cellsHistoryData).length + '개 연도');
+                }
+                
+                // 연도별 교인 스냅샷 로드
+                const membersHistoryData = await loadFromFirestore('membersHistory');
+                if (membersHistoryData) {
+                    localStorage.setItem('membersHistory', JSON.stringify(membersHistoryData));
+                    console.log('Firebase에서 교인 스냅샷 로드:', Object.keys(membersHistoryData).length + '개 연도');
                 }
                 
                 // 구역 출석 데이터 로드 (데이터 보호)
@@ -6586,6 +6616,7 @@
             document.getElementById('memberJob').value = '';
             // 사진 초기화
             document.getElementById('memberPhotoData').value = '';
+            document.getElementById('memberCellData').value = ''; // 구역 초기화
             document.getElementById('memberPhotoPreview').innerHTML = `
                 <div style="text-align: center; color: #999;">
                     <div style="font-size: 2em;">📷</div>
@@ -9920,7 +9951,7 @@
                 address: document.getElementById('memberAddress').value,
                 city: document.getElementById('memberCity').value,
                 zip: document.getElementById('memberZip').value,
-                cell: document.getElementById('memberCell').value,
+                cell: document.getElementById('memberCellData').value || '', // 기존 구역 값 유지
                 familyRole: document.getElementById('memberFamilyRole').value,
                 familyHead: document.getElementById('familyHead').value,
                 referrer: document.getElementById('memberReferrer').value,
@@ -10004,7 +10035,8 @@
             document.getElementById('memberAddress').value = member.address || '';
             document.getElementById('memberCity').value = member.city || '';
             document.getElementById('memberZip').value = member.zip || '';
-            document.getElementById('memberCell').value = member.cell || '';
+            // 구역은 구역관리에서 배정 (폼에서 제거됨)
+            document.getElementById('memberCellData').value = member.cell || ''; // 기존 구역 값 보존
             document.getElementById('memberFamilyRole').value = member.familyRole || '';
             document.getElementById('familyHead').value = member.familyHead || '';
             document.getElementById('memberReferrer').value = member.referrer || '';
@@ -13427,6 +13459,12 @@
             const container = document.getElementById('yearlyAttendanceSheet');
             const year = parseInt(document.getElementById('attendanceYear')?.value || new Date().getFullYear());
             
+            // 연도 레이블 업데이트
+            const snapshotLabel = document.getElementById('snapshotYearLabel');
+            if (snapshotLabel) snapshotLabel.textContent = year;
+            const deleteLabel = document.getElementById('deleteYearLabel');
+            if (deleteLabel) deleteLabel.textContent = year;
+            
             if (!container) return;
             
             // 최신 데이터 로드 (중요!)
@@ -13439,10 +13477,19 @@
             console.log('mainAttendance:', mainAttendance);
             
             const sundays = getSundaysOfYear(year);
-            const cellsData = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            
+            // 연도별 구역 스냅샷 사용 (없으면 현재 구역 사용)
+            const cellsHistory = JSON.parse(localStorage.getItem('churchCellsHistory') || '{}');
+            const cellsData = cellsHistory[year] || JSON.parse(localStorage.getItem('churchCells') || '[]');
+            
+            // 연도별 교인 스냅샷 사용 (없으면 현재 교인 사용)
+            const membersHistory = JSON.parse(localStorage.getItem('membersHistory') || '{}');
+            const yearMembers = membersHistory[year] || members;
+            
+            console.log(`📅 ${year}년 출석표 로드 - 구역: ${cellsData.length}개, 교인: ${yearMembers.length}명`);
             
             // 헤더 통계 업데이트
-            document.getElementById('totalMemberCount').textContent = members.length;
+            document.getElementById('totalMemberCount').textContent = yearMembers.length;
             
             // 전체 주일 수 계산
             let totalSundayCount = 0;
@@ -13453,7 +13500,7 @@
             // 금주 출석률 계산 (이번 주일 기준)
             const thisSunday = getThisSunday();
             const thisSundayAttendees = getAttendanceForDate(thisSunday);
-            const avgRate = members.length > 0 ? Math.round((thisSundayAttendees.length / members.length) * 100) : 0;
+            const avgRate = yearMembers.length > 0 ? Math.round((thisSundayAttendees.length / yearMembers.length) * 100) : 0;
             document.getElementById('yearlyAttendanceRate').textContent = avgRate + '%';
             
             // 년중 출석률 계산 (해당 연도 전체 주일 평균)
@@ -13469,7 +13516,7 @@
                     if (checkDate <= today) {
                         const attendees = getAttendanceForDate(dateStr);
                         totalAttendanceCount += attendees.length;
-                        totalPossibleCount += members.length;
+                        totalPossibleCount += yearMembers.length;
                     }
                 });
             }
@@ -13478,16 +13525,16 @@
             const yearTotalEl = document.getElementById('yearTotalAttendanceRate');
             if (yearTotalEl) yearTotalEl.textContent = yearTotalRate + '%';
             
-            if (members.length === 0) {
+            if (yearMembers.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">등록된 교인이 없습니다.</p>';
                 return;
             }
             
-            // 구역별 교인 분류
+            // 구역별 교인 분류 (해당 연도 스냅샷 기준)
             const membersByCell = {};
             const noCell = [];
             
-            members.forEach(m => {
+            yearMembers.forEach(m => {
                 const cellName = m.cell ? m.cell.replace('구역', '') : null;
                 if (cellName && cellsData.find(c => c.name === cellName)) {
                     if (!membersByCell[cellName]) membersByCell[cellName] = [];
@@ -13545,7 +13592,7 @@
                     </tr>`;
                     
                     cellMembers.forEach((member) => {
-                        html += renderMemberRow(member, rowNum++, year, sundays);
+                        html += renderMemberRowForYear(member, rowNum++, year, sundays, yearMembers);
                     });
                 }
             });
@@ -13559,18 +13606,115 @@
                 </tr>`;
                 
                 noCell.forEach((member) => {
-                    html += renderMemberRow(member, rowNum++, year, sundays);
+                    html += renderMemberRowForYear(member, rowNum++, year, sundays, yearMembers);
                 });
             }
             
             // 하단 통계 행들
-            html += renderStatRows(year, sundays, totalSundayCount);
+            html += renderStatRowsForYear(year, sundays, totalSundayCount, yearMembers);
             
             html += '</tbody></table>';
             container.innerHTML = html;
             
             // 금주 결석자 명단 로드
             loadWeeklyAbsentList(year, sundays);
+        }
+        
+        // 연도별 교인 행 렌더링
+        function renderMemberRowForYear(member, rowNum, year, sundays, yearMembers) {
+            let totalPresent = 0;
+            let totalAbsent = 0;
+            const currentYear = new Date().getFullYear();
+            const isPastYear = year < currentYear;
+            
+            let html = `<tr style="background: ${rowNum % 2 === 0 ? '#fff' : '#fafafa'};">
+                <td style="padding: 3px 2px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #38a169; position: sticky; left: 0; background: ${rowNum % 2 === 0 ? '#fff' : '#fafafa'}; z-index: 1; font-size: 9px;">${rowNum}</td>
+                <td style="padding: 3px; border: 1px solid #e2e8f0; font-weight: 500; position: sticky; left: 26px; background: ${rowNum % 2 === 0 ? '#fff' : '#fafafa'}; z-index: 1; font-size: 10px; white-space: nowrap;">${member.nameKr}</td>`;
+            
+            for (let m = 1; m <= 12; m++) {
+                if (sundays[m].length === 0) {
+                    html += `<td style="padding: 2px; border: 1px solid #e2e8f0; text-align: center; background: #f5f5f5; font-size: 8px;">-</td>`;
+                } else {
+                    sundays[m].forEach(day => {
+                        const dateStr = `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const attendees = getAttendanceForDate(dateStr);
+                        const isPresent = attendees.includes(member.nameKr);
+                        const isPast = new Date(dateStr) <= new Date();
+                        
+                        if (isPast) {
+                            if (isPresent) totalPresent++;
+                            else totalAbsent++;
+                        }
+                        
+                        // 과거 연도는 클릭 불가능 (읽기 전용)
+                        if (isPastYear) {
+                            html += `<td style="padding: 2px; border: 1px solid #e2e8f0; text-align: center; background: ${isPresent ? '#dcfce7' : isPast ? '#fee2e2' : '#fff'}; font-size: 10px;">
+                                ${isPresent ? '✓' : isPast ? '✗' : ''}
+                            </td>`;
+                        } else {
+                            html += `<td style="padding: 2px; border: 1px solid #e2e8f0; text-align: center; cursor: pointer; background: ${isPresent ? '#dcfce7' : isPast ? '#fee2e2' : '#fff'};"
+                                onclick="toggleMainAttendance('${member.nameKr}', '${dateStr}')" 
+                                title="${dateStr}" style="font-size: 10px;">
+                                ${isPresent ? '✓' : isPast ? '✗' : ''}
+                            </td>`;
+                        }
+                    });
+                }
+            }
+            
+            // 출석/결석 합계
+            html += `<td style="padding: 2px 1px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #16a34a; background: #f0fdf4; font-size: 9px;">${totalPresent}</td>`;
+            html += `<td style="padding: 2px 1px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #dc2626; background: #fef2f2; font-size: 9px;">${totalAbsent}</td>`;
+            html += '</tr>';
+            
+            return html;
+        }
+        
+        // 연도별 통계 행 렌더링
+        function renderStatRowsForYear(year, sundays, totalSundayCount, yearMembers) {
+            let html = '';
+            const today = new Date();
+            
+            // 출석 합계 행
+            html += `<tr style="background: #ecfdf5; font-weight: bold;">
+                <td colspan="2" style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; position: sticky; left: 0; background: #ecfdf5; z-index: 1; font-size: 10px;">출석 합계</td>`;
+            
+            for (let m = 1; m <= 12; m++) {
+                if (sundays[m].length === 0) {
+                    html += `<td style="padding: 3px; border: 1px solid #e2e8f0; text-align: center; background: #f5f5f5; font-size: 9px;">-</td>`;
+                } else {
+                    sundays[m].forEach(day => {
+                        const dateStr = `${year}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                        const attendees = getAttendanceForDate(dateStr);
+                        const isPast = new Date(dateStr) <= today;
+                        html += `<td style="padding: 3px; border: 1px solid #e2e8f0; text-align: center; color: #16a34a; font-size: 9px;">${isPast ? attendees.length : '-'}</td>`;
+                    });
+                }
+            }
+            
+            html += `<td colspan="2" style="border: 1px solid #e2e8f0;"></td></tr>`;
+            
+            // 출석률 행
+            html += `<tr style="background: #fef9c3; font-weight: bold;">
+                <td colspan="2" style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; position: sticky; left: 0; background: #fef9c3; z-index: 1; font-size: 10px;">출석률</td>`;
+            
+            for (let m = 1; m <= 12; m++) {
+                if (sundays[m].length === 0) {
+                    html += `<td style="padding: 3px; border: 1px solid #e2e8f0; text-align: center; background: #f5f5f5; font-size: 9px;">-</td>`;
+                } else {
+                    sundays[m].forEach(day => {
+                        const dateStr = `${year}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                        const attendees = getAttendanceForDate(dateStr);
+                        const isPast = new Date(dateStr) <= today;
+                        const rate = yearMembers.length > 0 ? Math.round((attendees.length / yearMembers.length) * 100) : 0;
+                        html += `<td style="padding: 3px; border: 1px solid #e2e8f0; text-align: center; color: ${rate >= 70 ? '#16a34a' : rate >= 50 ? '#ca8a04' : '#dc2626'}; font-size: 8px;">${isPast ? rate + '%' : '-'}</td>`;
+                    });
+                }
+            }
+            
+            html += `<td colspan="2" style="border: 1px solid #e2e8f0;"></td></tr>`;
+            
+            return html;
         }
         
         // 교인 행 렌더링
@@ -13785,6 +13929,159 @@
         }
         
         // 출석 토글
+        // ========== 연도별 구역/교인 스냅샷 관리 ==========
+        
+        // 현재 구역/교인을 해당 연도 스냅샷으로 저장
+        function saveCurrentCellsToYear() {
+            const year = parseInt(document.getElementById('attendanceYear')?.value || new Date().getFullYear());
+            
+            if (!confirm(`현재 구역 편성과 교인 목록을 ${year}년 스냅샷으로 저장하시겠습니까?\n\n⚠️ 기존 ${year}년 스냅샷이 있으면 덮어씁니다.`)) return;
+            
+            // 구역 스냅샷 저장
+            const cellsHistory = JSON.parse(localStorage.getItem('churchCellsHistory') || '{}');
+            const currentCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            cellsHistory[year] = JSON.parse(JSON.stringify(currentCells)); // 깊은 복사
+            localStorage.setItem('churchCellsHistory', JSON.stringify(cellsHistory));
+            
+            // 교인 스냅샷 저장
+            const membersHistory = JSON.parse(localStorage.getItem('membersHistory') || '{}');
+            membersHistory[year] = JSON.parse(JSON.stringify(members)); // 깊은 복사
+            localStorage.setItem('membersHistory', JSON.stringify(membersHistory));
+            
+            // Firebase 동기화
+            if (firebaseReady) {
+                saveToFirestore('churchCellsHistory', cellsHistory);
+                saveToFirestore('membersHistory', membersHistory);
+            }
+            
+            alert(`✅ ${year}년 스냅샷이 저장되었습니다!\n\n구역: ${currentCells.length}개\n교인: ${members.length}명`);
+            loadYearlyAttendanceSheet();
+        }
+        
+        // 스냅샷 현황 보기
+        function showCellSnapshotStatus() {
+            const cellsHistory = JSON.parse(localStorage.getItem('churchCellsHistory') || '{}');
+            const membersHistory = JSON.parse(localStorage.getItem('membersHistory') || '{}');
+            const currentCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            
+            let html = `
+                <div id="snapshotStatusModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 20px; border-radius: 15px 15px 0 0;">
+                            <h2 style="margin: 0;">📊 연도별 스냅샷 현황</h2>
+                        </div>
+                        <div style="padding: 20px;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f1f5f9;">
+                                        <th style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">연도</th>
+                                        <th style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">구역 수</th>
+                                        <th style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">교인 수</th>
+                                        <th style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="background: #ecfdf5;">
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">현재</td>
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${currentCells.length}개</td>
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${members.length}명</td>
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">-</td>
+                                    </tr>
+            `;
+            
+            // 저장된 스냅샷들 (연도 내림차순)
+            const years = Object.keys(cellsHistory).sort((a, b) => b - a);
+            if (years.length === 0) {
+                html += `<tr><td colspan="4" style="padding: 20px; text-align: center; color: #666;">저장된 스냅샷이 없습니다.</td></tr>`;
+            } else {
+                years.forEach(y => {
+                    const cellCount = cellsHistory[y]?.length || 0;
+                    const memberCount = membersHistory[y]?.length || 0;
+                    html += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${y}년</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${cellCount}개</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${memberCount}명</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                                <button onclick="deleteYearSnapshot(${y})" style="background: #fee2e2; color: #dc2626; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">삭제</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += `
+                                </tbody>
+                            </table>
+                            
+                            <div style="margin-top: 20px; padding: 15px; background: #fffbeb; border-radius: 10px; border: 1px solid #fcd34d;">
+                                <h4 style="margin: 0 0 10px 0; color: #92400e;">💡 사용 방법</h4>
+                                <ul style="margin: 0; padding-left: 20px; color: #a16207; font-size: 0.9em;">
+                                    <li>새해가 되면 이전 연도의 구역/교인을 스냅샷으로 저장하세요.</li>
+                                    <li>스냅샷이 있으면 해당 연도 출석표에서 그 당시 구역 구조로 볼 수 있습니다.</li>
+                                    <li>스냅샷이 없으면 현재 구역 구조가 사용됩니다.</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="margin-top: 20px; text-align: center;">
+                                <button onclick="document.getElementById('snapshotStatusModal').remove()" class="btn btn-secondary" style="padding: 10px 30px;">닫기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+        
+        // 연도 스냅샷 삭제
+        function deleteYearSnapshot(year) {
+            if (!confirm(`${year}년 스냅샷을 삭제하시겠습니까?\n\n⚠️ 삭제 후에는 해당 연도 출석표가 현재 구역 구조로 표시됩니다.`)) return;
+            
+            // 구역 스냅샷 삭제
+            const cellsHistory = JSON.parse(localStorage.getItem('churchCellsHistory') || '{}');
+            delete cellsHistory[year];
+            localStorage.setItem('churchCellsHistory', JSON.stringify(cellsHistory));
+            
+            // 교인 스냅샷 삭제
+            const membersHistory = JSON.parse(localStorage.getItem('membersHistory') || '{}');
+            delete membersHistory[year];
+            localStorage.setItem('membersHistory', JSON.stringify(membersHistory));
+            
+            // Firebase 동기화
+            if (firebaseReady) {
+                saveToFirestore('churchCellsHistory', cellsHistory);
+                saveToFirestore('membersHistory', membersHistory);
+            }
+            
+            alert(`${year}년 스냅샷이 삭제되었습니다.`);
+            document.getElementById('snapshotStatusModal')?.remove();
+            showCellSnapshotStatus();
+        }
+        
+        // 특정 연도 출석 데이터 삭제
+        function deleteYearAttendance(year) {
+            if (!confirm(`${year}년 출석 데이터를 모두 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다!`)) return;
+            if (!confirm(`정말로 ${year}년 출석 기록을 삭제하시겠습니까?\n\n마지막 확인입니다.`)) return;
+            
+            // mainAttendance에서 해당 연도 데이터 삭제
+            const keysToDelete = Object.keys(mainAttendance).filter(key => key.startsWith(`${year}-`));
+            keysToDelete.forEach(key => delete mainAttendance[key]);
+            localStorage.setItem('mainAttendance', JSON.stringify(mainAttendance));
+            
+            // cellAttendance에서 해당 연도 데이터 삭제
+            const cellKeysToDelete = Object.keys(cellAttendance).filter(key => key.includes(`_${year}-`));
+            cellKeysToDelete.forEach(key => delete cellAttendance[key]);
+            localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+            
+            // Firebase 동기화
+            saveMainAttendanceToFirebase();
+            saveCellAttendanceToFirebase();
+            
+            alert(`✅ ${year}년 출석 데이터가 삭제되었습니다.\n\n삭제된 주일 출석: ${keysToDelete.length}건\n삭제된 구역 출석: ${cellKeysToDelete.length}건`);
+            loadYearlyAttendanceSheet();
+        }
+        
         function toggleYearlyAttendance(memberName, dateStr) {
             if (!mainAttendance[dateStr]) mainAttendance[dateStr] = [];
             
@@ -14265,6 +14562,7 @@
                                     <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.85em;">${cell.meeting || '모임 미정'}</p>
                                 </div>
                                 <div class="pastor-only cell-edit-btns" style="display: none;">
+                                    <button onclick="showAddCellMemberModal('${cell.name}')" style="background: rgba(255,255,255,0.3); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; margin-right: 5px;">➕ 구역원</button>
                                     <button onclick="editCell(${idx})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; margin-right: 5px;">✏️ 수정</button>
                                     <button onclick="deleteCell(${idx})" style="background: rgba(220,38,38,0.7); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">🗑️ 삭제</button>
                                 </div>
@@ -14316,12 +14614,15 @@
                                             <div style="font-size: 0.75em; color: #64748b;">${m.phone || ''}</div>
                                         </div>
                                     </div>
-                                    <div style="font-size: 0.8em; font-weight: 500; color: ${isPresent ? '#16a34a' : '#dc2626'};">
-                                        ${isPresent ? '출석' : '결석'}
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 0.8em; font-weight: 500; color: ${isPresent ? '#16a34a' : '#dc2626'};">
+                                            ${isPresent ? '출석' : '결석'}
+                                        </span>
+                                        <button class="pastor-only cell-remove-btn" style="display: none; background: #fee2e2; color: #dc2626; border: none; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.7em;" onclick="removeCellMember('${cell.name}', '${m.nameKr}')">제거</button>
                                     </div>
                                 </div>
                                 `;
-                            }).join('') : '<p style="color: #94a3b8; font-size: 0.85em; text-align: center; padding: 20px;">구역원이 없습니다</p>'}
+                            }).join('') : '<p style="color: #94a3b8; font-size: 0.85em; text-align: center; padding: 20px;">구역원이 없습니다<br><small>➕ 구역원 버튼을 눌러 추가하세요</small></p>'}
                         </div>
                         
                         <!-- 결석자 명단 -->
@@ -14364,10 +14665,13 @@
             
             container.innerHTML = html;
             
-            // 관리자인 경우 수정/삭제 버튼 표시
+            // 관리자인 경우 수정/삭제/제거 버튼 표시
             if (currentUser && currentUser.role === '관리자') {
                 container.querySelectorAll('.cell-edit-btns').forEach(el => {
                     el.style.display = 'flex';
+                });
+                container.querySelectorAll('.cell-remove-btn').forEach(el => {
+                    el.style.display = 'inline-block';
                 });
             }
             
@@ -14476,6 +14780,114 @@
         // 구역 모달 닫기
         function closeCellModal() {
             document.getElementById('cellModal').classList.remove('active');
+        }
+        
+        // ========== 구역원 관리 ==========
+        
+        // 구역원 추가 모달 표시
+        function showAddCellMemberModal(cellName) {
+            // 이미 구역에 배정된 교인들 제외
+            const assignedMembers = members.filter(m => m.cell === cellName || m.cell === cellName + '구역');
+            const availableMembers = members.filter(m => !m.cell || m.cell === '');
+            
+            let html = `
+                <div id="addCellMemberModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+                        <div style="background: linear-gradient(135deg, #3182ce, #2c5282); color: white; padding: 20px; border-radius: 15px 15px 0 0;">
+                            <h2 style="margin: 0;">➕ ${cellName}구역 구역원 추가</h2>
+                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9em;">미배정 교인 중 선택하세요</p>
+                        </div>
+                        <div style="padding: 15px; overflow-y: auto; flex: 1;">
+                            <div style="margin-bottom: 15px;">
+                                <input type="text" id="cellMemberSearch" placeholder="🔍 이름 검색..." 
+                                       oninput="filterCellMemberList('${cellName}')"
+                                       style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div id="cellMemberList" style="max-height: 400px; overflow-y: auto;">
+            `;
+            
+            if (availableMembers.length === 0) {
+                html += `<p style="text-align: center; color: #666; padding: 30px;">미배정 교인이 없습니다.</p>`;
+            } else {
+                html += availableMembers.map(m => `
+                    <div class="cell-member-item" data-name="${m.nameKr.toLowerCase()}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 8px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 40px; height: 40px; background: #3182ce; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                ${m.nameKr.charAt(0)}
+                            </div>
+                            <div>
+                                <div style="font-weight: 500;">${m.nameKr}</div>
+                                <div style="font-size: 0.8em; color: #64748b;">${m.phone || '-'}</div>
+                            </div>
+                        </div>
+                        <button onclick="addMemberToCell('${cellName}', '${m.nameKr}')" style="background: #3182ce; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">추가</button>
+                    </div>
+                `).join('');
+            }
+            
+            html += `
+                            </div>
+                        </div>
+                        <div style="padding: 15px; border-top: 1px solid #e2e8f0; text-align: center;">
+                            <button onclick="document.getElementById('addCellMemberModal').remove()" class="btn btn-secondary" style="padding: 10px 30px;">닫기</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+        
+        // 구역원 검색 필터
+        function filterCellMemberList(cellName) {
+            const searchText = document.getElementById('cellMemberSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.cell-member-item');
+            
+            items.forEach(item => {
+                const name = item.dataset.name;
+                if (name.includes(searchText)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // 교인을 구역에 추가
+        function addMemberToCell(cellName, memberName) {
+            const memberIndex = members.findIndex(m => m.nameKr === memberName);
+            if (memberIndex === -1) {
+                alert('교인을 찾을 수 없습니다.');
+                return;
+            }
+            
+            members[memberIndex].cell = cellName;
+            localStorage.setItem('churchMembers', JSON.stringify(members));
+            saveMembersToFirebase();
+            
+            // 모달 닫고 목록 새로고침
+            document.getElementById('addCellMemberModal')?.remove();
+            loadCellList();
+            
+            alert(`${memberName}님이 ${cellName}구역에 추가되었습니다.`);
+        }
+        
+        // 구역에서 교인 제거
+        function removeCellMember(cellName, memberName) {
+            if (!confirm(`${memberName}님을 ${cellName}구역에서 제거하시겠습니까?`)) return;
+            
+            const memberIndex = members.findIndex(m => m.nameKr === memberName);
+            if (memberIndex === -1) {
+                alert('교인을 찾을 수 없습니다.');
+                return;
+            }
+            
+            members[memberIndex].cell = '';
+            localStorage.setItem('churchMembers', JSON.stringify(members));
+            saveMembersToFirebase();
+            
+            loadCellList();
+            alert(`${memberName}님이 ${cellName}구역에서 제거되었습니다.`);
         }
         
         // 구역 저장
