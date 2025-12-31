@@ -14791,16 +14791,18 @@
         
         // 구역원 추가 모달 표시
         function showAddCellMemberModal(cellName) {
-            // 이미 구역에 배정된 교인들 제외
-            const assignedMembers = members.filter(m => m.cell === cellName || m.cell === cellName + '구역');
-            const availableMembers = members.filter(m => !m.cell || m.cell === '');
+            // 이미 이 구역에 배정된 교인들
+            const alreadyInCell = members.filter(m => m.cell === cellName || m.cell === cellName + '구역').map(m => m.nameKr);
+            
+            // 전체 교인 (이미 이 구역에 있는 교인 제외)
+            const availableMembers = members.filter(m => !alreadyInCell.includes(m.nameKr));
             
             let html = `
                 <div id="addCellMemberModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
                     <div style="background: white; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
                         <div style="background: linear-gradient(135deg, #3182ce, #2c5282); color: white; padding: 20px; border-radius: 15px 15px 0 0;">
                             <h2 style="margin: 0;">➕ ${cellName}구역 구역원 추가</h2>
-                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9em;">미배정 교인 중 선택하세요 (다중 선택 가능)</p>
+                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9em;">추가할 교인을 선택하세요 (다중 선택 가능)</p>
                         </div>
                         <div style="padding: 15px; overflow-y: auto; flex: 1;">
                             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -14811,33 +14813,42 @@
                             </div>
                             <div style="background: #f0f9ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                                 <span style="color: #0369a1; font-size: 0.9em;">선택된 교인: <strong id="selectedCellMemberCount">0</strong>명</span>
+                                <span style="color: #64748b; font-size: 0.8em;">전체 ${availableMembers.length}명</span>
                             </div>
                             <div id="cellMemberList" style="max-height: 350px; overflow-y: auto;">
             `;
             
             if (availableMembers.length === 0) {
-                html += `<p style="text-align: center; color: #666; padding: 30px;">미배정 교인이 없습니다.</p>`;
+                html += `<p style="text-align: center; color: #666; padding: 30px;">추가할 수 있는 교인이 없습니다.</p>`;
             } else {
-                html += availableMembers.map(m => `
-                    <label class="cell-member-item" data-name="${m.nameKr.toLowerCase()}" style="display: flex; align-items: center; padding: 12px; margin-bottom: 8px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s;">
+                html += availableMembers.map(m => {
+                    const currentCell = m.cell ? m.cell.replace('구역', '') : '';
+                    const hasOtherCell = currentCell && currentCell !== cellName;
+                    return `
+                    <label class="cell-member-item" data-name="${m.nameKr.toLowerCase()}" style="display: flex; align-items: center; padding: 12px; margin-bottom: 8px; background: ${hasOtherCell ? '#fef3c7' : '#f8fafc'}; border-radius: 8px; border: 1px solid ${hasOtherCell ? '#fcd34d' : '#e2e8f0'}; cursor: pointer; transition: all 0.2s;">
                         <input type="checkbox" class="cell-member-checkbox" value="${m.nameKr}" onchange="updateSelectedCellMemberCount()" style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;">
-                        <div style="width: 40px; height: 40px; background: #3182ce; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">
+                        <div style="width: 40px; height: 40px; background: ${hasOtherCell ? '#f59e0b' : '#3182ce'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">
                             ${m.nameKr.charAt(0)}
                         </div>
                         <div style="flex: 1;">
                             <div style="font-weight: 500;">${m.nameKr}</div>
-                            <div style="font-size: 0.8em; color: #64748b;">${m.phone || '-'}</div>
+                            <div style="font-size: 0.8em; color: #64748b;">${m.phone || '-'} ${hasOtherCell ? '<span style="color: #f59e0b; font-weight: 500;">(현재: ' + currentCell + '구역)</span>' : ''}</div>
                         </div>
                     </label>
-                `).join('');
+                `}).join('');
             }
             
             html += `
                             </div>
                         </div>
-                        <div style="padding: 15px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; justify-content: center;">
-                            <button onclick="addSelectedMembersToCell('${cellName}')" class="btn btn-primary" style="padding: 12px 30px; background: #3182ce;">✓ 선택한 교인 추가</button>
-                            <button onclick="document.getElementById('addCellMemberModal').remove()" class="btn btn-secondary" style="padding: 12px 30px;">취소</button>
+                        <div style="padding: 15px; border-top: 1px solid #e2e8f0;">
+                            <div style="font-size: 0.8em; color: #64748b; margin-bottom: 10px; text-align: center;">
+                                💡 노란색 표시 = 다른 구역 소속 (선택 시 구역 이동)
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="addSelectedMembersToCell('${cellName}')" class="btn btn-primary" style="padding: 12px 30px; background: #3182ce;">✓ 선택한 교인 추가</button>
+                                <button onclick="document.getElementById('addCellMemberModal').remove()" class="btn btn-secondary" style="padding: 12px 30px;">취소</button>
+                            </div>
                         </div>
                     </div>
                 </div>
