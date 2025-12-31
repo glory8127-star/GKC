@@ -14264,9 +14264,9 @@
                                     <h3 style="margin: 0; font-size: 1.3em;">${cell.name}구역</h3>
                                     <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.85em;">${cell.meeting || '모임 미정'}</p>
                                 </div>
-                                <div class="pastor-only" style="display: none; gap: 5px;">
-                                    <button onclick="editCell(${idx})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">편집</button>
-                                    <button onclick="deleteCell(${idx})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">삭제</button>
+                                <div class="pastor-only cell-edit-btns" style="display: none;">
+                                    <button onclick="editCell(${idx})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; margin-right: 5px;">✏️ 수정</button>
+                                    <button onclick="deleteCell(${idx})" style="background: rgba(220,38,38,0.7); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">🗑️ 삭제</button>
                                 </div>
                             </div>
                         </div>
@@ -14363,6 +14363,13 @@
             });
             
             container.innerHTML = html;
+            
+            // 관리자인 경우 수정/삭제 버튼 표시
+            if (currentUser && currentUser.role === '관리자') {
+                container.querySelectorAll('.cell-edit-btns').forEach(el => {
+                    el.style.display = 'flex';
+                });
+            }
             
             // 교인 등록 폼의 구역 선택 업데이트
             updateCellSelect();
