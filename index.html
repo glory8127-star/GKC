@@ -7413,6 +7413,16 @@
             // 주일학교 섹션 선택 시
             if (sectionId === 'sundayschool') {
                 loadSundaySchoolData();
+                
+                // 학생교적부 탭 버튼 권한 체크
+                const studentRecordsBtn = document.querySelector('.perm-studentRecords');
+                if (studentRecordsBtn) {
+                    if (currentUser && (currentUser.role === '관리자' || (currentUser.permissions && currentUser.permissions.includes('studentRecords')))) {
+                        studentRecordsBtn.style.display = 'block';
+                    } else {
+                        studentRecordsBtn.style.display = 'none';
+                    }
+                }
             }
             
             // 갤러리 섹션 선택 시
