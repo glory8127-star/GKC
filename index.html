@@ -5994,7 +5994,6 @@
             
             users.push(newUser);
             localStorage.setItem('registeredUsers', JSON.stringify(users));
-                saveUsersToFirebase(); // Firebase 동기화
             saveUsersToFirebase(); // Firebase 동기화
             
             // 신청 상태 변경
@@ -6617,7 +6616,6 @@
             }
             
             localStorage.setItem('registeredUsers', JSON.stringify(users));
-                saveUsersToFirebase(); // Firebase 동기화
             saveUsersToFirebase(); // Firebase 동기화
             
             // 현재 로그인한 사용자의 권한이 변경된 경우 세션 업데이트
@@ -6640,7 +6638,6 @@
             let users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
             users = users.filter(u => u.id !== userId);
             localStorage.setItem('registeredUsers', JSON.stringify(users));
-                saveUsersToFirebase(); // Firebase 동기화
             saveUsersToFirebase(); // Firebase 동기화
             
             alert('사용자가 삭제되었습니다.');
@@ -7820,7 +7817,6 @@
             // 부서 목록에서 삭제
             departments = departments.filter(d => d.name !== deptName);
             localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
             saveDepartmentsToFirebase(); // Firebase 동기화
             
             // 부서 팀 데이터 삭제
@@ -11160,7 +11156,6 @@
                 departments[deptIndex].expenses.splice(expIndex, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
                 saveDepartmentsToFirebase(); // Firebase 동기화
-                saveDepartmentsToFirebase(); // Firebase 동기화
                 
                 // 재정관리 지출에서도 삭제
                 let expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
@@ -11311,7 +11306,6 @@
             if (confirm(`"${departments[index].name}" 부서를 삭제하시겠습니까?`)) {
                 departments.splice(index, 1);
                 localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
                 saveDepartmentsToFirebase(); // Firebase 동기화
                 loadDepartmentList();
                 // 재정관리 부서 목록 업데이트
@@ -13175,7 +13169,6 @@
                 if (req.deptIndex !== undefined && req.expIndex !== undefined) {
                     departments[req.deptIndex].expenses[req.expIndex].paymentRequested = false;
                     localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
                     saveDepartmentsToFirebase(); // Firebase 동기화
                 }
                 
@@ -14798,7 +14791,6 @@
             }
             
             localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
-                saveCellAttendanceToFirebase(); // Firebase 동기화
             saveCellAttendanceToFirebase(); // Firebase 동기화
             console.log('[구역관리] 저장된 cellAttendance:', JSON.stringify(cellAttendance));
             loadCellList();
@@ -14810,7 +14802,6 @@
                 const key = `${cellName}_${date}`;
                 delete cellAttendance[key];
                 localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
-                saveCellAttendanceToFirebase(); // Firebase 동기화
                 saveCellAttendanceToFirebase(); // Firebase 동기화
                 loadCellList();
             }
@@ -14873,7 +14864,6 @@
             if (confirm(`"${cells[index].name}구역"을 삭제하시겠습니까?`)) {
                 cells.splice(index, 1);
                 localStorage.setItem('churchCells', JSON.stringify(cells));
-                saveChurchCellsToFirebase(); // Firebase 동기화
                 saveChurchCellsToFirebase(); // Firebase 동기화
                 loadCellList();
             }
@@ -15064,7 +15054,7 @@
         }
         
         // 구역 저장
-        document.getElementById('cellForm')?.addEventListener('submit', function(e) {
+        document.getElementById('cellForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const cellData = {
@@ -15084,8 +15074,7 @@
             }
             
             localStorage.setItem('churchCells', JSON.stringify(cells));
-                saveChurchCellsToFirebase(); // Firebase 동기화
-            saveChurchCellsToFirebase(); // Firebase 동기화
+            await saveChurchCellsToFirebase(); // Firebase 동기화 (await 추가)
             closeCellModal();
             loadCellList();
             alert('구역이 저장되었습니다.');
