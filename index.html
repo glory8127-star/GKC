@@ -6131,12 +6131,6 @@
         async function backupToFirebase() {
             if (!confirm('현재 데이터를 Firebase 백업 저장소에 저장하시겠습니까?')) return;
             
-            const backupData = {
-                version: '1.0',
-                date: new Date().toISOString(),
-                data: {}
-            };
-            
             const keysToBackup = [
                 'churchMembers', 'registeredUsers', 'signupRequests',
                 'departments', 'churchCells', 'cellAttendance',
@@ -6145,31 +6139,65 @@
                 'mentoringPairs', 'mentoringProgress',
                 'yearlyEvents', 'churchDeptTeams', 'churchOrgChart',
                 'ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos', 'gloryClipVideos',
-                'heroSlides', 'churchGallery'
+                'heroSlides', 'churchGallery', 'churchCellsHistory', 'membersHistory'
             ];
             
-            keysToBackup.forEach(key => {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    try {
-                        backupData.data[key] = JSON.parse(data);
-                    } catch(e) {
-                        backupData.data[key] = data;
-                    }
-                }
-            });
+            // 데이터를 그룹으로 분할 (Firestore 1MB 제한 대응)
+            const groups = {
+                group1: ['churchMembers', 'registeredUsers', 'signupRequests', 'departments', 'churchCells'],
+                group2: ['cellAttendance', 'mainAttendance', 'visitorData', 'absentReasons'],
+                group3: ['churchOfferings', 'churchExpenses', 'churchBudgets', 'paymentRequests'],
+                group4: ['mentoringPairs', 'mentoringProgress', 'yearlyEvents', 'churchDeptTeams', 'churchOrgChart'],
+                group5: ['ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos', 'gloryClipVideos'],
+                group6: ['heroSlides', 'churchGallery', 'churchCellsHistory', 'membersHistory']
+            };
+            
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const timestamp = new Date().toISOString();
             
             try {
-                await db.collection('backups').doc('latest').set(backupData);
+                // 각 그룹별로 저장
+                for (const [groupName, keys] of Object.entries(groups)) {
+                    const groupData = {
+                        version: '2.0',
+                        date: timestamp,
+                        group: groupName,
+                        data: {}
+                    };
+                    
+                    keys.forEach(key => {
+                        const data = localStorage.getItem(key);
+                        if (data) {
+                            try {
+                                groupData.data[key] = JSON.parse(data);
+                            } catch(e) {
+                                groupData.data[key] = data;
+                            }
+                        }
+                    });
+                    
+                    // latest 백업
+                    await db.collection('backups').doc('latest_' + groupName).set(groupData);
+                    // 날짜별 백업
+                    await db.collection('backups').doc(dateStr + '_' + groupName).set(groupData);
+                }
                 
-                // 날짜별 백업도 저장
-                const dateStr = new Date().toISOString().slice(0, 10);
-                await db.collection('backups').doc(dateStr).set(backupData);
+                // 백업 메타데이터 저장
+                await db.collection('backups').doc('latest_meta').set({
+                    version: '2.0',
+                    date: timestamp,
+                    groups: Object.keys(groups)
+                });
+                await db.collection('backups').doc(dateStr + '_meta').set({
+                    version: '2.0',
+                    date: timestamp,
+                    groups: Object.keys(groups)
+                });
                 
-                localStorage.setItem('lastBackupDate', new Date().toISOString());
+                localStorage.setItem('lastBackupDate', timestamp);
                 loadDataStatus();
                 
-                alert('✅ Firebase에 백업되었습니다!\n- latest: 최신 백업\n- ' + dateStr + ': 오늘 백업');
+                alert('✅ Firebase에 백업되었습니다!\n- latest: 최신 백업 (6개 그룹)\n- ' + dateStr + ': 오늘 백업');
             } catch(error) {
                 console.error('Firebase 백업 실패:', error);
                 alert('❌ Firebase 백업 실패: ' + error.message);
@@ -6221,28 +6249,70 @@
         // Firebase에서 복원
         async function restoreFromFirebase() {
             try {
-                // 백업 목록 가져오기
-                const snapshot = await db.collection('backups').orderBy('date', 'desc').limit(5).get();
+                // 모든 백업 문서 가져오기
+                const snapshot = await db.collection('backups').get();
                 
                 if (snapshot.empty) {
                     alert('❌ Firebase에 저장된 백업이 없습니다.');
                     return;
                 }
                 
-                let backupList = '저장된 백업 목록:\n\n';
+                let backupList = '📦 저장된 백업 목록:\n\n';
                 let backups = [];
-                snapshot.forEach((doc, idx) => {
+                let metaDocs = {};
+                let v1Docs = {};
+                
+                // 문서 분류
+                snapshot.forEach(doc => {
                     const data = doc.data();
-                    const date = data.date ? new Date(data.date).toLocaleString('ko-KR') : '알 수 없음';
-                    backups.push({ id: doc.id, data: data });
-                    backupList += `${backups.length}. ${doc.id} (${date})\n`;
+                    
+                    // v2.0 메타 문서
+                    if (doc.id.endsWith('_meta') && data.groups) {
+                        const prefix = doc.id.replace('_meta', '');
+                        metaDocs[prefix] = {
+                            id: prefix,
+                            type: 'v2',
+                            date: data.date,
+                            groups: data.groups
+                        };
+                    }
+                    // v1.0 단일 백업 (data 필드가 있는 문서)
+                    else if (data.data && data.version === '1.0') {
+                        v1Docs[doc.id] = {
+                            id: doc.id,
+                            type: 'v1',
+                            date: data.date,
+                            data: data.data
+                        };
+                    }
                 });
                 
-                const choice = prompt(backupList + '\n복원할 백업 번호를 입력하세요 (1-' + backups.length + '):');
+                // v2 백업 추가
+                Object.values(metaDocs).forEach(b => backups.push(b));
+                
+                // v1 백업 추가
+                Object.values(v1Docs).forEach(b => backups.push(b));
+                
+                if (backups.length === 0) {
+                    alert('❌ Firebase에 유효한 백업이 없습니다.');
+                    return;
+                }
+                
+                // 날짜 기준 정렬 (최신순)
+                backups.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+                
+                // 상위 5개만 표시
+                backups.slice(0, 5).forEach((b, idx) => {
+                    const dateStr = b.date ? new Date(b.date).toLocaleString('ko-KR') : '알 수 없음';
+                    const typeLabel = b.type === 'v2' ? '(분할)' : '(단일)';
+                    backupList += `${idx + 1}. ${b.id} ${typeLabel}\n   📅 ${dateStr}\n\n`;
+                });
+                
+                const choice = prompt(backupList + '복원할 백업 번호를 입력하세요 (1-' + Math.min(backups.length, 5) + '):');
                 if (!choice) return;
                 
                 const idx = parseInt(choice) - 1;
-                if (isNaN(idx) || idx < 0 || idx >= backups.length) {
+                if (isNaN(idx) || idx < 0 || idx >= Math.min(backups.length, 5)) {
                     alert('❌ 잘못된 번호입니다.');
                     return;
                 }
@@ -6254,10 +6324,27 @@
                 }
                 
                 // 데이터 복원
-                Object.keys(selectedBackup.data.data).forEach(key => {
-                    const value = selectedBackup.data.data[key];
-                    localStorage.setItem(key, JSON.stringify(value));
-                });
+                if (selectedBackup.type === 'v2') {
+                    // v2.0: 분할 백업 복원
+                    for (const groupName of selectedBackup.groups) {
+                        const groupDoc = await db.collection('backups').doc(selectedBackup.id + '_' + groupName).get();
+                        if (groupDoc.exists) {
+                            const groupData = groupDoc.data();
+                            if (groupData.data) {
+                                Object.keys(groupData.data).forEach(key => {
+                                    const value = groupData.data[key];
+                                    localStorage.setItem(key, JSON.stringify(value));
+                                });
+                            }
+                        }
+                    }
+                } else {
+                    // v1.0: 단일 백업 복원
+                    Object.keys(selectedBackup.data).forEach(key => {
+                        const value = selectedBackup.data[key];
+                        localStorage.setItem(key, JSON.stringify(value));
+                    });
+                }
                 
                 alert('✅ 데이터가 복원되었습니다!\n페이지를 새로고침합니다.');
                 location.reload();
