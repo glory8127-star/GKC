@@ -482,10 +482,45 @@
                     <label class="form-label">상세 내역</label>
                     <textarea class="form-textarea" id="expenseDesc" placeholder="지출 내역을 상세히 작성해주세요"></textarea>
                 </div>
+                
+                <!-- 영수증 첨부 -->
+                <div class="form-group">
+                    <label class="form-label">🧾 영수증 첨부</label>
+                    <div id="receiptPreviewArea" style="display: none; margin-bottom: 10px; position: relative;">
+                        <img id="receiptPreview" style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 10px; border: 1px solid #e2e8f0;">
+                        <button onclick="removeReceipt()" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 1.1em;">×</button>
+                        <div id="receiptSize" style="text-align: center; font-size: 0.8em; color: #64748b; margin-top: 5px;"></div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; background: linear-gradient(135deg, #059669, #047857); color: white; border-radius: 10px; cursor: pointer; font-weight: 500;">
+                            <span style="font-size: 1.3em;">📷</span>
+                            <span>카메라</span>
+                            <input type="file" accept="image/*" capture="environment" onchange="handleReceiptSelect(event)" style="display: none;">
+                        </label>
+                        <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; background: #f1f5f9; color: #475569; border-radius: 10px; cursor: pointer; font-weight: 500; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 1.3em;">🖼️</span>
+                            <span>갤러리</span>
+                            <input type="file" accept="image/*" onchange="handleReceiptSelect(event)" style="display: none;">
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeExpenseModal()">취소</button>
-                <button class="btn btn-primary" onclick="submitExpense()">제출</button>
+                <button class="btn btn-primary" id="submitExpenseBtn" onclick="submitExpense()">제출</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 영수증 보기 모달 -->
+    <div class="modal" id="receiptViewModal">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh;">
+            <div class="modal-header">
+                <div class="modal-title">🧾 영수증</div>
+                <button class="modal-close" onclick="closeReceiptView()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 10px; text-align: center;">
+                <img id="receiptViewImage" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 10px;">
             </div>
         </div>
     </div>
@@ -518,6 +553,7 @@
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const storage = firebase.storage();
         
         let currentUser = null;
         let currentTab = 'deptList';
@@ -529,6 +565,8 @@
         let budgets = []; // 예산 데이터
         let selectedEventYear = new Date().getFullYear();
         let selectedEventMonth = new Date().getMonth() + 1; // 1-12
+        let selectedReceiptFile = null; // 선택된 영수증 파일
+        let compressedReceiptBlob = null; // 압축된 영수증
         
         // 금액 포맷 함수 ($1,000.00 형식)
         function formatMoney(amount) {
@@ -975,7 +1013,10 @@
                     <div class="expense-item ${itemClass}">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div class="expense-title">${req.title}</div>
-                            ${canDelete ? `<button onclick="deleteRequest('${req.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em; padding: 0 5px;">×</button>` : ''}
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                ${req.receiptUrl ? `<button onclick="viewReceipt('${req.receiptUrl}')" style="background: #dcfce7; border: none; color: #16a34a; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8em; font-weight: 500;">🧾 영수증</button>` : ''}
+                                ${canDelete ? `<button onclick="deleteRequest('${req.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em; padding: 0 5px;">×</button>` : ''}
+                            </div>
                         </div>
                         <div class="expense-info">${req.department} · ${req.category || '기타'} · ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div>
                         <div class="expense-info">${req.date}</div>
@@ -1002,14 +1043,17 @@
             pendingRequests.forEach((req, idx) => {
                 html += `
                     <div class="expense-item pending">
-                        <div class="expense-title">${req.title}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="expense-title">${req.title}</div>
+                            ${req.receiptUrl ? `<button onclick="viewReceipt('${req.receiptUrl}')" style="background: #dcfce7; border: none; color: #16a34a; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8em; font-weight: 500;">🧾 영수증</button>` : '<span style="font-size: 0.75em; color: #94a3b8;">영수증 없음</span>'}
+                        </div>
                         <div class="expense-info">${req.department} · ${req.requester} · ${req.date}</div>
                         <div class="expense-info" style="color: #059669;">📁 ${req.category || '기타'} · 💳 ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div>
-                        ${req.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px;">${req.description}</div>` : ''}
+                        ${req.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px; padding: 10px; background: #f8fafc; border-radius: 8px;">${req.description}</div>` : ''}
                         <div class="expense-amount">${formatMoney(req.amount)}</div>
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
-                            <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="approveRequest('${req.id}')">승인</button>
-                            <button class="btn btn-danger" style="flex: 1; padding: 10px;" onclick="rejectRequest('${req.id}')">거절</button>
+                            <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="approveRequest('${req.id}')">✅ 승인</button>
+                            <button class="btn btn-danger" style="flex: 1; padding: 10px;" onclick="rejectRequest('${req.id}')">❌ 거절</button>
                         </div>
                     </div>
                 `;
@@ -1028,6 +1072,9 @@
             document.getElementById('expenseCheckNumber').style.display = 'none';
             document.getElementById('expenseDesc').value = '';
             document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            
+            // 영수증 초기화
+            removeReceipt();
         }
         
         function closeExpenseModal() {
@@ -1044,6 +1091,126 @@
                 checkInput.value = '';
             }
         }
+        
+        // ===== 영수증 관련 함수 =====
+        
+        // 영수증 선택 처리
+        async function handleReceiptSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 이미지 파일 확인
+            if (!file.type.startsWith('image/')) {
+                showToast('이미지 파일만 선택할 수 있습니다');
+                return;
+            }
+            
+            showToast('이미지 압축 중...');
+            
+            try {
+                // 이미지 압축
+                compressedReceiptBlob = await compressImage(file, 1200, 0.7);
+                selectedReceiptFile = file;
+                
+                // 미리보기 표시
+                const previewUrl = URL.createObjectURL(compressedReceiptBlob);
+                document.getElementById('receiptPreview').src = previewUrl;
+                document.getElementById('receiptPreviewArea').style.display = 'block';
+                
+                // 파일 크기 표시
+                const originalSize = (file.size / 1024).toFixed(1);
+                const compressedSize = (compressedReceiptBlob.size / 1024).toFixed(1);
+                document.getElementById('receiptSize').textContent = 
+                    `원본: ${originalSize}KB → 압축: ${compressedSize}KB (${Math.round((1 - compressedReceiptBlob.size / file.size) * 100)}% 절감)`;
+                
+                showToast('✅ 영수증이 첨부되었습니다');
+                
+            } catch (error) {
+                console.error('이미지 압축 오류:', error);
+                showToast('이미지 처리 중 오류가 발생했습니다');
+            }
+            
+            // input 초기화 (같은 파일 다시 선택 가능하도록)
+            event.target.value = '';
+        }
+        
+        // 이미지 압축 함수
+        function compressImage(file, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // 최대 크기 제한
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob(
+                            (blob) => resolve(blob),
+                            'image/jpeg',
+                            quality
+                        );
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 영수증 제거
+        function removeReceipt() {
+            selectedReceiptFile = null;
+            compressedReceiptBlob = null;
+            document.getElementById('receiptPreviewArea').style.display = 'none';
+            document.getElementById('receiptPreview').src = '';
+            document.getElementById('receiptSize').textContent = '';
+        }
+        
+        // 영수증 업로드
+        async function uploadReceipt(requestId) {
+            if (!compressedReceiptBlob) return null;
+            
+            const fileName = `receipts/${requestId}_${Date.now()}.jpg`;
+            const storageRef = storage.ref(fileName);
+            
+            try {
+                const snapshot = await storageRef.put(compressedReceiptBlob);
+                const downloadUrl = await snapshot.ref.getDownloadURL();
+                return downloadUrl;
+            } catch (error) {
+                console.error('업로드 오류:', error);
+                throw error;
+            }
+        }
+        
+        // 영수증 보기
+        function viewReceipt(url) {
+            document.getElementById('receiptViewImage').src = url;
+            document.getElementById('receiptViewModal').classList.add('active');
+        }
+        
+        // 영수증 보기 닫기
+        function closeReceiptView() {
+            document.getElementById('receiptViewModal').classList.remove('active');
+        }
+        
+        // ===== 지출결의서 제출 =====
         
         async function submitExpense() {
             const dept = document.getElementById('expenseDept').value;
@@ -1069,37 +1236,59 @@
             const deptInfo = departments.find(d => d.name === dept);
             const deptLeader = deptInfo?.leader || currentUser.name;
             
-            const request = {
-                id: Date.now().toString(),
-                department: dept,
-                deptLeader: deptLeader,
-                item: title,  // index.html 호환
-                title: title,
-                category: category,
-                amount: parseFloat(amount),
-                payment: payment,
-                checkNumber: payment === 'Check' ? checkNumber : '',
-                date: date,
-                requestDate: new Date().toISOString().split('T')[0],  // index.html 호환
-                description: description,
-                requester: currentUser.name,
-                status: 'pending',
-                createdAt: new Date().toISOString()
-            };
+            const requestId = Date.now().toString();
             
-            paymentRequests.push(request);
+            // 제출 버튼 비활성화
+            const submitBtn = document.getElementById('submitExpenseBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '제출 중...';
             
             try {
+                // 영수증 업로드 (있는 경우)
+                let receiptUrl = '';
+                if (compressedReceiptBlob) {
+                    showToast('영수증 업로드 중...');
+                    receiptUrl = await uploadReceipt(requestId);
+                }
+                
+                const request = {
+                    id: requestId,
+                    department: dept,
+                    deptLeader: deptLeader,
+                    item: title,  // index.html 호환
+                    title: title,
+                    category: category,
+                    amount: parseFloat(amount),
+                    payment: payment,
+                    checkNumber: payment === 'Check' ? checkNumber : '',
+                    date: date,
+                    requestDate: new Date().toISOString().split('T')[0],  // index.html 호환
+                    description: description,
+                    requester: currentUser.name,
+                    status: 'pending',
+                    receiptUrl: receiptUrl,  // 영수증 URL
+                    createdAt: new Date().toISOString()
+                };
+                
+                paymentRequests.push(request);
+                
                 await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
                 
+                // 영수증 상태 초기화
+                removeReceipt();
+                
                 closeExpenseModal();
-                showToast('지출결의서가 제출되었습니다');
+                showToast('✅ 지출결의서가 제출되었습니다');
                 renderExpenseList();
                 
             } catch (error) {
                 console.error('저장 오류:', error);
                 showToast('저장 중 오류가 발생했습니다');
+            } finally {
+                // 제출 버튼 복구
+                submitBtn.disabled = false;
+                submitBtn.textContent = '제출';
             }
         }
         
@@ -1107,7 +1296,7 @@
             const req = paymentRequests.find(r => r.id === id);
             if (!req) return;
             
-            if (!confirm(`"${req.title}" 지출결의서를 승인하시겠습니까?\n금액: ${formatMoney(req.amount)}`)) {
+            if (!confirm(`"${req.title}" 지출결의서를 승인하시겠습니까?\n금액: ${formatMoney(req.amount)}${req.receiptUrl ? '\n🧾 영수증 첨부됨' : ''}`)) {
                 return;
             }
             
@@ -1128,7 +1317,8 @@
                 payment: req.payment || '현금',
                 checkNumber: req.checkNumber || '',
                 paidBy: req.requester,
-                receipt: false,
+                receipt: req.receiptUrl ? true : false,
+                receiptUrl: req.receiptUrl || '',  // 영수증 URL 포함
                 createdAt: new Date().toISOString(),
                 createdBy: currentUser.name,
                 fromExpenseRequest: req.id
@@ -1143,7 +1333,7 @@
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
                 localStorage.setItem('churchExpenses', JSON.stringify(expenses));
                 
-                showToast('승인 완료! 재정관리 지출에 반영되었습니다');
+                showToast('✅ 승인 완료! 재정관리 지출에 반영되었습니다');
                 renderApprovalList();
                 
             } catch (error) {
