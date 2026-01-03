@@ -323,6 +323,16 @@
                 <div id="deptList"></div>
             </div>
             
+            <div id="tabEvent" class="hidden">
+                <div class="card">
+                    <div class="card-title">📅 부서 행사</div>
+                    <select class="form-select" id="eventDeptFilter" onchange="renderEventList()" style="margin-top: 10px;">
+                        <option value="">전체 부서</option>
+                    </select>
+                </div>
+                <div id="eventList"></div>
+            </div>
+            
             <div id="tabExpense" class="hidden">
                 <div class="card">
                     <div class="card-title">📋 내 지출결의서</div>
@@ -344,6 +354,10 @@
             <div class="nav-icon">🏛️</div>
             <span>부서</span>
         </div>
+        <div class="nav-item" onclick="showTab('event')">
+            <div class="nav-icon">📅</div>
+            <span>행사</span>
+        </div>
         <div class="nav-item" onclick="showTab('expense')">
             <div class="nav-icon">📝</div>
             <span>지출결의</span>
@@ -354,7 +368,51 @@
         </div>
     </div>
     
-    <button class="fab hidden" id="fabExpense" onclick="openExpenseModal()">+</button>
+    <button class="fab hidden" id="fabAdd" onclick="handleFabClick()">+</button>
+    
+    <!-- 행사 등록 모달 -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📅 행사 등록</div>
+                <button class="modal-close" onclick="closeEventModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">부서 선택 *</label>
+                    <select class="form-select" id="eventDept"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">행사명 *</label>
+                    <input type="text" class="form-input" id="eventName" placeholder="예: 부서 친교모임">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">행사 날짜 *</label>
+                    <input type="date" class="form-input" id="eventDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">시작 시간</label>
+                    <input type="time" class="form-input" id="eventStartTime">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">종료 시간</label>
+                    <input type="time" class="form-input" id="eventEndTime">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">장소</label>
+                    <input type="text" class="form-input" id="eventLocation" placeholder="예: 교회 친교실">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">행사 내용</label>
+                    <textarea class="form-textarea" id="eventDesc" placeholder="행사 내용을 상세히 작성해주세요"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEventModal()">취소</button>
+                <button class="btn btn-primary" onclick="submitEvent()">등록</button>
+            </div>
+        </div>
+    </div>
     
     <div class="modal" id="expenseModal">
         <div class="modal-content">
@@ -430,13 +488,16 @@
         const db = firebase.firestore();
         
         let currentUser = null;
+        let currentTab = 'deptList';
         let departments = [];
         let members = [];
         let expenses = [];
         let expenseRequests = [];
+        let yearlyEvents = [];
         
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
             
             const savedUser = localStorage.getItem('deptAppUser');
             if (savedUser) {
@@ -514,7 +575,7 @@
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('appScreen').classList.add('hidden');
             document.getElementById('bottomNav').classList.add('hidden');
-            document.getElementById('fabExpense').classList.add('hidden');
+            document.getElementById('fabAdd').classList.add('hidden');
             document.getElementById('logoutBtn').style.display = 'none';
             
             document.getElementById('loginUsername').value = '';
@@ -525,7 +586,7 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('appScreen').classList.remove('hidden');
             document.getElementById('bottomNav').classList.remove('hidden');
-            document.getElementById('fabExpense').classList.remove('hidden');
+            document.getElementById('fabAdd').classList.remove('hidden');
             document.getElementById('logoutBtn').style.display = 'block';
             
             const canApprove = currentUser.role === '관리자' || 
@@ -565,12 +626,19 @@
                     localStorage.setItem('expenseRequests', JSON.stringify(expenseRequests));
                 }
                 
+                const eventsDoc = await db.collection('yearlyEvents').doc('main').get();
+                if (eventsDoc.exists) {
+                    yearlyEvents = eventsDoc.data().list || [];
+                    localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+                }
+                
             } catch (e) {
                 console.error('데이터 로드 실패:', e);
                 departments = JSON.parse(localStorage.getItem('departments') || '[]');
                 members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
                 expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
                 expenseRequests = JSON.parse(localStorage.getItem('expenseRequests') || '[]');
+                yearlyEvents = JSON.parse(localStorage.getItem('yearlyEvents') || '[]');
             }
         }
         
@@ -591,6 +659,16 @@
                 if (doc.exists) {
                     expenses = doc.data().list || [];
                     localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                }
+            });
+            
+            db.collection('yearlyEvents').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    yearlyEvents = doc.data().list || [];
+                    localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+                    
+                    const eventTab = document.getElementById('tabEvent');
+                    if (!eventTab.classList.contains('hidden')) renderEventList();
                 }
             });
         }
@@ -873,7 +951,10 @@
         }
         
         function showTab(tab) {
+            currentTab = tab;
+            
             document.getElementById('tabDeptList').classList.add('hidden');
+            document.getElementById('tabEvent').classList.add('hidden');
             document.getElementById('tabExpense').classList.add('hidden');
             document.getElementById('tabApproval').classList.add('hidden');
             
@@ -883,14 +964,198 @@
                 document.getElementById('tabDeptList').classList.remove('hidden');
                 document.querySelectorAll('.nav-item')[0].classList.add('active');
                 renderDeptList();
+            } else if (tab === 'event') {
+                document.getElementById('tabEvent').classList.remove('hidden');
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                updateEventDeptFilter();
+                renderEventList();
             } else if (tab === 'expense') {
                 document.getElementById('tabExpense').classList.remove('hidden');
-                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                document.querySelectorAll('.nav-item')[2].classList.add('active');
                 renderExpenseList();
             } else if (tab === 'approval') {
                 document.getElementById('tabApproval').classList.remove('hidden');
                 document.getElementById('navApproval').classList.add('active');
                 renderApprovalList();
+            }
+        }
+        
+        // FAB 버튼 클릭 핸들러
+        function handleFabClick() {
+            if (currentTab === 'event') {
+                openEventModal();
+            } else {
+                openExpenseModal();
+            }
+        }
+        
+        // 행사 부서 필터 업데이트
+        function updateEventDeptFilter() {
+            const select = document.getElementById('eventDeptFilter');
+            select.innerHTML = '<option value="">전체 부서</option>';
+            departments.forEach(dept => {
+                select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
+            });
+        }
+        
+        // 행사 목록 렌더링
+        function renderEventList() {
+            const container = document.getElementById('eventList');
+            const filterDept = document.getElementById('eventDeptFilter').value;
+            
+            // 부서별 필터링
+            let filteredEvents = yearlyEvents;
+            if (filterDept) {
+                filteredEvents = yearlyEvents.filter(e => e.department === filterDept);
+            }
+            
+            // 날짜순 정렬 (가까운 미래 먼저)
+            const today = new Date().toISOString().split('T')[0];
+            filteredEvents.sort((a, b) => {
+                const dateA = a.date || a.startDate || '';
+                const dateB = b.date || b.startDate || '';
+                return dateA.localeCompare(dateB);
+            });
+            
+            // 지난 행사와 예정 행사 분리
+            const upcomingEvents = filteredEvents.filter(e => (e.date || e.startDate || '') >= today);
+            const pastEvents = filteredEvents.filter(e => (e.date || e.startDate || '') < today);
+            
+            if (filteredEvents.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>등록된 행사가 없습니다</p><p style="font-size: 0.85em; margin-top: 10px;">+ 버튼을 눌러 새 행사를 등록하세요</p></div>';
+                return;
+            }
+            
+            let html = '';
+            
+            // 예정 행사
+            if (upcomingEvents.length > 0) {
+                html += '<div class="card"><div class="card-title">📌 예정된 행사</div>';
+                upcomingEvents.forEach(evt => {
+                    html += renderEventItem(evt, false);
+                });
+                html += '</div>';
+            }
+            
+            // 지난 행사
+            if (pastEvents.length > 0) {
+                html += '<div class="card" style="opacity: 0.7;"><div class="card-title">📁 지난 행사</div>';
+                pastEvents.slice(-10).reverse().forEach(evt => {
+                    html += renderEventItem(evt, true);
+                });
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function renderEventItem(evt, isPast) {
+            const date = evt.date || evt.startDate || '-';
+            const time = evt.startTime ? ` ${evt.startTime}` : '';
+            const endTime = evt.endTime ? `~${evt.endTime}` : '';
+            
+            return `
+                <div style="padding: 15px 0; border-bottom: 1px solid #f1f5f9;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">${evt.name || evt.title || '행사명 없음'}</div>
+                            <div style="font-size: 0.85em; color: #64748b; margin-top: 3px;">
+                                📅 ${date}${time}${endTime}
+                            </div>
+                            ${evt.location ? `<div style="font-size: 0.85em; color: #64748b;">📍 ${evt.location}</div>` : ''}
+                            ${evt.department ? `<div style="font-size: 0.8em; color: #059669; margin-top: 5px;">🏛️ ${evt.department}</div>` : ''}
+                        </div>
+                        ${!isPast && currentUser.role === '관리자' ? `<button onclick="deleteEvent('${evt.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em;">×</button>` : ''}
+                    </div>
+                    ${evt.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px; padding: 10px; background: #f8fafc; border-radius: 8px;">${evt.description}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        // 행사 모달 열기
+        function openEventModal() {
+            document.getElementById('eventModal').classList.add('active');
+            document.getElementById('eventName').value = '';
+            document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('eventStartTime').value = '';
+            document.getElementById('eventEndTime').value = '';
+            document.getElementById('eventLocation').value = '';
+            document.getElementById('eventDesc').value = '';
+            
+            // 부서 선택 드롭다운 업데이트
+            const select = document.getElementById('eventDept');
+            select.innerHTML = '<option value="">-- 부서 선택 (선택사항) --</option>';
+            departments.forEach(dept => {
+                select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
+            });
+        }
+        
+        // 행사 모달 닫기
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.remove('active');
+        }
+        
+        // 행사 등록
+        async function submitEvent() {
+            const dept = document.getElementById('eventDept').value;
+            const name = document.getElementById('eventName').value.trim();
+            const date = document.getElementById('eventDate').value;
+            const startTime = document.getElementById('eventStartTime').value;
+            const endTime = document.getElementById('eventEndTime').value;
+            const location = document.getElementById('eventLocation').value.trim();
+            const description = document.getElementById('eventDesc').value.trim();
+            
+            if (!name || !date) {
+                showToast('행사명과 날짜를 입력해주세요');
+                return;
+            }
+            
+            const newEvent = {
+                id: Date.now().toString(),
+                name: name,
+                date: date,
+                startDate: date,
+                startTime: startTime,
+                endTime: endTime,
+                location: location,
+                department: dept,
+                description: description,
+                createdBy: currentUser.name,
+                createdAt: new Date().toISOString()
+            };
+            
+            yearlyEvents.push(newEvent);
+            
+            try {
+                await db.collection('yearlyEvents').doc('main').set({ list: yearlyEvents });
+                localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+                
+                closeEventModal();
+                showToast('행사가 등록되었습니다');
+                renderEventList();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showToast('저장 중 오류가 발생했습니다');
+            }
+        }
+        
+        // 행사 삭제
+        async function deleteEvent(id) {
+            if (!confirm('이 행사를 삭제하시겠습니까?')) return;
+            
+            yearlyEvents = yearlyEvents.filter(e => e.id !== id);
+            
+            try {
+                await db.collection('yearlyEvents').doc('main').set({ list: yearlyEvents });
+                localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+                
+                showToast('행사가 삭제되었습니다');
+                renderEventList();
+                
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                showToast('삭제 중 오류가 발생했습니다');
             }
         }
         
