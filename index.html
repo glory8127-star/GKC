@@ -5509,15 +5509,47 @@
         
         // 페이지 로드 시 Firebase 데이터 로드
         document.addEventListener('DOMContentLoaded', async function() {
-            await loadAllDataFromFirebase();
-            
-            // URL 파라미터로 섹션 바로가기 처리
+            // URL 파라미터 저장 (로그인 후 이동용)
             const urlParams = new URLSearchParams(window.location.search);
             const section = urlParams.get('section');
             if (section) {
-                // 약간 지연 후 섹션 이동 (UI 렌더링 완료 대기)
+                sessionStorage.setItem('pendingSection', section);
+            }
+            
+            await loadAllDataFromFirebase();
+            
+            // 저장된 로그인 상태 복원
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    
+                    // UI 업데이트
+                    document.getElementById('authButtons').style.display = 'none';
+                    document.getElementById('userDisplay').style.display = 'block';
+                    document.getElementById('userName').textContent = currentUser.username;
+                    document.getElementById('userRole').textContent = currentUser.role;
+                    
+                    // 회원 메뉴 표시
+                    document.querySelectorAll('.member-only').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                    
+                    // 권한에 따른 메뉴 표시
+                    applyUserPermissions(currentUser.permissions || []);
+                    
+                    console.log('로그인 상태 복원:', currentUser.username);
+                } catch (e) {
+                    console.error('로그인 상태 복원 실패:', e);
+                    localStorage.removeItem('currentUser');
+                }
+            }
+            
+            // 로그인된 상태면 바로 섹션 이동
+            if (section && currentUser) {
                 setTimeout(() => {
                     showSection(section);
+                    sessionStorage.removeItem('pendingSection');
                 }, 100);
             }
         });
@@ -10133,6 +10165,9 @@
                     permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'users']
                 };
                 
+                // 로그인 상태 저장
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
                 document.getElementById('authButtons').style.display = 'none';
                 document.getElementById('userDisplay').style.display = 'block';
                 document.getElementById('userName').textContent = 'gkc8127';
@@ -10174,6 +10209,13 @@
                 alert('로그인 성공!');
                 loadSignupRequests();
                 loadRegisteredUsers();
+                
+                // URL 파라미터로 요청된 섹션으로 이동
+                const pendingSection = sessionStorage.getItem('pendingSection');
+                if (pendingSection) {
+                    sessionStorage.removeItem('pendingSection');
+                    setTimeout(() => showSection(pendingSection), 100);
+                }
                 return;
             }
             
@@ -10191,6 +10233,9 @@
                     memberName: user.memberName || null
                 };
                 
+                // 로그인 상태 저장
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
                 document.getElementById('authButtons').style.display = 'none';
                 document.getElementById('userDisplay').style.display = 'block';
                 document.getElementById('userName').textContent = user.username;
@@ -10206,6 +10251,13 @@
                 
                 closeLogin();
                 alert('로그인 성공!');
+                
+                // URL 파라미터로 요청된 섹션으로 이동
+                const pendingSection = sessionStorage.getItem('pendingSection');
+                if (pendingSection) {
+                    sessionStorage.removeItem('pendingSection');
+                    setTimeout(() => showSection(pendingSection), 100);
+                }
             } else {
                 alert('아이디 또는 비밀번호가 잘못되었습니다.\\n\\n가입 신청 후 승인을 받으셔야 로그인이 가능합니다.');
             }
@@ -10213,6 +10265,7 @@
         
         function logout() {
             currentUser = null;
+            localStorage.removeItem('currentUser'); // 로그인 상태 제거
             document.getElementById('authButtons').style.display = 'flex';
             document.getElementById('userDisplay').style.display = 'none';
             
@@ -13407,17 +13460,24 @@
             }
             
             let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse;">';
-            html += '<thead><tr style="background: #f6ad55; color: white;"><th style="padding: 10px;">요청일</th><th style="padding: 10px;">부서</th><th style="padding: 10px;">부서장</th><th style="padding: 10px;">지출항목</th><th style="padding: 10px;">지출일</th><th style="padding: 10px;">금액</th><th style="padding: 10px;">처리</th></tr></thead>';
+            html += '<thead><tr style="background: #f6ad55; color: white;"><th style="padding: 10px;">요청일</th><th style="padding: 10px;">부서</th><th style="padding: 10px;">요청자</th><th style="padding: 10px;">지출항목</th><th style="padding: 10px;">영수증</th><th style="padding: 10px;">금액</th><th style="padding: 10px;">처리</th></tr></thead>';
             html += '<tbody>';
             
             pendingRequests.forEach((req, idx) => {
+                const receiptBtn = req.receiptUrl 
+                    ? `<button onclick="viewReceiptImage('${req.receiptUrl}')" style="background: #dcfce7; border: none; color: #16a34a; padding: 5px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85em; font-weight: 500;">🧾 보기</button>`
+                    : '<span style="color: #94a3b8; font-size: 0.85em;">없음</span>';
+                
                 html += `
                     <tr style="border-bottom: 1px solid #e2e8f0;">
-                        <td style="padding: 10px; text-align: center;">${req.requestDate}</td>
+                        <td style="padding: 10px; text-align: center;">${req.requestDate || req.date}</td>
                         <td style="padding: 10px; text-align: center; font-weight: 600;">${req.department}</td>
-                        <td style="padding: 10px; text-align: center;">${req.deptLeader}</td>
-                        <td style="padding: 10px;">${req.item}</td>
-                        <td style="padding: 10px; text-align: center;">${req.date}</td>
+                        <td style="padding: 10px; text-align: center;">${req.requester || req.deptLeader}</td>
+                        <td style="padding: 10px;">
+                            ${req.item || req.title}
+                            ${req.description ? `<div style="font-size: 0.8em; color: #64748b;">${req.description}</div>` : ''}
+                        </td>
+                        <td style="padding: 10px; text-align: center;">${receiptBtn}</td>
                         <td style="padding: 10px; text-align: right; font-weight: 600; color: #e94560;">$${req.amount.toFixed(2)}</td>
                         <td style="padding: 10px; text-align: center;">
                             <button onclick="approvePayment(${idx})" class="btn btn-success" style="padding: 5px 10px; font-size: 0.85em;">승인</button>
@@ -13431,13 +13491,29 @@
             container.innerHTML = html;
         }
         
+        // 영수증 이미지 보기
+        function viewReceiptImage(url) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            modal.onclick = () => modal.remove();
+            modal.innerHTML = `
+                <div style="position: relative; max-width: 90%; max-height: 90%;">
+                    <img src="${url}" style="max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 10px;">
+                    <button onclick="event.stopPropagation(); this.parentElement.parentElement.remove();" style="position: absolute; top: -15px; right: -15px; background: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.5em; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">×</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
         // 결제 승인
         function approvePayment(reqIndex) {
             let paymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
             const pendingRequests = paymentRequests.filter(r => r.status === 'pending');
             const req = pendingRequests[reqIndex];
             
-            if (confirm(`"${req.item}" 결제를 승인하시겠습니까?\n\n금액: $${req.amount.toFixed(2)}\n부서: ${req.department}`)) {
+            const confirmMsg = `"${req.item || req.title}" 결제를 승인하시겠습니까?\n\n금액: $${req.amount.toFixed(2)}\n부서: ${req.department}${req.receiptUrl ? '\n🧾 영수증 첨부됨' : ''}`;
+            
+            if (confirm(confirmMsg)) {
                 // 요청 상태 업데이트
                 const fullIndex = paymentRequests.findIndex(r => r.id === req.id && r.status === 'pending');
                 if (fullIndex >= 0) {
@@ -13447,38 +13523,43 @@
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
                 savePaymentRequestsToFirebase(); // Firebase 동기화
                 
-                // 부서 지출 결의서 상태 업데이트
+                // 부서 지출 결의서 상태 업데이트 (구 방식 - 부서관리에서 직접 만든 경우)
                 let expData = null;
                 if (req.deptIndex !== undefined && req.expIndex !== undefined) {
                     departments[req.deptIndex].expenses[req.expIndex].paymentApproved = true;
                     expData = departments[req.deptIndex].expenses[req.expIndex];
                     localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
+                    saveDepartmentsToFirebase(); // Firebase 동기화
                 }
                 
                 // 재정관리 지출 내역에 추가
-                if (expData) {
-                    expenses.push({
-                        id: expData.id,
-                        date: expData.date,
-                        department: req.department,
-                        category: expData.category || '기타',
-                        item: expData.item,
-                        amount: expData.amount,
-                        payment: expData.payment || '현금',
-                        checkNumber: expData.checkNumber || '',
-                        memo: `결제승인: ${new Date().toISOString().split('T')[0]}`
-                    });
-                    localStorage.setItem('churchExpenses', JSON.stringify(expenses));
-                    saveChurchExpensesToFirebase(); // Firebase 동기화
-                }
+                const newExpense = {
+                    id: expData ? expData.id : Date.now(),
+                    date: expData ? expData.date : req.date,
+                    department: req.department,
+                    category: expData ? (expData.category || '기타') : (req.category || '기타'),
+                    item: expData ? expData.item : (req.item || req.title),
+                    description: req.description || '',
+                    amount: expData ? expData.amount : req.amount,
+                    payment: expData ? (expData.payment || '현금') : (req.payment || '현금'),
+                    checkNumber: expData ? (expData.checkNumber || '') : (req.checkNumber || ''),
+                    paidBy: req.requester || '',
+                    receipt: req.receiptUrl ? true : false,
+                    receiptUrl: req.receiptUrl || '',  // 영수증 URL
+                    memo: `결제승인: ${new Date().toISOString().split('T')[0]}`,
+                    fromExpenseRequest: req.id
+                };
+                
+                expenses.push(newExpense);
+                localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                saveChurchExpensesToFirebase(); // Firebase 동기화
                 
                 loadPaymentRequests();
                 loadDepartmentList();
                 loadExpenseList();
                 updateExpenseStats();
                 updateFinanceDashboard();
-                alert('결제가 승인되었습니다.\n재정관리 지출 내역에 추가되었습니다.');
+                alert('✅ 결제가 승인되었습니다.\n재정관리 지출 내역에 추가되었습니다.');
             }
         }
         
@@ -13592,6 +13673,7 @@
                                 <th>항목</th>
                                 <th>금액</th>
                                 <th>결제방법</th>
+                                <th>영수증</th>
                                 <th>관리</th>
                             </tr>
                         </thead>
@@ -13604,14 +13686,19 @@
                 if (expense.payment === 'Check' && expense.checkNumber) {
                     paymentDisplay = `Check #${expense.checkNumber}`;
                 }
+                const receiptBtn = expense.receiptUrl 
+                    ? `<button onclick="viewReceiptImage('${expense.receiptUrl}')" style="background: #dcfce7; border: none; color: #16a34a; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.85em;">🧾</button>`
+                    : '<span style="color: #ccc;">-</span>';
+                
                 html += `
                     <tr>
                         <td>${expense.date}</td>
                         <td><span class="badge badge-info">${expense.department || '-'}</span></td>
                         <td>${expense.category}</td>
-                        <td>${expense.item}</td>
+                        <td>${expense.item}${expense.description ? `<div style="font-size: 0.8em; color: #666;">${expense.description}</div>` : ''}</td>
                         <td style="color: #e53e3e;">${formatMoney(expense.amount)}</td>
                         <td>${paymentDisplay}</td>
+                        <td style="text-align: center;">${receiptBtn}</td>
                         <td>
                             <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" onclick="deleteExpense(${originalIndex})">삭제</button>
                         </td>
@@ -13625,7 +13712,7 @@
                             <tr style="background: #f7fafc; font-weight: bold;">
                                 <td colspan="4">합계</td>
                                 <td style="color: #e53e3e;">${formatMoney(total)}</td>
-                                <td colspan="2"></td>
+                                <td colspan="3"></td>
                             </tr>
                         </tfoot>
                     </table>
