@@ -554,7 +554,15 @@
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const storage = firebase.storage();
+        let storage = null; // 필요할 때 초기화
+        
+        // Storage 지연 초기화
+        function getStorage() {
+            if (!storage) {
+                storage = firebase.storage();
+            }
+            return storage;
+        }
         
         let currentUser = null;
         let currentTab = 'deptList';
@@ -1188,7 +1196,7 @@
             if (!compressedReceiptBlob) return null;
             
             const fileName = `receipts/${requestId}_${Date.now()}.jpg`;
-            const storageRef = storage.ref(fileName);
+            const storageRef = getStorage().ref(fileName);
             
             try {
                 const snapshot = await storageRef.put(compressedReceiptBlob);
@@ -1238,17 +1246,17 @@
             const deptLeader = deptInfo?.leader || currentUser.name;
             
             const requestId = Date.now().toString();
+            const hasReceipt = !!compressedReceiptBlob;
             
             // 제출 버튼 비활성화
             const submitBtn = document.getElementById('submitExpenseBtn');
             submitBtn.disabled = true;
-            submitBtn.textContent = '제출 중...';
+            submitBtn.textContent = hasReceipt ? '영수증 업로드 중...' : '제출 중...';
             
             try {
-                // 영수증 업로드 (있는 경우)
+                // 영수증 업로드 (있는 경우만)
                 let receiptUrl = '';
-                if (compressedReceiptBlob) {
-                    showToast('영수증 업로드 중...');
+                if (hasReceipt) {
                     receiptUrl = await uploadReceipt(requestId);
                 }
                 
@@ -1256,38 +1264,42 @@
                     id: requestId,
                     department: dept,
                     deptLeader: deptLeader,
-                    item: title,  // index.html 호환
+                    item: title,
                     title: title,
                     category: category,
                     amount: parseFloat(amount),
                     payment: payment,
                     checkNumber: payment === 'Check' ? checkNumber : '',
                     date: date,
-                    requestDate: new Date().toISOString().split('T')[0],  // index.html 호환
+                    requestDate: new Date().toISOString().split('T')[0],
                     description: description,
                     requester: currentUser.name,
                     status: 'pending',
-                    receiptUrl: receiptUrl,  // 영수증 URL
+                    receiptUrl: receiptUrl,
                     createdAt: new Date().toISOString()
                 };
                 
                 paymentRequests.push(request);
                 
-                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
+                // 1. 로컬 저장 먼저 (즉시)
                 localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
                 
-                // 영수증 상태 초기화
+                // 2. 영수증 상태 초기화
                 removeReceipt();
                 
+                // 3. 모달 닫고 UI 업데이트 (즉시)
                 closeExpenseModal();
                 showToast('✅ 지출결의서가 제출되었습니다');
                 renderExpenseList();
+                
+                // 4. Firebase 저장 (백그라운드)
+                db.collection('paymentRequests').doc('main').set({ list: paymentRequests })
+                    .catch(err => console.error('Firebase 저장 오류:', err));
                 
             } catch (error) {
                 console.error('저장 오류:', error);
                 showToast('저장 중 오류가 발생했습니다');
             } finally {
-                // 제출 버튼 복구
                 submitBtn.disabled = false;
                 submitBtn.textContent = '제출';
             }
