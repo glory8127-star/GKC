@@ -3531,9 +3531,10 @@
                         <h2 style="margin: 0;">📊 부서별 예산 현황</h2>
                         <select id="budgetYearSelect" onchange="updateBudgetVisualization()" class="form-control" style="width: auto; min-width: 120px;">
                             <option value="2024">2024년</option>
-                            <option value="2025" selected>2025년</option>
+                            <option value="2025">2025년</option>
                             <option value="2026">2026년</option>
                             <option value="2027">2027년</option>
+                            <option value="2028">2028년</option>
                         </select>
                     </div>
                     <div id="budgetVisualization">
@@ -3556,6 +3557,7 @@
                         <option value="2025">2025년</option>
                         <option value="2026">2026년</option>
                         <option value="2027">2027년</option>
+                        <option value="2028">2028년</option>
                     </select>
                 </div>
                 <div id="budgetFormContainer" style="padding: 20px; max-height: 400px; overflow-y: auto;">
@@ -12317,6 +12319,32 @@
                 
                 localStorage.setItem('churchBudgets', JSON.stringify(budgets));
                 saveChurchBudgetsToFirebase(); // Firebase 동기화
+            }
+            
+            // 예산 현황 연도 선택을 현재 연도로 설정
+            const currentYear = new Date().getFullYear();
+            const yearSelect = document.getElementById('budgetYearSelect');
+            if (yearSelect) {
+                // 현재 연도 옵션이 있으면 선택
+                const options = yearSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    if (options[i].value == currentYear) {
+                        yearSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            // 예산 편성 모달의 연도도 현재 연도로 설정
+            const modalYearSelect = document.getElementById('budgetModalYear');
+            if (modalYearSelect) {
+                const options = modalYearSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    if (options[i].value == currentYear) {
+                        modalYearSelect.selectedIndex = i;
+                        break;
+                    }
+                }
             }
             
             updateDepartmentSelects();
