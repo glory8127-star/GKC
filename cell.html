@@ -984,6 +984,7 @@
         let cells = [];
         let cellAttendance = {};       // 구역예배 출석
         let cellSundayAttendance = {}; // 주일예배 출석
+        let cellWorshipDates = {};     // 구역별 구역예배 날짜
         let cellReports = {};
         let absentReasons = {};
         let selectedCell = null;
@@ -1039,13 +1040,18 @@
             loadSundayAttendance();
         }
         
-        // 초기 날짜 설정 - 저장된 날짜 또는 기본값
+        // 초기 날짜 설정 - Firebase 저장된 날짜 또는 기본값
         function initDates() {
             const today = new Date();
             
-            // 구역예배 날짜 - 저장된 값 또는 오늘
-            const savedAttDate = localStorage.getItem('cellApp_attendanceDate');
-            const attDateStr = savedAttDate || today.toISOString().split('T')[0];
+            // 구역예배 날짜 - Firebase 구역별 날짜 > localStorage > 오늘
+            let attDateStr;
+            if (selectedCell && cellWorshipDates[selectedCell]) {
+                attDateStr = cellWorshipDates[selectedCell];
+            } else {
+                const savedAttDate = localStorage.getItem('cellApp_attendanceDate');
+                attDateStr = savedAttDate || today.toISOString().split('T')[0];
+            }
             
             const attendanceDate = document.getElementById('attendanceDate');
             const reportDate = document.getElementById('reportDate');
@@ -1087,6 +1093,14 @@
             const overviewDate = document.getElementById('overviewDate');
             if (reportDate) reportDate.value = dateStr;
             if (overviewDate) overviewDate.value = dateStr;
+            
+            // 구역별 구역예배 날짜 Firebase 저장
+            if (selectedCell) {
+                cellWorshipDates[selectedCell] = dateStr;
+                db.collection('cellWorshipDates').doc('main').set({ data: cellWorshipDates })
+                    .then(() => console.log('✅ 구역예배 날짜 Firebase 저장:', selectedCell, dateStr))
+                    .catch(err => console.error('구역예배 날짜 저장 오류:', err));
+            }
             
             loadAttendance();
         }
@@ -1194,6 +1208,12 @@
                     cellSundayAttendance = sundayAttDoc.data().data || {};
                 }
                 
+                // 구역별 구역예배 날짜
+                const datesDoc = await db.collection('cellWorshipDates').doc('main').get();
+                if (datesDoc.exists) {
+                    cellWorshipDates = datesDoc.data().data || {};
+                }
+                
                 // 구역 보고서 데이터
                 const reportsDoc = await db.collection('cellReports').doc('main').get();
                 if (reportsDoc.exists) {
@@ -1236,6 +1256,25 @@
                         console.log('🔄 주일예배 출석 실시간 업데이트');
                         cellSundayAttendance = newData;
                         loadSundayAttendance();
+                    }
+                }
+            });
+            
+            // 구역별 구역예배 날짜 실시간 동기화
+            db.collection('cellWorshipDates').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    if (JSON.stringify(newData) !== JSON.stringify(cellWorshipDates)) {
+                        console.log('🔄 구역예배 날짜 실시간 업데이트');
+                        cellWorshipDates = newData;
+                        // 현재 구역의 날짜가 변경되면 다시 로드
+                        if (selectedCell && cellWorshipDates[selectedCell]) {
+                            const dateInput = document.getElementById('attendanceDate');
+                            if (dateInput) {
+                                dateInput.value = cellWorshipDates[selectedCell];
+                                loadAttendance();
+                            }
+                        }
                     }
                 }
             });
@@ -1346,6 +1385,15 @@
         // 상단 구역 선택 변경 - 모든 탭에 적용
         function onCellChange() {
             selectedCell = document.getElementById('cellSelect').value;
+            
+            // 해당 구역의 저장된 구역예배 날짜 적용
+            if (selectedCell && cellWorshipDates[selectedCell]) {
+                const dateInput = document.getElementById('attendanceDate');
+                if (dateInput) {
+                    dateInput.value = cellWorshipDates[selectedCell];
+                }
+            }
+            
             loadAttendance();
             loadSundayAttendance();
         }
