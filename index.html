@@ -10892,6 +10892,8 @@
         function loadDepartmentList() {
             // Firebase에서 불러온 최신 데이터 다시 읽기
             departments = JSON.parse(localStorage.getItem('departments') || '[]');
+            expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+            budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
             
             initDefaultDepartments();
             
@@ -13690,10 +13692,45 @@
                 totalSundayCount += sundays[m].length;
             }
             
-            // 금주 출석률 계산 (이번 주일 기준)
-            const thisSunday = getThisSunday();
-            const thisSundayAttendees = getAttendanceForDate(thisSunday);
-            const avgRate = yearMembers.length > 0 ? Math.round((thisSundayAttendees.length / yearMembers.length) * 100) : 0;
+            // 금주 출석률 계산 (선택된 연도의 가장 최근 주일 기준)
+            const todayDate = new Date();
+            let thisSunday = getThisSunday();
+            
+            // 선택된 연도와 이번 주일의 연도가 다르면, 해당 연도의 가장 최근 주일 찾기
+            const thisSundayYear = parseInt(thisSunday.split('-')[0]);
+            if (thisSundayYear !== year) {
+                // 선택된 연도의 마지막 주일 또는 첫 주일 찾기
+                if (year < thisSundayYear) {
+                    // 과거 연도: 12월의 마지막 주일
+                    const lastDec = new Date(year, 11, 31);
+                    const dayOfWeek = lastDec.getDay();
+                    const diff = dayOfWeek === 0 ? 0 : -dayOfWeek;
+                    lastDec.setDate(lastDec.getDate() + diff);
+                    thisSunday = `${year}-12-${String(lastDec.getDate()).padStart(2, '0')}`;
+                } else {
+                    // 미래 연도 또는 현재 연도 초: 해당 연도의 첫 번째 지난 주일
+                    // 현재 날짜가 해당 연도에 속하면 가장 최근 주일, 아니면 첫 주일
+                    if (todayDate.getFullYear() === year) {
+                        // 현재 연도: 가장 최근 주일 사용 (이미 계산됨)
+                        // 하지만 아직 주일이 없으면 0%
+                        const firstSunday = sundays[1][0];
+                        if (firstSunday) {
+                            const firstSundayDate = new Date(year, 0, firstSunday);
+                            if (todayDate < firstSundayDate) {
+                                thisSunday = null; // 아직 주일이 없음
+                            }
+                        }
+                    } else {
+                        thisSunday = null; // 미래 연도
+                    }
+                }
+            }
+            
+            let avgRate = 0;
+            if (thisSunday) {
+                const thisSundayAttendees = getAttendanceForDate(thisSunday);
+                avgRate = yearMembers.length > 0 ? Math.round((thisSundayAttendees.length / yearMembers.length) * 100) : 0;
+            }
             document.getElementById('yearlyAttendanceRate').textContent = avgRate + '%';
             
             // 년중 출석률 계산 (해당 연도 전체 주일 평균)
