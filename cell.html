@@ -638,14 +638,6 @@
             
             <!-- 탭 컨텐츠: 구역예배 출석 -->
             <div id="tabAttendance">
-                <!-- 구역 선택 -->
-                <div class="card" style="margin: 10px; padding: 15px;">
-                    <label style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 10px;">📍 구역 선택</label>
-                    <select class="form-select" id="cellSelectAttendance" onchange="onCellSelectChange(this.value)" style="font-size: 1.1em; padding: 12px;">
-                        <option value="">-- 구역을 선택하세요 --</option>
-                    </select>
-                </div>
-                
                 <div class="date-selector">
                     <span>📅 구역예배 날짜</span>
                     <input type="date" class="date-input" id="attendanceDate" onchange="loadAttendance()">
@@ -674,10 +666,7 @@
                     </div>
                     
                     <div id="memberList">
-                        <div class="empty-state">
-                            <div class="empty-icon">👆</div>
-                            <div>위에서 구역을 먼저 선택해주세요</div>
-                        </div>
+                        <!-- 동적 생성 -->
                     </div>
                 </div>
                 
@@ -688,14 +677,6 @@
             
             <!-- 탭 컨텐츠: 주일예배 출석 -->
             <div id="tabSunday" class="hidden">
-                <!-- 구역 선택 -->
-                <div class="card" style="margin: 10px; padding: 15px;">
-                    <label style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 10px;">📍 구역 선택</label>
-                    <select class="form-select" id="cellSelectSunday" onchange="onCellSelectSundayChange(this.value)" style="font-size: 1.1em; padding: 12px;">
-                        <option value="">-- 구역을 선택하세요 --</option>
-                    </select>
-                </div>
-                
                 <div class="date-selector">
                     <span>📅 주일예배 날짜</span>
                     <input type="date" class="date-input" id="sundayAttendanceDate" onchange="loadSundayAttendance()">
@@ -724,10 +705,7 @@
                     </div>
                     
                     <div id="sundayMemberList">
-                        <div class="empty-state">
-                            <div class="empty-icon">👆</div>
-                            <div>위에서 구역을 먼저 선택해주세요</div>
-                        </div>
+                        <!-- 동적 생성 -->
                     </div>
                 </div>
                 
@@ -1239,8 +1217,6 @@
         // 구역 선택 초기화
         function initCellSelector() {
             const select = document.getElementById('cellSelect');
-            const selectAttendance = document.getElementById('cellSelectAttendance');
-            const selectSunday = document.getElementById('cellSelectSunday');
             select.innerHTML = '';
             
             // 관리자는 모든 구역, 구역장은 자기 구역만
@@ -1265,44 +1241,21 @@
             
             if (availableCells.length === 0) {
                 select.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
-                selectAttendance.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
-                selectSunday.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
                 return;
             }
-            
-            // 구역예배 탭 구역 선택 초기화
-            selectAttendance.innerHTML = '<option value="">-- 구역을 선택하세요 --</option>';
-            // 주일예배 탭 구역 선택 초기화
-            selectSunday.innerHTML = '<option value="">-- 구역을 선택하세요 --</option>';
             
             availableCells.forEach((cell, idx) => {
                 const option = document.createElement('option');
                 option.value = cell.name;
                 option.textContent = `${cell.name}구역 (구역장: ${cell.leaderName || '미지정'})`;
                 select.appendChild(option);
-                
-                // 구역예배 탭 드롭다운에 추가
-                const option2 = document.createElement('option');
-                option2.value = cell.name;
-                option2.textContent = `${cell.name}구역 (${cell.leaderName || '미지정'})`;
-                selectAttendance.appendChild(option2);
-                
-                // 주일예배 탭 드롭다운에 추가
-                const option3 = document.createElement('option');
-                option3.value = cell.name;
-                option3.textContent = `${cell.name}구역 (${cell.leaderName || '미지정'})`;
-                selectSunday.appendChild(option3);
             });
             
             selectedCell = availableCells[0].name;
             
-            // 구역이 1개면 기본 셀렉터는 숨김, 출석탭은 자동 선택
-            if (availableCells.length === 1) {
-                if (currentUser.role !== '관리자') {
-                    document.getElementById('cellSelector').style.display = 'none';
-                }
-                selectAttendance.value = availableCells[0].name;
-                selectSunday.value = availableCells[0].name;
+            // 구역이 1개면 셀렉터 숨김
+            if (availableCells.length === 1 && currentUser.role !== '관리자') {
+                document.getElementById('cellSelector').style.display = 'none';
             }
             
             // 오늘 날짜 설정 (구역예배)
@@ -1311,26 +1264,11 @@
             setThisSunday();
         }
         
-        // 구역예배 탭 구역 선택 변경
-        function onCellSelectChange(value) {
-            if (value) {
-                selectedCell = value;
-                loadAttendance();
-            }
-        }
-        
-        // 주일예배 탭 구역 선택 변경
-        function onCellSelectSundayChange(value) {
-            if (value) {
-                selectedCell = value;
-                loadSundayAttendance();
-            }
-        }
-        
-        // 보고서탭 구역 선택 변경
+        // 상단 구역 선택 변경 - 모든 탭에 적용
         function onCellChange() {
             selectedCell = document.getElementById('cellSelect').value;
             loadAttendance();
+            loadSundayAttendance();
         }
         
         // 출석 데이터 로드
