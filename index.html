@@ -13642,6 +13642,37 @@
             return Array.from(attendees);
         }
         
+        // 출석표에서 직접 출석 체크 토글
+        function toggleMainAttendance(memberName, dateStr) {
+            // 최신 데이터 로드
+            let mainAtt = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+            
+            if (!mainAtt[dateStr]) {
+                mainAtt[dateStr] = [];
+            }
+            
+            const idx = mainAtt[dateStr].indexOf(memberName);
+            if (idx >= 0) {
+                // 이미 출석 체크됨 - 해제
+                mainAtt[dateStr].splice(idx, 1);
+                console.log(`[출석표] ${memberName} 출석 해제 - 날짜: ${dateStr}`);
+            } else {
+                // 출석 체크
+                mainAtt[dateStr].push(memberName);
+                console.log(`[출석표] ${memberName} 출석 체크 - 날짜: ${dateStr}`);
+            }
+            
+            // 저장
+            localStorage.setItem('mainAttendance', JSON.stringify(mainAtt));
+            mainAttendance = mainAtt;
+            
+            // Firebase 동기화
+            saveMainAttendanceToFirebase();
+            
+            // 출석표 새로고침
+            loadYearlyAttendanceSheet();
+        }
+        
         // 연간 출석표 로드
         function loadYearlyAttendanceSheet() {
             const container = document.getElementById('yearlyAttendanceSheet');
