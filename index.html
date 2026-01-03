@@ -5508,8 +5508,18 @@
         }
         
         // 페이지 로드 시 Firebase 데이터 로드
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAllDataFromFirebase();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadAllDataFromFirebase();
+            
+            // URL 파라미터로 섹션 바로가기 처리
+            const urlParams = new URLSearchParams(window.location.search);
+            const section = urlParams.get('section');
+            if (section) {
+                // 약간 지연 후 섹션 이동 (UI 렌더링 완료 대기)
+                setTimeout(() => {
+                    showSection(section);
+                }, 100);
+            }
         });
 
         // 전화번호 자동 포맷팅 함수 (000) 000-0000
