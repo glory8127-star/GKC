@@ -1,11 +1,11 @@
 {
-    "name": "GKC 새크라멘토 영광교회",
-    "short_name": "GKC 영광교회",
-    "description": "Sacramento Glory Korean Church - 교회 관리 시스템",
-    "start_url": "/index.html",
+    "name": "GKC 부서관리",
+    "short_name": "부서관리",
+    "description": "새크라멘토 영광교회 부서관리 앱",
+    "start_url": "/department.html",
     "display": "standalone",
-    "background_color": "#1e3a5f",
-    "theme_color": "#1e3a5f",
+    "background_color": "#059669",
+    "theme_color": "#059669",
     "orientation": "portrait-primary",
     "icons": [
         {
@@ -33,20 +33,8 @@
             "purpose": "any maskable"
         },
         {
-            "src": "icons/icon-152.png",
-            "sizes": "152x152",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
             "src": "icons/icon-192.png",
             "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "icons/icon-384.png",
-            "sizes": "384x384",
             "type": "image/png",
             "purpose": "any maskable"
         },
@@ -57,36 +45,6 @@
             "purpose": "any maskable"
         }
     ],
-    "categories": ["productivity", "utilities"],
-    "lang": "ko-KR",
-    "shortcuts": [
-        {
-            "name": "구역관리",
-            "short_name": "구역",
-            "description": "구역 출석 체크 및 관리",
-            "url": "/index.html?section=cell",
-            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
-        },
-        {
-            "name": "출석관리",
-            "short_name": "출석",
-            "description": "주일 출석 관리",
-            "url": "/index.html?section=attendance",
-            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
-        },
-        {
-            "name": "교적관리",
-            "short_name": "교적",
-            "description": "교인 정보 관리",
-            "url": "/index.html?section=members",
-            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
-        },
-        {
-            "name": "부서관리",
-            "short_name": "부서",
-            "description": "부서 및 조직 관리",
-            "url": "/index.html?section=department",
-            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
-        }
-    ]
+    "categories": ["productivity"],
+    "lang": "ko-KR"
 }
