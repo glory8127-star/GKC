@@ -738,6 +738,20 @@
                     </div>
                 </div>
                 
+                <!-- 출석/결석 현황 카드 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>📋</span>
+                        <span>출석/결석 현황</span>
+                        <button onclick="refreshReportAttendance()" style="margin-left: auto; background: #e2e8f0; border: none; padding: 5px 12px; border-radius: 15px; font-size: 0.8em; cursor: pointer;">새로고침</button>
+                    </div>
+                    <div id="reportAttendanceStatus">
+                        <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                            출석 체크 탭에서 먼저 출석을 체크해주세요
+                        </div>
+                    </div>
+                </div>
+                
                 <div style="padding: 15px;">
                     <button class="btn btn-primary" onclick="submitReport()">📤 보고서 제출</button>
                 </div>
@@ -747,22 +761,26 @@
             <div id="tabOverview" class="hidden">
                 <div class="overview-card">
                     <div class="overview-title" id="overviewDateTitle">12월 8일 구역예배 현황</div>
-                    <div class="overview-stats">
+                    <div class="overview-stats" style="grid-template-columns: repeat(5, 1fr);">
                         <div class="overview-stat">
                             <div class="overview-number" id="overviewSubmitted">0</div>
-                            <div class="overview-label">보고서 제출</div>
+                            <div class="overview-label">보고서</div>
                         </div>
                         <div class="overview-stat">
                             <div class="overview-number" id="overviewTotal">0</div>
-                            <div class="overview-label">전체 구역</div>
+                            <div class="overview-label">구역</div>
                         </div>
                         <div class="overview-stat">
-                            <div class="overview-number" id="overviewAttendance">0</div>
-                            <div class="overview-label">총 참석</div>
+                            <div class="overview-number" id="overviewAttendance" style="color: #4ade80;">0</div>
+                            <div class="overview-label">출석</div>
+                        </div>
+                        <div class="overview-stat">
+                            <div class="overview-number" id="overviewAbsent" style="color: #f87171;">0</div>
+                            <div class="overview-label">결석</div>
                         </div>
                         <div class="overview-stat">
                             <div class="overview-number" id="overviewOffering">$0</div>
-                            <div class="overview-label">총 헌금</div>
+                            <div class="overview-label">헌금</div>
                         </div>
                     </div>
                 </div>
@@ -1367,11 +1385,108 @@
             }
         }
         
+        // 보고서 출석현황 새로고침
+        function refreshReportAttendance() {
+            if (!selectedCell) {
+                document.getElementById('reportAttendanceStatus').innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">구역을 먼저 선택해주세요</div>';
+                return;
+            }
+            
+            const dateStr = document.getElementById('reportDate').value;
+            const key = `${selectedCell}_${dateStr}`;
+            const presentList = cellAttendance[key] || [];
+            
+            // 구역원 전체 목록
+            const cell = cells.find(c => c.name === selectedCell);
+            if (!cell) return;
+            
+            const cellMembers = members.filter(m => {
+                const memberCell = (m.cell || '').replace('구역', '');
+                return memberCell === selectedCell || m.cell === selectedCell + '구역';
+            });
+            
+            // 구역장 포함
+            const allMembers = [];
+            if (cell.leaderName) {
+                allMembers.push({ nameKr: cell.leaderName, isLeader: true });
+            }
+            cellMembers.forEach(m => {
+                if (m.nameKr !== cell.leaderName) {
+                    allMembers.push({ nameKr: m.nameKr, isLeader: false });
+                }
+            });
+            
+            const absentList = allMembers.filter(m => !presentList.includes(m.nameKr));
+            
+            let html = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: #dcfce7; border-radius: 12px; padding: 15px;">
+                        <div style="font-weight: 600; color: #16a34a; margin-bottom: 10px;">✅ 출석 (${presentList.length}명)</div>
+                        ${presentList.length > 0 ? presentList.map(name => {
+                            const member = allMembers.find(m => m.nameKr === name);
+                            const isLeader = member?.isLeader || name === cell.leaderName;
+                            return `<div style="font-size: 0.9em; padding: 3px 0; color: #166534;">${name}${isLeader ? ' (구역장)' : ''}</div>`;
+                        }).join('') : '<div style="font-size: 0.85em; color: #94a3b8;">없음</div>'}
+                    </div>
+                    <div style="background: #fee2e2; border-radius: 12px; padding: 15px;">
+                        <div style="font-weight: 600; color: #dc2626; margin-bottom: 10px;">❌ 결석 (${absentList.length}명)</div>
+                        ${absentList.length > 0 ? absentList.map(m => {
+                            const reasonKey = `${selectedCell}_${dateStr}_${m.nameKr}`;
+                            const reason = absentReasons[reasonKey] || '';
+                            return `<div style="font-size: 0.9em; padding: 3px 0; color: #991b1b;">
+                                ${m.nameKr}${m.isLeader ? ' (구역장)' : ''}
+                                ${reason ? `<span style="font-size: 0.8em; color: #dc2626;"> - ${reason}</span>` : ''}
+                            </div>`;
+                        }).join('') : '<div style="font-size: 0.85em; color: #94a3b8;">없음</div>'}
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; padding: 10px; background: #f1f5f9; border-radius: 10px;">
+                    <span style="font-weight: 600;">출석률: </span>
+                    <span style="color: ${(presentList.length / allMembers.length * 100) >= 70 ? '#16a34a' : '#dc2626'}; font-weight: 700;">
+                        ${allMembers.length > 0 ? Math.round(presentList.length / allMembers.length * 100) : 0}%
+                    </span>
+                    <span style="color: #64748b; font-size: 0.9em;"> (${presentList.length}/${allMembers.length}명)</span>
+                </div>
+            `;
+            
+            document.getElementById('reportAttendanceStatus').innerHTML = html;
+        }
+        
         // 보고서 제출
         async function submitReport() {
             if (!selectedCell) return;
             
             const dateStr = document.getElementById('reportDate').value;
+            const key = `${selectedCell}_${dateStr}`;
+            
+            // 구역원 전체 목록
+            const cell = cells.find(c => c.name === selectedCell);
+            const cellMembers = members.filter(m => {
+                const memberCell = (m.cell || '').replace('구역', '');
+                return memberCell === selectedCell || m.cell === selectedCell + '구역';
+            });
+            
+            const allMembers = [];
+            if (cell && cell.leaderName) {
+                allMembers.push(cell.leaderName);
+            }
+            cellMembers.forEach(m => {
+                if (m.nameKr && m.nameKr !== cell?.leaderName) {
+                    allMembers.push(m.nameKr);
+                }
+            });
+            
+            const presentList = cellAttendance[key] || [];
+            const absentList = allMembers.filter(name => !presentList.includes(name));
+            
+            // 결석 사유
+            const absentWithReasons = absentList.map(name => {
+                const reasonKey = `${selectedCell}_${dateStr}_${name}`;
+                return {
+                    name: name,
+                    reason: absentReasons[reasonKey] || ''
+                };
+            });
             
             const report = {
                 cell: selectedCell,
@@ -1385,7 +1500,10 @@
                 offering: parseInt(document.getElementById('reportOffering').value) || 0,
                 prayer: document.getElementById('reportPrayer').value,
                 notes: document.getElementById('reportNotes').value,
-                attendance: cellAttendance[`${selectedCell}_${dateStr}`] || [],
+                attendance: presentList,
+                absent: absentWithReasons,
+                totalMembers: allMembers.length,
+                attendanceRate: allMembers.length > 0 ? Math.round(presentList.length / allMembers.length * 100) : 0,
                 submittedAt: new Date().toISOString(),
                 submittedBy: currentUser.name
             };
@@ -1396,7 +1514,6 @@
                 return;
             }
             
-            const key = `${selectedCell}_${dateStr}`;
             cellReports[key] = report;
             
             try {
@@ -1430,6 +1547,7 @@
             // 통계 계산
             let submitted = 0;
             let totalAttendance = 0;
+            let totalAbsent = 0;
             let totalOffering = 0;
             let prayers = [];
             
@@ -1446,10 +1564,12 @@
                 });
                 
                 const totalMembers = cellMembers.length + (cell.leaderName ? 1 : 0);
+                const absentCount = totalMembers - attendance.length;
                 const attendanceRate = totalMembers > 0 ? Math.round((attendance.length / totalMembers) * 100) : 0;
                 
                 if (report) {
                     submitted++;
+                    totalAbsent += absentCount;
                     totalOffering += report.offering || 0;
                     if (report.prayer) {
                         prayers.push({ cell: cell.name, prayer: report.prayer });
@@ -1463,7 +1583,9 @@
                         <div class="report-cell">${cell.name}구역</div>
                         <div style="flex: 1;">
                             <div style="font-size: 0.85em; color: #64748b;">
-                                출석 ${attendance.length}/${totalMembers}명 (${attendanceRate}%)
+                                <span style="color: #16a34a;">출석 ${attendance.length}명</span> / 
+                                <span style="color: #dc2626;">결석 ${absentCount}명</span>
+                                <span style="margin-left: 5px;">(${attendanceRate}%)</span>
                             </div>
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: ${attendanceRate}%"></div>
@@ -1480,6 +1602,7 @@
             document.getElementById('overviewSubmitted').textContent = submitted;
             document.getElementById('overviewTotal').textContent = cells.length;
             document.getElementById('overviewAttendance').textContent = totalAttendance;
+            document.getElementById('overviewAbsent').textContent = totalAbsent;
             document.getElementById('overviewOffering').textContent = '$' + totalOffering;
             
             document.getElementById('overviewList').innerHTML = listHtml || '<div class="empty-state">구역 데이터가 없습니다</div>';
@@ -1507,6 +1630,12 @@
             const date = new Date(dateStr);
             const dateLabel = `${date.getMonth() + 1}월 ${date.getDate()}일`;
             
+            // 출석/결석 정보
+            const presentList = report.attendance || [];
+            const absentList = report.absent || [];
+            const totalMembers = report.totalMembers || (presentList.length + absentList.length);
+            const attendanceRate = report.attendanceRate || (totalMembers > 0 ? Math.round(presentList.length / totalMembers * 100) : 0);
+            
             document.getElementById('reportDetailTitle').textContent = `${cellName}구역 보고서 (${dateLabel})`;
             
             document.getElementById('reportDetailContent').innerHTML = `
@@ -1521,7 +1650,35 @@
                         <div><strong>본문:</strong> ${report.scripture || '-'}</div>
                         <div><strong>제목:</strong> ${report.title || '-'}</div>
                     </div>
-                    <div><strong>참석자 (${report.attendance?.length || 0}명):</strong> ${report.attendance?.join(', ') || '-'}</div>
+                    
+                    <!-- 출석률 표시 -->
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: 700; color: ${attendanceRate >= 70 ? '#16a34a' : '#dc2626'};">
+                            출석률 ${attendanceRate}%
+                        </div>
+                        <div style="color: #64748b; margin-top: 5px;">${presentList.length}명 출석 / ${absentList.length}명 결석 (전체 ${totalMembers}명)</div>
+                    </div>
+                    
+                    <!-- 출석/결석 현황 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="background: #dcfce7; padding: 15px; border-radius: 10px;">
+                            <div style="font-weight: 600; color: #16a34a; margin-bottom: 10px;">✅ 출석 (${presentList.length}명)</div>
+                            ${presentList.length > 0 ? presentList.map(name => 
+                                `<div style="font-size: 0.9em; color: #166534; padding: 2px 0;">${name}</div>`
+                            ).join('') : '<div style="color: #94a3b8; font-size: 0.85em;">없음</div>'}
+                        </div>
+                        <div style="background: #fee2e2; padding: 15px; border-radius: 10px;">
+                            <div style="font-weight: 600; color: #dc2626; margin-bottom: 10px;">❌ 결석 (${absentList.length}명)</div>
+                            ${absentList.length > 0 ? absentList.map(item => {
+                                const name = typeof item === 'string' ? item : item.name;
+                                const reason = typeof item === 'object' ? item.reason : '';
+                                return `<div style="font-size: 0.9em; color: #991b1b; padding: 2px 0;">
+                                    ${name}${reason ? ` <span style="font-size: 0.8em; color: #b91c1c;">(${reason})</span>` : ''}
+                                </div>`;
+                            }).join('') : '<div style="color: #94a3b8; font-size: 0.85em;">없음</div>'}
+                        </div>
+                    </div>
+                    
                     <div><strong>구역헌금:</strong> $${report.offering || 0}</div>
                     <div style="background: #fef3c7; padding: 15px; border-radius: 10px;">
                         <strong>🙏 기도제목</strong>
@@ -1604,6 +1761,9 @@
                 loadOverview();
             } else if (tab === 'history') {
                 loadHistory();
+            } else if (tab === 'report') {
+                // 보고서 탭 전환 시 출석 현황 새로고침
+                setTimeout(() => refreshReportAttendance(), 100);
             }
         }
         
