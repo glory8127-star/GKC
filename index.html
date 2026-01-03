@@ -5069,7 +5069,12 @@
                         console.log('🔄 구역 출석 실시간 업데이트');
                         cellAttendance = newData;
                         localStorage.setItem('cellAttendance', JSON.stringify(newData));
+                        // 구역 목록 새로고침
                         if (typeof loadCellList === 'function') loadCellList();
+                        // 구역 출석 화면 새로고침
+                        if (typeof loadCellAttendanceForReport === 'function') loadCellAttendanceForReport();
+                        // 구역 출석현황 새로고침
+                        if (typeof onCellAttendanceDateChange === 'function') onCellAttendanceDateChange();
                     }
                 }
             });
