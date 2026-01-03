@@ -802,7 +802,17 @@
                 const color = dept.color || colors[idx % colors.length];
                 const deptMembers = members.filter(m => m.department === dept.name);
                 const teams = dept.teams || [];
-                const deptExpenses = expenses.filter(e => e.department === dept.name);
+                
+                // 현재 연도 + 정확한 부서명 매칭으로 지출 필터링
+                const deptExpenses = expenses.filter(e => {
+                    if (!e.department || e.department !== dept.name) return false;
+                    // 날짜가 있으면 현재 연도만 필터
+                    if (e.date) {
+                        const expYear = parseInt(e.date.substring(0, 4));
+                        return expYear === currentYear;
+                    }
+                    return false;
+                });
                 const totalExpense = deptExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
                 
                 // churchBudgets에서 해당 부서 + 현재 연도 예산 찾기
@@ -893,7 +903,16 @@
             const color = dept.color || '#059669';
             const deptMembers = members.filter(m => m.department === dept.name);
             const teams = dept.teams || [];
-            const deptExpenses = expenses.filter(e => e.department === dept.name);
+            
+            // 현재 연도 + 정확한 부서명 매칭으로 지출 필터링
+            const deptExpenses = expenses.filter(e => {
+                if (!e.department || e.department !== dept.name) return false;
+                if (e.date) {
+                    const expYear = parseInt(e.date.substring(0, 4));
+                    return expYear === currentYear;
+                }
+                return false;
+            });
             const totalExpense = deptExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
             
             // churchBudgets에서 해당 부서 + 현재 연도 예산 찾기
