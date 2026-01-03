@@ -7489,6 +7489,7 @@
                                 <th>전화번호</th>
                                 <th>직분</th>
                                 <th>인도자</th>
+                                <th>멘토</th>
                                 <th>🏅 전도</th>
                                 <th>📚 교육 이수 현황</th>
                                 <th>관리</th>
@@ -7556,6 +7557,7 @@
                         <td>${member.phone || '-'}</td>
                         <td>${member.position || '-'}</td>
                         <td style="color: ${member.referrer ? '#3182ce' : '#ccc'};">${member.referrer || '-'}</td>
+                        <td style="color: ${member.mentoring?.mentorName ? '#319795' : '#ccc'};">${member.mentoring?.mentorName || '-'}</td>
                         <td style="text-align: center;">${medalHtml}</td>
                         <td>${eduBadges}</td>
                         <td>
