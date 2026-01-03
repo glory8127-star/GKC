@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#059669">
+    <title>GKC 부서관리</title>
+    <link rel="manifest" href="manifest-dept.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+            background: #f0fdf4;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        /* 헤더 */
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .header h1 {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        
+        /* 메인 컨텐츠 */
+        .main-content {
+            padding-top: 70px;
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
+        
+        /* 로그인 화면 */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 70px);
+            padding: 20px;
+        }
+        
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .login-logo {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .login-title {
+            font-size: 1.5em;
+            color: #059669;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 0.9em;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #059669;
+        }
+        
+        /* 버튼 */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        /* 카드 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            margin: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 부서 카드 */
+        .dept-card {
+            background: white;
+            border-radius: 16px;
+            margin: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .dept-header {
+            padding: 20px;
+            color: white;
+        }
+        
+        .dept-name {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .dept-leader {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .dept-body {
+            padding: 20px;
+        }
+        
+        .dept-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            text-align: center;
+        }
+        
+        .dept-stat-number {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #059669;
+        }
+        
+        .dept-stat-label {
+            font-size: 0.8em;
+            color: #64748b;
+        }
+        
+        /* 팀 목록 */
+        .team-list {
+            margin-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+        
+        .team-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .team-item:last-child {
+            border-bottom: none;
+        }
+        
+        .team-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .team-count {
+            background: #f0fdf4;
+            color: #059669;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        /* 구성원 목록 */
+        .member-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            gap: 15px;
+        }
+        
+        .member-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .member-info {
+            flex: 1;
+        }
+        
+        .member-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .member-role {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+        
+        /* 탭 네비게이션 */
+        .tab-nav {
+            display: flex;
+            background: white;
+            padding: 10px;
+            gap: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+        }
+        
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .nav-item.active {
+            color: #059669;
+        }
+        
+        .nav-icon {
+            font-size: 1.5em;
+            margin-bottom: 4px;
+        }
+        
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+        
+        .empty-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        /* 숨김 */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 토스트 */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9em;
+            z-index: 300;
+            display: none;
+        }
+        
+        .toast.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        /* 결재 요청 */
+        .request-card {
+            background: white;
+            border-radius: 12px;
+            margin: 10px 15px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .request-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .request-info {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+        
+        .request-amount {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #059669;
+            margin-top: 10px;
+        }
+        
+        .request-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .request-actions .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+        
+        .btn-approve {
+            background: #059669;
+            color: white;
+        }
+        
+        .btn-reject {
+            background: #ef4444;
+            color: white;
+        }
+        
+        /* 오프라인 */
+        body.offline .header {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <div class="header">
+        <h1>🏛️ GKC 부서관리</h1>
+        <button class="header-btn" id="logoutBtn" onclick="logout()" style="display: none;">로그아웃</button>
+    </div>
+    
+    <!-- 메인 컨텐츠 -->
+    <div class="main-content">
+        <!-- 로그인 화면 -->
+        <div id="loginScreen" class="login-container">
+            <div class="login-box">
+                <div class="login-logo">🏛️</div>
+                <div class="login-title">GKC 부서관리</div>
+                <div class="form-group">
+                    <label class="form-label">아이디</label>
+                    <input type="text" class="form-input" id="loginUsername" placeholder="아이디 입력">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">비밀번호</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') login()">
+                </div>
+                <button class="btn btn-primary" onclick="login()">로그인</button>
+            </div>
+        </div>
+        
+        <!-- 앱 화면 (로그인 후) -->
+        <div id="appScreen" class="hidden">
+            <!-- 탭: 부서 목록 -->
+            <div id="tabDeptList">
+                <div id="deptList">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+            
+            <!-- 탭: 내 부서 상세 -->
+            <div id="tabMyDept" class="hidden">
+                <div id="myDeptContent">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+            
+            <!-- 탭: 결재 요청 (담당자용) -->
+            <div id="tabRequests" class="hidden">
+                <div class="card">
+                    <div class="card-title">📋 결재 대기 목록</div>
+                    <div id="requestList">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 하단 네비게이션 -->
+    <div class="bottom-nav hidden" id="bottomNav">
+        <div class="nav-item active" onclick="showTab('deptList')">
+            <div class="nav-icon">🏛️</div>
+            <span>부서</span>
+        </div>
+        <div class="nav-item" onclick="showTab('myDept')">
+            <div class="nav-icon">👤</div>
+            <span>내 부서</span>
+        </div>
+        <div class="nav-item" id="navRequests" onclick="showTab('requests')" style="display: none;">
+            <div class="nav-icon">📋</div>
+            <span>결재</span>
+        </div>
+    </div>
+    
+    <!-- 토스트 -->
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        // Firebase 초기화
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-9Mfa2t5z6t9z9z9z9z9z9z9z9z9z9z9",
+            authDomain: "gkc-web-project-c87c9.firebaseapp.com",
+            projectId: "gkc-web-project-c87c9",
+            storageBucket: "gkc-web-project-c87c9.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abc123"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // 전역 변수
+        let currentUser = null;
+        let departments = [];
+        let members = [];
+        let users = [];
+        let paymentRequests = [];
+        
+        // 로그인
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showToast('아이디와 비밀번호를 입력하세요');
+                return;
+            }
+            
+            // Firebase에서 사용자 데이터 로드
+            try {
+                const usersDoc = await db.collection('registeredUsers').doc('main').get();
+                if (usersDoc.exists) {
+                    users = usersDoc.data().list || [];
+                }
+            } catch (e) {
+                console.error('사용자 로드 실패:', e);
+                users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            }
+            
+            // 관리자 계정
+            if (username === 'gkc8127' && password === '4581') {
+                currentUser = {
+                    username: 'gkc8127',
+                    name: '정준연',
+                    role: '관리자',
+                    permissions: ['department', 'offeringEdit']
+                };
+            } else {
+                // 일반 사용자
+                const user = users.find(u => u.username === username && u.password === password);
+                if (!user) {
+                    showToast('아이디 또는 비밀번호가 틀립니다');
+                    return;
+                }
+                
+                if (!user.permissions?.includes('department')) {
+                    showToast('부서관리 권한이 없습니다');
+                    return;
+                }
+                
+                currentUser = {
+                    username: user.username,
+                    name: user.name,
+                    role: user.role,
+                    permissions: user.permissions || [],
+                    memberName: user.memberName
+                };
+            }
+            
+            // 로그인 성공
+            localStorage.setItem('deptAppUser', JSON.stringify(currentUser));
+            
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.remove('hidden');
+            document.getElementById('logoutBtn').style.display = 'block';
+            
+            // 결재 권한이 있으면 결재 탭 표시
+            if (currentUser.role === '관리자' || currentUser.permissions?.includes('offeringEdit')) {
+                document.getElementById('navRequests').style.display = 'flex';
+            }
+            
+            await loadData();
+            renderDeptList();
+            
+            showToast('로그인 성공!');
+        }
+        
+        // 로그아웃
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('deptAppUser');
+            
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById('bottomNav').classList.add('hidden');
+            document.getElementById('logoutBtn').style.display = 'none';
+            
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+        
+        // 데이터 로드
+        async function loadData() {
+            try {
+                // 부서 데이터
+                const deptDoc = await db.collection('departments').doc('main').get();
+                if (deptDoc.exists) {
+                    departments = deptDoc.data().list || [];
+                }
+                
+                // 교인 데이터
+                const membersDoc = await db.collection('churchMembers').doc('main').get();
+                if (membersDoc.exists) {
+                    members = membersDoc.data().list || [];
+                }
+                
+                // 결재 요청
+                const requestsDoc = await db.collection('paymentRequests').doc('main').get();
+                if (requestsDoc.exists) {
+                    paymentRequests = requestsDoc.data().list || [];
+                }
+                
+                // localStorage 백업
+                localStorage.setItem('departments', JSON.stringify(departments));
+                localStorage.setItem('churchMembers', JSON.stringify(members));
+                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                
+            } catch (e) {
+                console.error('데이터 로드 실패:', e);
+                // 오프라인 - localStorage에서 로드
+                departments = JSON.parse(localStorage.getItem('departments') || '[]');
+                members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+                paymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+            }
+        }
+        
+        // 부서 목록 렌더링
+        function renderDeptList() {
+            const container = document.getElementById('deptList');
+            
+            if (departments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🏛️</div>
+                        <p>등록된 부서가 없습니다</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const colors = ['#059669', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
+            
+            let html = '';
+            departments.forEach((dept, idx) => {
+                const color = colors[idx % colors.length];
+                const deptMembers = members.filter(m => m.department === dept.name);
+                const teams = dept.teams || [];
+                
+                html += `
+                    <div class="dept-card" onclick="showDeptDetail(${idx})">
+                        <div class="dept-header" style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);">
+                            <div class="dept-name">${dept.name}</div>
+                            <div class="dept-leader">👤 ${dept.leader || '미정'}</div>
+                        </div>
+                        <div class="dept-body">
+                            <div class="dept-stats">
+                                <div>
+                                    <div class="dept-stat-number">${deptMembers.length}</div>
+                                    <div class="dept-stat-label">구성원</div>
+                                </div>
+                                <div>
+                                    <div class="dept-stat-number">${teams.length}</div>
+                                    <div class="dept-stat-label">팀</div>
+                                </div>
+                                <div>
+                                    <div class="dept-stat-number">${dept.budget ? Math.round(dept.budget/10000) + '만' : '-'}</div>
+                                    <div class="dept-stat-label">예산</div>
+                                </div>
+                            </div>
+                            ${teams.length > 0 ? `
+                                <div class="team-list">
+                                    ${teams.slice(0, 3).map(team => `
+                                        <div class="team-item">
+                                            <span class="team-name">${team.name}</span>
+                                            <span class="team-count">${team.members?.length || 0}명</span>
+                                        </div>
+                                    `).join('')}
+                                    ${teams.length > 3 ? `<div style="text-align: center; color: #94a3b8; font-size: 0.85em; padding-top: 10px;">+${teams.length - 3}개 더보기</div>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 부서 상세
+        function showDeptDetail(idx) {
+            const dept = departments[idx];
+            if (!dept) return;
+            
+            showTab('myDept');
+            
+            const container = document.getElementById('myDeptContent');
+            const deptMembers = members.filter(m => m.department === dept.name);
+            const teams = dept.teams || [];
+            const colors = ['#059669', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
+            const color = colors[idx % colors.length];
+            
+            let html = `
+                <div class="dept-card">
+                    <div class="dept-header" style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);">
+                        <div class="dept-name">${dept.name}</div>
+                        <div class="dept-leader">👤 부장: ${dept.leader || '미정'}</div>
+                    </div>
+                    <div class="dept-body">
+                        <div class="dept-stats">
+                            <div>
+                                <div class="dept-stat-number">${deptMembers.length}</div>
+                                <div class="dept-stat-label">구성원</div>
+                            </div>
+                            <div>
+                                <div class="dept-stat-number">${teams.length}</div>
+                                <div class="dept-stat-label">팀</div>
+                            </div>
+                            <div>
+                                <div class="dept-stat-number">${dept.budget ? Math.round(dept.budget/10000) + '만원' : '-'}</div>
+                                <div class="dept-stat-label">예산</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 팀 목록 -->
+                ${teams.length > 0 ? `
+                    <div class="card">
+                        <div class="card-title">👥 소속 팀</div>
+                        ${teams.map(team => `
+                            <div class="team-item">
+                                <div>
+                                    <div class="team-name">${team.name}</div>
+                                    <div style="font-size: 0.8em; color: #64748b;">팀장: ${team.leader || '미정'}</div>
+                                </div>
+                                <span class="team-count">${team.members?.length || 0}명</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <!-- 구성원 목록 -->
+                <div class="card">
+                    <div class="card-title">👤 구성원 (${deptMembers.length}명)</div>
+                    ${deptMembers.length > 0 ? deptMembers.map(m => `
+                        <div class="member-item">
+                            <div class="member-avatar" style="background: ${color};">${m.nameKr?.charAt(0) || '?'}</div>
+                            <div class="member-info">
+                                <div class="member-name">${m.nameKr || '-'}</div>
+                                <div class="member-role">${m.position || '성도'} ${m.phone ? '· ' + m.phone : ''}</div>
+                            </div>
+                        </div>
+                    `).join('') : '<div class="empty-state">등록된 구성원이 없습니다</div>'}
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // 결재 요청 목록
+        function renderRequests() {
+            const container = document.getElementById('requestList');
+            
+            const pending = paymentRequests.filter(r => r.status === '대기중' || r.status === '승인대기');
+            
+            if (pending.length === 0) {
+                container.innerHTML = '<div class="empty-state">대기중인 결재가 없습니다</div>';
+                return;
+            }
+            
+            let html = '';
+            pending.forEach((req, idx) => {
+                html += `
+                    <div class="request-card">
+                        <div class="request-title">${req.title || '지출 요청'}</div>
+                        <div class="request-info">
+                            ${req.department || '-'} · ${req.requester || '-'} · ${req.date || '-'}
+                        </div>
+                        <div class="request-amount">₩${(req.amount || 0).toLocaleString()}</div>
+                        <div class="request-actions">
+                            <button class="btn btn-approve" onclick="approveRequest(${idx})">승인</button>
+                            <button class="btn btn-reject" onclick="rejectRequest(${idx})">거절</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 결재 승인
+        async function approveRequest(idx) {
+            const pending = paymentRequests.filter(r => r.status === '대기중' || r.status === '승인대기');
+            const req = pending[idx];
+            if (!req) return;
+            
+            req.status = '승인';
+            req.approvedBy = currentUser.name;
+            req.approvedDate = new Date().toISOString().split('T')[0];
+            
+            try {
+                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
+                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                showToast('승인되었습니다');
+                renderRequests();
+            } catch (e) {
+                showToast('저장 실패');
+            }
+        }
+        
+        // 결재 거절
+        async function rejectRequest(idx) {
+            const pending = paymentRequests.filter(r => r.status === '대기중' || r.status === '승인대기');
+            const req = pending[idx];
+            if (!req) return;
+            
+            const reason = prompt('거절 사유를 입력하세요:');
+            if (!reason) return;
+            
+            req.status = '거절';
+            req.rejectedBy = currentUser.name;
+            req.rejectReason = reason;
+            
+            try {
+                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
+                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                showToast('거절되었습니다');
+                renderRequests();
+            } catch (e) {
+                showToast('저장 실패');
+            }
+        }
+        
+        // 탭 전환
+        function showTab(tab) {
+            // 모든 탭 숨기기
+            document.getElementById('tabDeptList').classList.add('hidden');
+            document.getElementById('tabMyDept').classList.add('hidden');
+            document.getElementById('tabRequests').classList.add('hidden');
+            
+            // 모든 네비 비활성화
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // 선택된 탭 표시
+            if (tab === 'deptList') {
+                document.getElementById('tabDeptList').classList.remove('hidden');
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                renderDeptList();
+            } else if (tab === 'myDept') {
+                document.getElementById('tabMyDept').classList.remove('hidden');
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+            } else if (tab === 'requests') {
+                document.getElementById('tabRequests').classList.remove('hidden');
+                document.getElementById('navRequests').classList.add('active');
+                renderRequests();
+            }
+        }
+        
+        // 토스트
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        // 오프라인 감지
+        window.addEventListener('online', () => {
+            document.body.classList.remove('offline');
+            loadData();
+        });
+        
+        window.addEventListener('offline', () => {
+            document.body.classList.add('offline');
+        });
+        
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            // 저장된 로그인 상태 확인
+            const saved = localStorage.getItem('deptAppUser');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+                document.getElementById('bottomNav').classList.remove('hidden');
+                document.getElementById('logoutBtn').style.display = 'block';
+                
+                if (currentUser.role === '관리자' || currentUser.permissions?.includes('offeringEdit')) {
+                    document.getElementById('navRequests').style.display = 'flex';
+                }
+                
+                loadData().then(() => {
+                    renderDeptList();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
