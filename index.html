@@ -10942,8 +10942,12 @@
                 const budgetItem = budgets.find(b => b.name === dept.name && b.year === currentYear);
                 const deptBudget = budgetItem ? budgetItem.budget : (dept.budget || 0);
                 
-                // 지출액 계산 (재정관리 지출에서)
-                const deptExpenses = expenses.filter(e => e.department === dept.name);
+                // 지출액 계산 (재정관리 지출에서 - 현재 연도만)
+                const deptExpenses = expenses.filter(e => {
+                    if (e.department !== dept.name) return false;
+                    const expDate = new Date(e.date);
+                    return expDate.getFullYear() === currentYear;
+                });
                 const usedBudget = deptExpenses.reduce((sum, e) => sum + e.amount, 0);
                 const budgetPercent = deptBudget > 0 ? Math.round((usedBudget / deptBudget) * 100) : 0;
                 
