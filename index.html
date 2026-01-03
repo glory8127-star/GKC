@@ -4465,14 +4465,20 @@
                 // 교인 데이터 로드 (데이터 보호)
                 const membersData = await loadFromFirestore('churchMembers');
                 const localMembers = JSON.parse(localStorage.getItem('churchMembers') || '[]');
-                const fbMembersCount = membersData?.list?.length || 0;
+                const localMembersTimestamp = localStorage.getItem('churchMembersTimestamp') || '0';
+                const fbMembersTimestamp = membersData?.timestamp || '0';
                 
-                if (fbMembersCount >= localMembers.length && fbMembersCount > 0) {
+                // 타임스탬프 비교: 더 최신 데이터 사용
+                if (fbMembersTimestamp > localMembersTimestamp && membersData?.list) {
                     members = membersData.list;
-                    console.log('Firebase에서 교인 로드:', fbMembersCount + '명');
+                    localStorage.setItem('churchMembers', JSON.stringify(members));
+                    localStorage.setItem('churchMembersTimestamp', fbMembersTimestamp);
+                    console.log('Firebase에서 교인 로드:', members.length + '명');
                 } else if (localMembers.length > 0) {
                     members = localMembers;
-                    await saveToFirestore('churchMembers', { list: members });
+                    const timestamp = new Date().toISOString();
+                    await saveToFirestore('churchMembers', { list: members, timestamp: timestamp });
+                    localStorage.setItem('churchMembersTimestamp', timestamp);
                     console.log('localStorage 교인을 Firebase에 저장:', localMembers.length + '명');
                 }
                 
@@ -4839,11 +4845,15 @@
             db.collection('churchMembers').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().list) {
                     const newData = doc.data().list;
-                    const currentData = JSON.parse(localStorage.getItem('churchMembers') || '[]');
-                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                    const fbTimestamp = doc.data().timestamp || '0';
+                    const localTimestamp = localStorage.getItem('churchMembersTimestamp') || '0';
+                    
+                    // Firebase 데이터가 더 최신인 경우에만 업데이트
+                    if (fbTimestamp > localTimestamp) {
                         console.log('🔄 교인 데이터 실시간 업데이트:', newData.length + '명');
                         members = newData;
                         localStorage.setItem('churchMembers', JSON.stringify(newData));
+                        localStorage.setItem('churchMembersTimestamp', fbTimestamp);
                         if (typeof loadMemberList === 'function') loadMemberList();
                         if (typeof loadCellList === 'function') loadCellList();
                         if (typeof updateMemberStats === 'function') updateMemberStats();
@@ -5178,7 +5188,10 @@
         async function saveMembersToFirebase() {
             localStorage.setItem('churchMembers', JSON.stringify(members));
             if (firebaseReady) {
-                await saveToFirestore('churchMembers', { list: members });
+                const timestamp = new Date().toISOString();
+                await saveToFirestore('churchMembers', { list: members, timestamp: timestamp });
+                localStorage.setItem('churchMembersTimestamp', timestamp);
+                console.log('교인 데이터 Firebase 저장 완료:', members.length + '명, 타임스탬프:', timestamp);
             }
         }
         
@@ -6793,6 +6806,9 @@
         
         // 교인관리 대시보드 로드
         function loadMemberDashboard() {
+            // 최신 교인 데이터 로드
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            
             const total = members.length;
             const male = members.filter(m => m.gender === '남').length;
             const female = members.filter(m => m.gender === '여').length;
@@ -7054,6 +7070,9 @@
 
         // 교인 통계 표시
         function showMemberStats(type) {
+            // 최신 교인 데이터 로드
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            
             // 탭 스타일 업데이트
             const tabs = ['age', 'region', 'job', 'year', 'gender', 'position'];
             tabs.forEach(t => {
@@ -7265,6 +7284,9 @@
 
         // 교인 목록 로드 함수
         function loadMembersList() {
+            // 최신 교인 데이터 로드
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            
             const container = document.getElementById('membersList');
             if (members.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #666;">등록된 교인이 없습니다.</p>';
@@ -7294,6 +7316,26 @@
                     return true;
                 });
             }
+            
+            // 교인번호 순서로 정렬 (SGC-25-001 형식)
+            filteredMembers.sort((a, b) => {
+                const numA = a.number || '';
+                const numB = b.number || '';
+                // SGC-YY-NNN 형식에서 숫자 추출
+                const matchA = numA.match(/SGC-(\d{2})-(\d+)/);
+                const matchB = numB.match(/SGC-(\d{2})-(\d+)/);
+                
+                if (matchA && matchB) {
+                    // 연도 비교
+                    const yearA = parseInt(matchA[1]);
+                    const yearB = parseInt(matchB[1]);
+                    if (yearA !== yearB) return yearA - yearB;
+                    // 번호 비교
+                    return parseInt(matchA[2]) - parseInt(matchB[2]);
+                }
+                // 형식이 다르면 문자열 비교
+                return numA.localeCompare(numB);
+            });
 
             let html = `
                 <div class="table-container">
@@ -13568,6 +13610,7 @@
         function loadYearlyAttendanceSheet() {
             const container = document.getElementById('yearlyAttendanceSheet');
             const year = parseInt(document.getElementById('attendanceYear')?.value || new Date().getFullYear());
+            const currentYear = new Date().getFullYear();
             
             // 연도 레이블 업데이트
             const snapshotLabel = document.getElementById('snapshotYearLabel');
@@ -13580,23 +13623,29 @@
             // 최신 데이터 로드 (중요!)
             cellAttendance = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
             mainAttendance = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]'); // 교인 데이터도 최신으로 로드
             
             // 디버그: 콘솔에 출석 데이터 출력
             console.log('=== 출석 데이터 확인 ===');
             console.log('cellAttendance:', cellAttendance);
             console.log('mainAttendance:', mainAttendance);
+            console.log('members:', members.length + '명');
             
             const sundays = getSundaysOfYear(year);
             
-            // 연도별 구역 스냅샷 사용 (없으면 현재 구역 사용)
+            // 연도별 구역 스냅샷 사용 (현재 연도는 항상 현재 데이터 사용)
             const cellsHistory = JSON.parse(localStorage.getItem('churchCellsHistory') || '{}');
-            const cellsData = cellsHistory[year] || JSON.parse(localStorage.getItem('churchCells') || '[]');
+            const cellsData = (year === currentYear) 
+                ? JSON.parse(localStorage.getItem('churchCells') || '[]')
+                : (cellsHistory[year] || JSON.parse(localStorage.getItem('churchCells') || '[]'));
             
-            // 연도별 교인 스냅샷 사용 (없으면 현재 교인 사용)
+            // 연도별 교인 스냅샷 사용 (현재 연도는 항상 현재 교인 사용)
             const membersHistory = JSON.parse(localStorage.getItem('membersHistory') || '{}');
-            const yearMembers = membersHistory[year] || members;
+            const yearMembers = (year === currentYear) 
+                ? members 
+                : (membersHistory[year] || members);
             
-            console.log(`📅 ${year}년 출석표 로드 - 구역: ${cellsData.length}개, 교인: ${yearMembers.length}명`);
+            console.log(`📅 ${year}년 출석표 로드 - 구역: ${cellsData.length}개, 교인: ${yearMembers.length}명 (현재연도: ${year === currentYear})`);
             
             // 헤더 통계 업데이트
             document.getElementById('totalMemberCount').textContent = yearMembers.length;
