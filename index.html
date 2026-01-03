@@ -15345,6 +15345,7 @@
         // 구역 목록 로드
         function loadCellList() {
             // Firebase에서 불러온 최신 데이터 다시 읽기
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
             cells = JSON.parse(localStorage.getItem('churchCells') || '[]');
             cellAttendance = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
             absentReasons = JSON.parse(localStorage.getItem('absentReasons') || '{}');
@@ -15654,6 +15655,9 @@
         
         // 구역원 추가 모달 표시
         function showAddCellMemberModal(cellName) {
+            // 최신 교인 데이터 로드
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            
             // 이미 이 구역에 배정된 교인들
             const alreadyInCell = members.filter(m => m.cell === cellName || m.cell === cellName + '구역').map(m => m.nameKr);
             
@@ -15758,6 +15762,9 @@
                 return;
             }
             
+            // 최신 교인 데이터 로드
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            
             let addedCount = 0;
             selectedNames.forEach(name => {
                 const memberIndex = members.findIndex(m => m.nameKr === name);
@@ -15794,6 +15801,9 @@
         
         // 교인을 구역에 추가 (단일)
         function addMemberToCell(cellName, memberName) {
+            // 최신 교인 데이터 로드
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            
             const memberIndex = members.findIndex(m => m.nameKr === memberName);
             if (memberIndex === -1) {
                 alert('교인을 찾을 수 없습니다.');
@@ -15814,6 +15824,9 @@
         // 구역에서 교인 제거
         function removeCellMember(cellName, memberName) {
             if (!confirm(`${memberName}님을 ${cellName}구역에서 제거하시겠습니까?`)) return;
+            
+            // 최신 교인 데이터 로드
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
             
             const memberIndex = members.findIndex(m => m.nameKr === memberName);
             if (memberIndex === -1) {
