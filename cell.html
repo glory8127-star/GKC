@@ -638,10 +638,19 @@
             
             <!-- 탭 컨텐츠: 출석체크 -->
             <div id="tabAttendance">
+                <!-- 구역 선택 -->
+                <div class="card" style="margin: 10px; padding: 15px;">
+                    <label style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 10px;">📍 구역 선택</label>
+                    <select class="form-select" id="cellSelectAttendance" onchange="onCellSelectChange(this.value)" style="font-size: 1.1em; padding: 12px;">
+                        <option value="">-- 구역을 선택하세요 --</option>
+                    </select>
+                </div>
+                
                 <div class="date-selector">
                     <span>📅</span>
                     <input type="date" class="date-input" id="attendanceDate" onchange="loadAttendance()">
-                    <button class="btn btn-secondary" onclick="setToday()" style="width: auto; padding: 10px 15px;">오늘</button>
+                    <button class="btn btn-secondary" onclick="setToday()" style="width: auto; padding: 8px 12px; font-size: 0.85em;">오늘</button>
+                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.85em;">주일</button>
                 </div>
                 
                 <div class="card">
@@ -666,7 +675,10 @@
                     </div>
                     
                     <div id="memberList">
-                        <!-- 동적 생성 -->
+                        <div class="empty-state">
+                            <div class="empty-icon">👆</div>
+                            <div>위에서 구역을 먼저 선택해주세요</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -939,11 +951,26 @@
             }
         });
         
-        // 이번 주일 날짜 설정
+        // 오늘 날짜 설정
         function setToday() {
             const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('attendanceDate').value = dateStr;
+            document.getElementById('reportDate').value = dateStr;
+            document.getElementById('overviewDate').value = dateStr;
+            
+            loadAttendance();
+        }
+        
+        // 이번 주일(일요일) 날짜 설정
+        function setThisSunday() {
+            const today = new Date();
             const sunday = new Date(today);
-            sunday.setDate(today.getDate() - today.getDay()); // 이번 주 일요일
+            const day = today.getDay();
+            // 일요일(0)이면 오늘, 아니면 다가오는 일요일
+            if (day !== 0) {
+                sunday.setDate(today.getDate() + (7 - day));
+            }
             
             const dateStr = sunday.toISOString().split('T')[0];
             document.getElementById('attendanceDate').value = dateStr;
@@ -1018,11 +1045,8 @@
             // 실시간 동기화 리스너 설정
             setupRealtimeListeners();
             
-            // 구역 선택 초기화
+            // 구역 선택 초기화 (setToday → loadAttendance 자동 호출)
             initCellSelector();
-            
-            // 출석 데이터 로드
-            loadAttendance();
         }
         
         // 데이터 로드
@@ -1138,6 +1162,7 @@
         // 구역 선택 초기화
         function initCellSelector() {
             const select = document.getElementById('cellSelect');
+            const selectAttendance = document.getElementById('cellSelectAttendance');
             select.innerHTML = '';
             
             // 관리자는 모든 구역, 구역장은 자기 구역만
@@ -1162,27 +1187,49 @@
             
             if (availableCells.length === 0) {
                 select.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
+                selectAttendance.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
                 return;
             }
+            
+            // 출석탭 구역 선택 초기화
+            selectAttendance.innerHTML = '<option value="">-- 구역을 선택하세요 --</option>';
             
             availableCells.forEach((cell, idx) => {
                 const option = document.createElement('option');
                 option.value = cell.name;
                 option.textContent = `${cell.name}구역 (구역장: ${cell.leaderName || '미지정'})`;
                 select.appendChild(option);
+                
+                // 출석탭 드롭다운에도 추가
+                const option2 = document.createElement('option');
+                option2.value = cell.name;
+                option2.textContent = `${cell.name}구역 (${cell.leaderName || '미지정'})`;
+                selectAttendance.appendChild(option2);
             });
             
             selectedCell = availableCells[0].name;
             
-            // 구역이 1개면 셀렉터 숨김
-            if (availableCells.length === 1 && currentUser.role !== '관리자') {
-                document.getElementById('cellSelector').style.display = 'none';
+            // 구역이 1개면 기본 셀렉터는 숨김, 출석탭은 자동 선택
+            if (availableCells.length === 1) {
+                if (currentUser.role !== '관리자') {
+                    document.getElementById('cellSelector').style.display = 'none';
+                }
+                selectAttendance.value = availableCells[0].name;
             }
             
-            loadAttendance();
+            // 오늘 날짜 설정
+            setToday();
         }
         
-        // 구역 변경
+        // 출석탭 구역 선택 변경
+        function onCellSelectChange(value) {
+            if (value) {
+                selectedCell = value;
+                loadAttendance();
+            }
+        }
+        
+        // 보고서탭 구역 선택 변경
         function onCellChange() {
             selectedCell = document.getElementById('cellSelect').value;
             loadAttendance();
