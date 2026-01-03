@@ -4582,12 +4582,20 @@
                 // 교회 구역 데이터 로드 (데이터 보호)
                 const churchCellsData = await loadFromFirestore('churchCells');
                 const localChurchCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
-                const fbChurchCellsCount = churchCellsData?.list?.length || 0;
+                const localCellsTimestamp = localStorage.getItem('churchCellsTimestamp') || '0';
+                const fbCellsTimestamp = churchCellsData?.timestamp || '0';
                 
-                if (fbChurchCellsCount >= localChurchCells.length && fbChurchCellsCount > 0) {
+                // 타임스탬프 비교: 더 최신 데이터 사용
+                if (fbCellsTimestamp > localCellsTimestamp && churchCellsData?.list) {
+                    console.log('Firebase 구역 데이터가 더 최신 - Firebase 데이터 사용');
                     localStorage.setItem('churchCells', JSON.stringify(churchCellsData.list));
+                    localStorage.setItem('churchCellsTimestamp', fbCellsTimestamp);
+                    cells = churchCellsData.list;
                 } else if (localChurchCells.length > 0) {
-                    await saveToFirestore('churchCells', { list: localChurchCells });
+                    console.log('로컬 구역 데이터가 더 최신 - Firebase에 저장');
+                    const timestamp = new Date().toISOString();
+                    await saveToFirestore('churchCells', { list: localChurchCells, timestamp: timestamp });
+                    localStorage.setItem('churchCellsTimestamp', timestamp);
                 }
                 
                 // 연도별 구역 스냅샷 로드
@@ -4889,11 +4897,15 @@
             db.collection('churchCells').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().list) {
                     const newData = doc.data().list;
-                    const currentData = JSON.parse(localStorage.getItem('churchCells') || '[]');
-                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                    const fbTimestamp = doc.data().timestamp || '0';
+                    const localTimestamp = localStorage.getItem('churchCellsTimestamp') || '0';
+                    
+                    // Firebase 데이터가 더 최신인 경우에만 업데이트
+                    if (fbTimestamp > localTimestamp) {
                         console.log('🔄 구역 데이터 실시간 업데이트:', newData.length + '개');
                         cells = newData;
                         localStorage.setItem('churchCells', JSON.stringify(newData));
+                        localStorage.setItem('churchCellsTimestamp', fbTimestamp);
                         if (typeof loadCellList === 'function') loadCellList();
                     }
                 }
@@ -5238,7 +5250,10 @@
         async function saveChurchCellsToFirebase() {
             const churchCells = JSON.parse(localStorage.getItem('churchCells') || '[]');
             if (firebaseReady) {
-                await saveToFirestore('churchCells', { list: churchCells });
+                const timestamp = new Date().toISOString();
+                await saveToFirestore('churchCells', { list: churchCells, timestamp: timestamp });
+                localStorage.setItem('churchCellsTimestamp', timestamp);
+                console.log('구역 데이터 Firebase 저장 완료:', churchCells.length + '개, 타임스탬프:', timestamp);
             }
         }
         
@@ -14296,8 +14311,12 @@
         // ========== 구역관리 ==========
         let cells = JSON.parse(localStorage.getItem('churchCells') || '[]');
         
-        // 기본 구역 초기화
+        // 기본 구역 초기화 (첫 설치 시에만)
         function initDefaultCells() {
+            // 이미 한 번이라도 구역이 설정된 적 있으면 기본 구역 생성 안함
+            const cellsInitialized = localStorage.getItem('cellsInitialized');
+            if (cellsInitialized) return; // 이미 초기화됨
+            
             if (cells.length === 0) {
                 cells = [
                     { name: '성령', leader: '', leaderName: '', color: '#d69e2e', meeting: '매주 금요일 저녁 7시', location: '' },
@@ -14308,6 +14327,8 @@
                 localStorage.setItem('churchCells', JSON.stringify(cells));
                 saveChurchCellsToFirebase(); // Firebase 동기화
             }
+            // 초기화 완료 표시
+            localStorage.setItem('cellsInitialized', 'true');
         }
         
         // 주일 출석 데이터 (구역별)
