@@ -7505,6 +7505,22 @@
                 // 전도 메달 계산 (이 교인이 인도한 사람 수)
                 const evangelismCount = members.filter(m => m.referrer === member.nameKr).length;
                 
+                // 멘토 찾기 (멘티의 mentorName 또는 멘토의 menteeNames에서 검색)
+                let mentorName = member.mentoring?.mentorName || '';
+                if (!mentorName) {
+                    // 모든 멘토의 menteeNames에서 이 교인 이름 검색
+                    const mentor = members.find(m => {
+                        if (m.mentoring?.role === 'mentor' && m.mentoring?.menteeNames) {
+                            const menteeList = m.mentoring.menteeNames.split(',').map(n => n.trim());
+                            return menteeList.includes(member.nameKr);
+                        }
+                        return false;
+                    });
+                    if (mentor) {
+                        mentorName = mentor.nameKr;
+                    }
+                }
+                
                 // 사진 또는 기본 아바타
                 const photoHtml = member.photo 
                     ? `<img src="${member.photo}" style="width: 45px; height: 55px; object-fit: cover; border-radius: 5px;">`
@@ -7557,7 +7573,7 @@
                         <td>${member.phone || '-'}</td>
                         <td>${member.position || '-'}</td>
                         <td style="color: ${member.referrer ? '#3182ce' : '#ccc'};">${member.referrer || '-'}</td>
-                        <td style="color: ${member.mentoring?.mentorName ? '#319795' : '#ccc'};">${member.mentoring?.mentorName || '-'}</td>
+                        <td style="color: ${mentorName ? '#319795' : '#ccc'};">${mentorName || '-'}</td>
                         <td style="text-align: center;">${medalHtml}</td>
                         <td>${eduBadges}</td>
                         <td>
