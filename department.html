@@ -443,8 +443,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">금액 (원) *</label>
-                    <input type="number" class="form-input" id="expenseAmount" placeholder="50000">
+                    <label class="form-label">금액 ($) *</label>
+                    <input type="number" class="form-input" id="expenseAmount" placeholder="100.00" step="0.01" min="0">
                 </div>
                 <div class="form-group">
                     <label class="form-label">결제 방법 *</label>
@@ -494,6 +494,12 @@
         let expenses = [];
         let expenseRequests = [];
         let yearlyEvents = [];
+        
+        // 금액 포맷 함수 ($1,000.00 형식)
+        function formatMoney(amount) {
+            const num = parseFloat(amount) || 0;
+            return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
         
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
@@ -760,7 +766,7 @@
                         <div class="expense-title">${req.title}</div>
                         <div class="expense-info">${req.department} · ${req.category || '기타'} · ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div>
                         <div class="expense-info">${req.date}</div>
-                        <div class="expense-amount">₩${parseInt(req.amount).toLocaleString()}</div>
+                        <div class="expense-amount">${formatMoney(req.amount)}</div>
                         <span class="expense-status ${statusClass}">${req.status}</span>
                         ${req.status === '거절' && req.rejectReason ? `<div style="font-size: 0.8em; color: #dc2626; margin-top: 5px;">거절 사유: ${req.rejectReason}</div>` : ''}
                     </div>
@@ -787,7 +793,7 @@
                         <div class="expense-info">${req.department} · ${req.requester} · ${req.date}</div>
                         <div class="expense-info" style="color: #059669;">📁 ${req.category || '기타'} · 💳 ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div>
                         ${req.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px;">${req.description}</div>` : ''}
-                        <div class="expense-amount">₩${parseInt(req.amount).toLocaleString()}</div>
+                        <div class="expense-amount">${formatMoney(req.amount)}</div>
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
                             <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="approveRequest('${req.id}')">승인</button>
                             <button class="btn btn-danger" style="flex: 1; padding: 10px;" onclick="rejectRequest('${req.id}')">거절</button>
@@ -851,7 +857,7 @@
                 department: dept,
                 title: title,
                 category: category,
-                amount: parseInt(amount),
+                amount: parseFloat(amount),
                 payment: payment,
                 checkNumber: payment === 'Check' ? checkNumber : '',
                 date: date,
@@ -881,7 +887,7 @@
             const req = expenseRequests.find(r => r.id === id);
             if (!req) return;
             
-            if (!confirm(`"${req.title}" 지출결의서를 승인하시겠습니까?\n금액: ₩${parseInt(req.amount).toLocaleString()}`)) {
+            if (!confirm(`"${req.title}" 지출결의서를 승인하시겠습니까?\n금액: ${formatMoney(req.amount)}`)) {
                 return;
             }
             
