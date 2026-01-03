@@ -14755,12 +14755,12 @@
                     <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
                         <!-- 헤더 -->
                         <div style="background: ${cell.color}; padding: 18px; color: white;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <div>
-                                    <h3 style="margin: 0; font-size: 1.3em;">${cell.name}구역</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                                <div style="flex-shrink: 0;">
+                                    <h3 style="margin: 0; font-size: 1.3em; white-space: nowrap;">${cell.name}구역</h3>
                                     <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.85em;">${cell.meeting || '모임 미정'}</p>
                                 </div>
-                                <div class="pastor-only cell-edit-btns" style="display: none;">
+                                <div class="pastor-only cell-edit-btns" style="display: none; flex-shrink: 0; white-space: nowrap;">
                                     <button onclick="showAddCellMemberModal('${cell.name}')" style="background: rgba(255,255,255,0.3); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; margin-right: 5px;">➕ 구역원</button>
                                     <button onclick="editCell(${idx})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; margin-right: 5px;">✏️ 수정</button>
                                     <button onclick="deleteCell(${idx})" style="background: rgba(220,38,38,0.7); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">🗑️ 삭제</button>
