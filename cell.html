@@ -1236,9 +1236,7 @@
                             <div class="member-name">
                                 ${m.nameKr}
                                 ${isLeader ? '<span style="color: #4f46e5; font-size: 0.8em;">(구역장)</span>' : ''}
-                            </div>
-                            <div class="member-phone">
-                                <a href="tel:${m.phone}" class="phone-link">${m.phone || '-'}</a>
+                                <a href="tel:${m.phone}" class="phone-link" style="color: #64748b; font-size: 0.85em; margin-left: 8px;">${m.phone || ''}</a>
                             </div>
                         </div>
                         ${isPresent ? 
@@ -1253,9 +1251,29 @@
             updateStats();
         }
         
-        // 출석 토글
-        function toggleAttendance(name, checked) {
+        // 출석 토글 - 즉시 저장
+        async function toggleAttendance(name, checked) {
             attendanceData[name] = checked;
+            
+            // 즉시 Firebase와 localStorage에 저장
+            const dateStr = document.getElementById('attendanceDate').value;
+            const key = `${selectedCell}_${dateStr}`;
+            
+            // 출석자 목록 업데이트
+            const presentList = Object.keys(attendanceData).filter(n => attendanceData[n]);
+            cellAttendance[key] = presentList;
+            
+            // localStorage에 저장 (메인 사이트와 동기화)
+            localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+            
+            try {
+                // Firebase에 저장
+                await db.collection('cellAttendance').doc('main').set({ data: cellAttendance });
+                console.log('✅ 출석 저장:', name, checked ? '출석' : '결석');
+            } catch (error) {
+                console.error('저장 오류:', error);
+            }
+            
             loadAttendance(); // 다시 렌더링
         }
         
