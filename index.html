@@ -2678,11 +2678,21 @@
             
             <!-- 구역 목록 탭 -->
             <div id="cellListTab">
-                <!-- 구역예배 날짜 선택 -->
+                <!-- 서브탭 선택: 주일예배/구역예배 -->
+                <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                    <button id="cellSubTabSunday" onclick="showCellSubTab('sunday')" style="flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: white; font-size: 1em;">
+                        ✝️ 주일예배 출석
+                    </button>
+                    <button id="cellSubTabCell" onclick="showCellSubTab('cell')" style="flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: white; color: #64748b; border: 2px solid #e2e8f0; font-size: 1em;">
+                        ⛪ 구역예배 출석
+                    </button>
+                </div>
+                
+                <!-- 날짜 선택 -->
                 <div class="card" style="margin-bottom: 20px; padding: 15px;">
                     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
                         <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <label style="font-weight: 600; color: #333;">⛪ 구역예배 날짜:</label>
+                            <label style="font-weight: 600; color: #333;" id="cellDateLabel">✝️ 주일예배 날짜:</label>
                             <select id="cellAttendanceDateSelect" class="form-control" style="width: auto; min-width: 180px; font-weight: 600;" onchange="onCellAttendanceDateChange()">
                                 <!-- 주일 목록이 동적으로 생성됨 -->
                             </select>
@@ -14813,6 +14823,7 @@
         
         // ========== 구역관리 ==========
         let cells = JSON.parse(localStorage.getItem('churchCells') || '[]');
+        let currentCellSubTab = 'sunday'; // 현재 서브탭: 'sunday' 또는 'cell'
         
         // 기본 구역 초기화 (첫 설치 시에만)
         function initDefaultCells() {
@@ -14966,6 +14977,36 @@
                 // 보고서 탭 선택 시 날짜 초기화 및 로드
                 setReportDateToThisSunday();
             }
+        }
+        
+        // 구역관리 서브탭 전환 (주일예배/구역예배)
+        function showCellSubTab(tab) {
+            currentCellSubTab = tab;
+            
+            const sundayBtn = document.getElementById('cellSubTabSunday');
+            const cellBtn = document.getElementById('cellSubTabCell');
+            const dateLabel = document.getElementById('cellDateLabel');
+            
+            if (tab === 'sunday') {
+                sundayBtn.style.background = 'linear-gradient(135deg, #7c3aed, #8b5cf6)';
+                sundayBtn.style.color = 'white';
+                sundayBtn.style.border = 'none';
+                cellBtn.style.background = 'white';
+                cellBtn.style.color = '#64748b';
+                cellBtn.style.border = '2px solid #e2e8f0';
+                if (dateLabel) dateLabel.textContent = '✝️ 주일예배 날짜:';
+            } else {
+                cellBtn.style.background = 'linear-gradient(135deg, #0891b2, #06b6d4)';
+                cellBtn.style.color = 'white';
+                cellBtn.style.border = 'none';
+                sundayBtn.style.background = 'white';
+                sundayBtn.style.color = '#64748b';
+                sundayBtn.style.border = '2px solid #e2e8f0';
+                if (dateLabel) dateLabel.textContent = '⛪ 구역예배 날짜:';
+            }
+            
+            // 목록 새로고침
+            loadCellList();
         }
         
         // 이번 주일 날짜 설정
@@ -15536,13 +15577,16 @@
                 const cellWorshipAtt = cellAttendance[attendanceKey] || [];  // 구역예배 출석
                 const sundayWorshipAtt = cellSundayAttendance[attendanceKey] || [];  // 주일예배 출석
                 
-                // 구역예배 출석 계산
-                const cellPresentCount = cellWorshipAtt.length;
-                const cellRate = totalCount > 0 ? Math.round((cellPresentCount / totalCount) * 100) : 0;
+                // 현재 탭에 따른 출석 데이터
+                const currentAtt = currentCellSubTab === 'sunday' ? sundayWorshipAtt : cellWorshipAtt;
+                const presentCount = currentAtt.length;
+                const absentCount = totalCount - presentCount;
+                const attendanceRate = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
                 
-                // 주일예배 출석 계산
-                const sundayPresentCount = sundayWorshipAtt.length;
-                const sundayRate = totalCount > 0 ? Math.round((sundayPresentCount / totalCount) * 100) : 0;
+                // 탭별 색상
+                const tabColor = currentCellSubTab === 'sunday' ? '#7c3aed' : '#0891b2';
+                const tabIcon = currentCellSubTab === 'sunday' ? '✝️' : '⛪';
+                const tabName = currentCellSubTab === 'sunday' ? '주일예배' : '구역예배';
                 
                 html += `
                     <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
@@ -15561,49 +15605,60 @@
                             </div>
                         </div>
                         
-                        <!-- 출석 통계 - 구역예배 / 주일예배 구분 -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; text-align: center; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-                            <div style="padding: 12px 8px; border-right: 1px solid #e2e8f0;">
-                                <div style="font-size: 0.7em; color: #0ea5e9; font-weight: 600; margin-bottom: 4px;">⛪ 구역예배</div>
-                                <div style="font-size: 1.3em; font-weight: bold; color: #0ea5e9;">${cellPresentCount}/${totalCount}</div>
-                                <div style="font-size: 0.7em; color: #64748b;">${cellRate}%</div>
+                        <!-- 출석 통계 -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; padding: 15px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                            <div>
+                                <div style="font-size: 1.4em; font-weight: bold; color: ${cell.color};">${totalCount}</div>
+                                <div style="font-size: 0.75em; color: #64748b;">총원</div>
                             </div>
-                            <div style="padding: 12px 8px;">
-                                <div style="font-size: 0.7em; color: #8b5cf6; font-weight: 600; margin-bottom: 4px;">✝️ 주일예배</div>
-                                <div style="font-size: 1.3em; font-weight: bold; color: #8b5cf6;">${sundayPresentCount}/${totalCount}</div>
-                                <div style="font-size: 0.7em; color: #64748b;">${sundayRate}%</div>
+                            <div>
+                                <div style="font-size: 1.4em; font-weight: bold; color: #16a34a;">${presentCount}</div>
+                                <div style="font-size: 0.75em; color: #64748b;">출석</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.4em; font-weight: bold; color: ${absentCount > 0 ? '#dc2626' : '#16a34a'};">${attendanceRate}%</div>
+                                <div style="font-size: 0.75em; color: #64748b;">출석률</div>
                             </div>
                         </div>
                         
-                        <!-- 날짜 표시 -->
-                        <div style="padding: 8px 15px; background: #fefce8; border-bottom: 1px solid #fde68a;">
-                            <span style="font-size: 0.8em; color: #854d0e;">📅 ${selectedDate}</span>
+                        <!-- 날짜 및 탭 표시 -->
+                        <div style="padding: 10px 15px; background: ${currentCellSubTab === 'sunday' ? '#ede9fe' : '#e0f2fe'}; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.85em; color: ${tabColor}; font-weight: 600;">${tabIcon} ${tabName} 출석 (${selectedDate})</span>
+                                <button onclick="resetCellAttendanceByType('${cell.name}', '${selectedDate}', '${currentCellSubTab}')" style="background: ${currentCellSubTab === 'sunday' ? '#ddd6fe' : '#bae6fd'}; border: none; color: ${tabColor}; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.7em;">초기화</button>
+                            </div>
                         </div>
                         
-                        <!-- 구역원 목록 (구역예배/주일예배 출석 현황) -->
-                        <div style="padding: 12px;">
+                        <!-- 구역원 목록 (출석체크) -->
+                        <div style="padding: 15px;">
                             ${cellMembers.length > 0 ? cellMembers.map((m, mIdx) => {
                                 const isLeader = m.nameKr === cell.leaderName;
-                                const isCellPresent = cellWorshipAtt.includes(m.nameKr);
-                                const isSundayPresent = sundayWorshipAtt.includes(m.nameKr);
+                                const isPresent = currentAtt.includes(m.nameKr);
                                 return `
-                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; margin-bottom: 4px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                        <span style="font-weight: ${isLeader ? '600' : 'normal'}; color: ${isLeader ? cell.color : '#334155'}; font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            ${m.nameKr}${isLeader ? ' <span style="font-size: 0.7em; opacity: 0.8;">(구역장)</span>' : ''}
-                                        </span>
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; margin-bottom: 6px; background: ${isPresent ? '#f0fdf4' : '#fef2f2'}; border-radius: 8px; border: 1px solid ${isPresent ? '#bbf7d0' : '#fecaca'};">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" 
+                                               id="att_${cell.name}_${mIdx}" 
+                                               ${isPresent ? 'checked' : ''} 
+                                               onchange="toggleCellAttendanceByType('${cell.name}', '${m.nameKr}', '${selectedDate}', '${currentCellSubTab}')"
+                                               style="width: 18px; height: 18px; cursor: pointer; accent-color: ${tabColor};">
+                                        <div>
+                                            <div style="font-weight: ${isLeader ? '600' : 'normal'}; color: ${isLeader ? cell.color : '#334155'}; font-size: 0.95em;">
+                                                ${m.nameKr}
+                                                ${isLeader ? '<span style="font-size: 0.7em; background: ' + cell.color + '; color: white; padding: 2px 6px; border-radius: 6px; margin-left: 5px;">구역장</span>' : ''}
+                                            </div>
+                                            <div style="font-size: 0.75em; color: #64748b;">${m.phone || ''}</div>
+                                        </div>
                                     </div>
-                                    <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                                        <span style="font-size: 0.7em; padding: 3px 8px; border-radius: 12px; background: ${isCellPresent ? '#e0f2fe' : '#fee2e2'}; color: ${isCellPresent ? '#0369a1' : '#b91c1c'}; white-space: nowrap;">
-                                            ⛪${isCellPresent ? '✓' : '✗'}
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 0.8em; font-weight: 500; color: ${isPresent ? '#16a34a' : '#dc2626'};">
+                                            ${isPresent ? '출석' : '결석'}
                                         </span>
-                                        <span style="font-size: 0.7em; padding: 3px 8px; border-radius: 12px; background: ${isSundayPresent ? '#ede9fe' : '#fee2e2'}; color: ${isSundayPresent ? '#6d28d9' : '#b91c1c'}; white-space: nowrap;">
-                                            ✝️${isSundayPresent ? '✓' : '✗'}
-                                        </span>
+                                        <button class="pastor-only cell-remove-btn" style="display: none; background: #fee2e2; color: #dc2626; border: none; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.7em;" onclick="removeCellMember('${cell.name}', '${m.nameKr}')">제거</button>
                                     </div>
                                 </div>
                                 `;
-                            }).join('') : '<p style="color: #94a3b8; font-size: 0.85em; text-align: center; padding: 20px;">구역원이 없습니다</p>'}
+                            }).join('') : '<p style="color: #94a3b8; font-size: 0.85em; text-align: center; padding: 20px;">구역원이 없습니다<br><small>➕ 구역원 버튼을 눌러 추가하세요</small></p>'}
                         </div>
                     </div>
                 `;
@@ -15656,6 +15711,75 @@
                 saveCellAttendanceToFirebase(); // Firebase 동기화
                 loadCellList();
             }
+        }
+        
+        // 출석 체크 토글 (타입별: sunday 또는 cell)
+        function toggleCellAttendanceByType(cellName, memberName, date, type) {
+            const key = `${cellName}_${date}`;
+            
+            if (type === 'sunday') {
+                // 주일예배 출석
+                let sundayAtt = JSON.parse(localStorage.getItem('cellSundayAttendance') || '{}');
+                if (!sundayAtt[key]) sundayAtt[key] = [];
+                
+                const idx = sundayAtt[key].indexOf(memberName);
+                if (idx >= 0) {
+                    sundayAtt[key].splice(idx, 1);
+                    console.log(`[주일예배] ${memberName} 출석 해제`);
+                } else {
+                    sundayAtt[key].push(memberName);
+                    console.log(`[주일예배] ${memberName} 출석 체크`);
+                }
+                
+                localStorage.setItem('cellSundayAttendance', JSON.stringify(sundayAtt));
+                saveCellSundayAttendanceToFirebase();
+            } else {
+                // 구역예배 출석
+                if (!cellAttendance[key]) cellAttendance[key] = [];
+                
+                const idx = cellAttendance[key].indexOf(memberName);
+                if (idx >= 0) {
+                    cellAttendance[key].splice(idx, 1);
+                    console.log(`[구역예배] ${memberName} 출석 해제`);
+                } else {
+                    cellAttendance[key].push(memberName);
+                    console.log(`[구역예배] ${memberName} 출석 체크`);
+                }
+                
+                localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+                saveCellAttendanceToFirebase();
+            }
+            
+            loadCellList();
+        }
+        
+        // 출석 초기화 (타입별)
+        function resetCellAttendanceByType(cellName, date, type) {
+            const typeName = type === 'sunday' ? '주일예배' : '구역예배';
+            if (confirm(`${cellName}구역의 ${date} ${typeName} 출석 기록을 초기화하시겠습니까?`)) {
+                const key = `${cellName}_${date}`;
+                
+                if (type === 'sunday') {
+                    let sundayAtt = JSON.parse(localStorage.getItem('cellSundayAttendance') || '{}');
+                    delete sundayAtt[key];
+                    localStorage.setItem('cellSundayAttendance', JSON.stringify(sundayAtt));
+                    saveCellSundayAttendanceToFirebase();
+                } else {
+                    delete cellAttendance[key];
+                    localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+                    saveCellAttendanceToFirebase();
+                }
+                
+                loadCellList();
+            }
+        }
+        
+        // 주일예배 출석 Firebase 저장
+        function saveCellSundayAttendanceToFirebase() {
+            const sundayAtt = JSON.parse(localStorage.getItem('cellSundayAttendance') || '{}');
+            db.collection('cellSundayAttendance').doc('main').set({ data: sundayAtt })
+                .then(() => console.log('✅ 주일예배 출석 Firebase 저장 완료'))
+                .catch(err => console.error('주일예배 출석 저장 오류:', err));
         }
         
         // 구역관리에서 결석 사유 저장
