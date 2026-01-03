@@ -58,5 +58,35 @@
         }
     ],
     "categories": ["productivity", "utilities"],
-    "lang": "ko-KR"
+    "lang": "ko-KR",
+    "shortcuts": [
+        {
+            "name": "구역관리",
+            "short_name": "구역",
+            "description": "구역 출석 체크 및 관리",
+            "url": "/index.html?section=cell",
+            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
+        },
+        {
+            "name": "출석관리",
+            "short_name": "출석",
+            "description": "주일 출석 관리",
+            "url": "/index.html?section=attendance",
+            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
+        },
+        {
+            "name": "교적관리",
+            "short_name": "교적",
+            "description": "교인 정보 관리",
+            "url": "/index.html?section=members",
+            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
+        },
+        {
+            "name": "부서관리",
+            "short_name": "부서",
+            "description": "부서 및 조직 관리",
+            "url": "/index.html?section=department",
+            "icons": [{"src": "icons/icon-96.png", "sizes": "96x96"}]
+        }
+    ]
 }
