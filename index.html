@@ -2717,10 +2717,9 @@
                 <!-- 날짜 선택 및 보고서 작성 버튼 -->
                 <div class="card" style="margin-bottom: 20px;">
                     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
-                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <label style="font-weight: 600;">📅 날짜 선택:</label>
-                            <input type="date" class="form-control" id="cellReportDate" style="width: auto;" onchange="loadCellReportsView()">
-                            <button class="btn btn-secondary" onclick="setReportDateToThisSunday()" style="padding: 10px 15px;">이번 주일</button>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <span style="font-size: 0.9em; color: #64748b;">💡 각 구역의 구역예배 날짜 기준으로 출석이 표시됩니다</span>
+                            <button class="btn btn-secondary" onclick="loadCellReportsView()" style="padding: 8px 15px; font-size: 0.9em;">🔄 새로고침</button>
                         </div>
                         <button class="btn btn-primary" onclick="showCellReportModal()" style="padding: 10px 20px;">
                             ✍️ 보고서 작성
@@ -14992,8 +14991,8 @@
                 listBtn.style.color = '#333';
                 listBtn.style.border = '1px solid #e2e8f0';
                 
-                // 보고서 탭 선택 시 날짜 초기화 및 로드
-                setReportDateToThisSunday();
+                // 보고서 탭 선택 시 로드
+                loadCellReportsView();
             }
         }
         
@@ -15068,9 +15067,6 @@
         
         // 구역 보고서 목록 로드
         async function loadCellReportsView() {
-            const dateStr = document.getElementById('cellReportDate').value;
-            if (!dateStr) return;
-            
             // Firebase에서 보고서 데이터 로드
             let cellReports = {};
             try {
@@ -15086,6 +15082,9 @@
             const cellsData = JSON.parse(localStorage.getItem('churchCells') || '[]');
             const membersData = JSON.parse(localStorage.getItem('churchMembers') || '[]');
             const cellAttData = JSON.parse(localStorage.getItem('cellAttendance') || '{}');
+            const cellWorshipDatesData = JSON.parse(localStorage.getItem('cellWorshipDates') || '{}');
+            
+            const today = new Date().toISOString().split('T')[0];
             
             let submitted = 0;
             let totalAttendance = 0;
@@ -15097,9 +15096,16 @@
             let listHtml = '';
             
             cellsData.forEach(cell => {
-                const key = `${cell.name}_${dateStr}`;
+                // 각 구역의 개별 날짜 사용
+                const cellDate = cellWorshipDatesData[cell.name] || today;
+                const key = `${cell.name}_${cellDate}`;
                 const report = cellReports[key];
                 const attendance = cellAttData[key] || [];
+                
+                // 날짜 포맷
+                const d = new Date(cellDate + 'T00:00:00');
+                const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                const dateLabel = `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})`;
                 
                 // 구역원 수 계산
                 const cellMembers = membersData.filter(m => {
@@ -15145,6 +15151,14 @@
                             </div>
                         </div>
                         
+                        <!-- 구역예배 날짜 -->
+                        <div style="padding: 10px 15px; background: #e0f2fe; border-bottom: 1px solid #bae6fd;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.85em; color: #0369a1; font-weight: 600;">⛪ 구역예배 날짜: ${dateLabel}</span>
+                                <span style="font-size: 0.8em; color: #64748b;">${cellDate}</span>
+                            </div>
+                        </div>
+                        
                         <!-- 출석 현황 -->
                         <div style="padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -15184,10 +15198,10 @@
                             </div>
                             ` : ''}
                             <div style="display: flex; gap: 8px; margin-top: 15px;">
-                                <button onclick="viewCellReportDetail('${cell.name}', '${dateStr}')" style="flex: 1; background: #3182ce; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85em;">
+                                <button onclick="viewCellReportDetail('${cell.name}', '${cellDate}')" style="flex: 1; background: #3182ce; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85em;">
                                     📄 상세보기
                                 </button>
-                                <button onclick="editCellReport('${cell.name}', '${dateStr}')" style="background: #f1f5f9; color: #475569; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 0.85em;">
+                                <button onclick="editCellReport('${cell.name}', '${cellDate}')" style="background: #f1f5f9; color: #475569; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 0.85em;">
                                     ✏️ 수정
                                 </button>
                             </div>
@@ -15195,7 +15209,7 @@
                         ` : `
                         <div style="padding: 20px; text-align: center;">
                             <p style="color: #94a3b8; margin-bottom: 15px; font-size: 0.9em;">아직 보고서가 제출되지 않았습니다</p>
-                            <button onclick="showCellReportModalForCell('${cell.name}', '${dateStr}')" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9em;">
+                            <button onclick="showCellReportModalForCell('${cell.name}', '${cellDate}')" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9em;">
                                 ✍️ 보고서 작성
                             </button>
                         </div>
@@ -15354,6 +15368,7 @@
         // 보고서 작성 모달 열기
         function showCellReportModal() {
             const cellsData = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            const cellWorshipDatesData = JSON.parse(localStorage.getItem('cellWorshipDates') || '{}');
             const select = document.getElementById('reportCellSelect');
             
             // 구역 옵션 생성
@@ -15362,16 +15377,27 @@
                 select.innerHTML += `<option value="${cell.name}">${cell.name}구역</option>`;
             });
             
-            // 날짜 초기화 (선택된 날짜 또는 이번 주일)
-            const reportDate = document.getElementById('cellReportDate').value || getThisSunday();
-            document.getElementById('reportDateInput').value = reportDate;
+            // 구역 선택 시 해당 구역의 날짜 자동 적용
+            select.onchange = function() {
+                const selectedCellName = this.value;
+                if (selectedCellName && cellWorshipDatesData[selectedCellName]) {
+                    document.getElementById('reportDateInput').value = cellWorshipDatesData[selectedCellName];
+                } else if (selectedCellName) {
+                    document.getElementById('reportDateInput').value = new Date().toISOString().split('T')[0];
+                }
+                loadCellAttendanceForReport();
+            };
+            
+            // 날짜 초기화 (오늘)
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('reportDateInput').value = today;
             
             // 폼 초기화
             document.getElementById('cellReportForm').reset();
-            document.getElementById('reportDateInput').value = reportDate;
+            document.getElementById('reportDateInput').value = today;
             document.getElementById('reportEditKey').value = '';
             document.getElementById('cellReportModalTitle').textContent = '✍️ 구역예배 보고서 작성';
-            document.getElementById('reportAttendanceList').innerHTML = '<span style="color: #94a3b8; font-size: 0.85em;">구역을 선택하면 구역예배 출석 현황이 표시됩니다</span>';
+            document.getElementById('reportAttendanceList').innerHTML = '<span style="color: #94a3b8; font-size: 0.85em;">구역을 선택하면 해당 구역의 구역예배 출석 현황이 표시됩니다</span>';
             document.getElementById('reportAttendanceSummary').textContent = '0/0명 (0%)';
             
             document.getElementById('cellReportModal').classList.add('active');
