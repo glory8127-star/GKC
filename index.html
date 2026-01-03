@@ -11328,10 +11328,7 @@
             }
             
             localStorage.setItem('departments', JSON.stringify(departments));
-                saveDepartmentsToFirebase(); // Firebase 동기화
-            
-            // Firebase에 동기화
-            saveDepartmentsToFirebase();
+            saveDepartmentsToFirebase(); // Firebase 동기화
             
             // 재정관리 예산과 연동
             syncBudgetWithFinance(deptData.name, deptData.budget);
@@ -11348,14 +11345,14 @@
             let budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
             const currentYear = new Date().getFullYear();
             
-            // 해당 부서 찾기
-            const existingIndex = budgets.findIndex(b => b.name === deptName);
+            // 해당 부서 + 현재 연도 찾기
+            const existingIndex = budgets.findIndex(b => b.name === deptName && b.year === currentYear);
             
             if (existingIndex >= 0) {
                 // 기존 부서 예산 업데이트
                 budgets[existingIndex].budget = budgetAmount;
             } else {
-                // 새 부서 추가
+                // 새 부서 추가 (현재 연도)
                 budgets.push({
                     name: deptName,
                     budget: budgetAmount,
@@ -11365,7 +11362,12 @@
             }
             
             localStorage.setItem('churchBudgets', JSON.stringify(budgets));
-                saveChurchBudgetsToFirebase(); // Firebase 동기화
+            saveChurchBudgetsToFirebase(); // Firebase 동기화
+            
+            // 예산 시각화 업데이트
+            if (typeof updateBudgetVisualization === 'function') {
+                updateBudgetVisualization();
+            }
         }
         
         // 부서 삭제
