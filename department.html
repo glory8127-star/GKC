@@ -1118,7 +1118,8 @@
             
             try {
                 // 이미지 압축
-                compressedReceiptBlob = await compressImage(file, 1200, 0.7);
+                // 영수증은 텍스트만 읽으면 되므로 작게 압축 (800px, 50% 품질)
+                compressedReceiptBlob = await compressImage(file, 800, 0.5);
                 selectedReceiptFile = file;
                 
                 // 미리보기 표시
