@@ -2678,11 +2678,11 @@
             
             <!-- 구역 목록 탭 -->
             <div id="cellListTab">
-                <!-- 출석 날짜 선택 -->
+                <!-- 구역예배 날짜 선택 -->
                 <div class="card" style="margin-bottom: 20px; padding: 15px;">
                     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
                         <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <label style="font-weight: 600; color: #333;">📅 출석 체크 날짜:</label>
+                            <label style="font-weight: 600; color: #333;">⛪ 구역예배 날짜:</label>
                             <select id="cellAttendanceDateSelect" class="form-control" style="width: auto; min-width: 180px; font-weight: 600;" onchange="onCellAttendanceDateChange()">
                                 <!-- 주일 목록이 동적으로 생성됨 -->
                             </select>
@@ -2837,14 +2837,14 @@
                             </div>
                         </div>
                         
-                        <!-- 출석 현황 (자동 연동) -->
+                        <!-- 구역예배 출석 현황 (자동 연동) -->
                         <div style="background: #f0fdf4; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #bbf7d0;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-weight: 600; color: #166534;">📋 출석 현황</span>
+                                <span style="font-weight: 600; color: #166534;">⛪ 구역예배 출석</span>
                                 <span id="reportAttendanceSummary" style="font-size: 0.9em; color: #166534;">0/0명 (0%)</span>
                             </div>
                             <div id="reportAttendanceList" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                <span style="color: #94a3b8; font-size: 0.85em;">구역을 선택하면 출석 현황이 표시됩니다</span>
+                                <span style="color: #94a3b8; font-size: 0.85em;">구역을 선택하면 구역예배 출석 현황이 표시됩니다</span>
                             </div>
                         </div>
                         
@@ -15268,7 +15268,7 @@
             document.getElementById('reportDateInput').value = reportDate;
             document.getElementById('reportEditKey').value = '';
             document.getElementById('cellReportModalTitle').textContent = '✍️ 구역예배 보고서 작성';
-            document.getElementById('reportAttendanceList').innerHTML = '<span style="color: #94a3b8; font-size: 0.85em;">구역을 선택하면 출석 현황이 표시됩니다</span>';
+            document.getElementById('reportAttendanceList').innerHTML = '<span style="color: #94a3b8; font-size: 0.85em;">구역을 선택하면 구역예배 출석 현황이 표시됩니다</span>';
             document.getElementById('reportAttendanceSummary').textContent = '0/0명 (0%)';
             
             document.getElementById('cellReportModal').classList.add('active');
