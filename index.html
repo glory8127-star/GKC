@@ -5120,6 +5120,19 @@
                 }
             });
             
+            // 구역예배 날짜 실시간 동기화
+            db.collection('cellWorshipDates').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    const currentData = JSON.parse(localStorage.getItem('cellWorshipDates') || '{}');
+                    if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                        console.log('🔄 구역예배 날짜 실시간 업데이트');
+                        localStorage.setItem('cellWorshipDates', JSON.stringify(newData));
+                        if (typeof loadCellList === 'function') loadCellList();
+                    }
+                }
+            });
+            
             // 결석 사유 실시간 동기화
             db.collection('absentReasons').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().data) {
@@ -15027,6 +15040,12 @@
             const cellWorshipDates = JSON.parse(localStorage.getItem('cellWorshipDates') || '{}');
             cellWorshipDates[cellName] = dateStr;
             localStorage.setItem('cellWorshipDates', JSON.stringify(cellWorshipDates));
+            
+            // Firebase 저장
+            db.collection('cellWorshipDates').doc('main').set({ data: cellWorshipDates })
+                .then(() => console.log('✅ 구역예배 날짜 Firebase 저장'))
+                .catch(err => console.error('구역예배 날짜 저장 오류:', err));
+            
             loadCellList();
         }
         
