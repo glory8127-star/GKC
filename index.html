@@ -2691,18 +2691,23 @@
                 <!-- 날짜 선택 -->
                 <div class="card" style="margin-bottom: 20px; padding: 15px;">
                     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
-                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <label style="font-weight: 600; color: #333;" id="cellDateLabel">✝️ 주일예배 날짜:</label>
+                        <!-- 주일예배 날짜 (드롭다운) -->
+                        <div id="sundayDateSelector" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <label style="font-weight: 600; color: #7c3aed;">✝️ 주일예배 날짜:</label>
                             <select id="cellAttendanceDateSelect" class="form-control" style="width: auto; min-width: 180px; font-weight: 600;" onchange="onCellAttendanceDateChange()">
                                 <!-- 주일 목록이 동적으로 생성됨 -->
                             </select>
+                        </div>
+                        <!-- 구역예배 안내 -->
+                        <div id="cellWorshipDateSelector" style="display: none; gap: 10px; align-items: center;">
+                            <span style="font-size: 0.95em; color: #0891b2; font-weight: 600;">⛪ 구역예배 날짜는 각 구역 카드에서 개별 선택하세요</span>
                         </div>
                         <div style="font-size: 0.85em; color: #666;">
                             <span id="selectedDateDisplay"></span>
                         </div>
                     </div>
                 </div>
-                <div id="cellList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                <div id="cellList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
                     <!-- 구역 카드가 여기에 표시됩니다 -->
                 </div>
             </div>
@@ -14985,7 +14990,8 @@
             
             const sundayBtn = document.getElementById('cellSubTabSunday');
             const cellBtn = document.getElementById('cellSubTabCell');
-            const dateLabel = document.getElementById('cellDateLabel');
+            const sundayDateSelector = document.getElementById('sundayDateSelector');
+            const cellWorshipDateSelector = document.getElementById('cellWorshipDateSelector');
             
             if (tab === 'sunday') {
                 sundayBtn.style.background = 'linear-gradient(135deg, #7c3aed, #8b5cf6)';
@@ -14994,7 +15000,10 @@
                 cellBtn.style.background = 'white';
                 cellBtn.style.color = '#64748b';
                 cellBtn.style.border = '2px solid #e2e8f0';
-                if (dateLabel) dateLabel.textContent = '✝️ 주일예배 날짜:';
+                
+                // 날짜 선택 UI 전환
+                if (sundayDateSelector) sundayDateSelector.style.display = 'flex';
+                if (cellWorshipDateSelector) cellWorshipDateSelector.style.display = 'none';
             } else {
                 cellBtn.style.background = 'linear-gradient(135deg, #0891b2, #06b6d4)';
                 cellBtn.style.color = 'white';
@@ -15002,11 +15011,29 @@
                 sundayBtn.style.background = 'white';
                 sundayBtn.style.color = '#64748b';
                 sundayBtn.style.border = '2px solid #e2e8f0';
-                if (dateLabel) dateLabel.textContent = '⛪ 구역예배 날짜:';
+                
+                // 날짜 선택 UI 전환 - 구역예배는 각 카드에서 개별 선택
+                if (sundayDateSelector) sundayDateSelector.style.display = 'none';
+                if (cellWorshipDateSelector) cellWorshipDateSelector.style.display = 'flex';
             }
             
             // 목록 새로고침
             loadCellList();
+        }
+        
+        // 구역예배 날짜 초기화
+        // 구역별 구역예배 날짜 설정
+        function setCellWorshipDate(cellName, dateStr) {
+            const cellWorshipDates = JSON.parse(localStorage.getItem('cellWorshipDates') || '{}');
+            cellWorshipDates[cellName] = dateStr;
+            localStorage.setItem('cellWorshipDates', JSON.stringify(cellWorshipDates));
+            loadCellList();
+        }
+        
+        // 구역별 구역예배 날짜 오늘로 설정
+        function setCellWorshipDateToday(cellName) {
+            const today = new Date().toISOString().split('T')[0];
+            setCellWorshipDate(cellName, today);
         }
         
         // 이번 주일 날짜 설정
@@ -15572,93 +15599,107 @@
                 
                 const totalCount = cellMembers.length;
                 
-                // 선택된 날짜 출석 데이터
-                const attendanceKey = `${cell.name}_${selectedDate}`;
-                const cellWorshipAtt = cellAttendance[attendanceKey] || [];  // 구역예배 출석
-                const sundayWorshipAtt = cellSundayAttendance[attendanceKey] || [];  // 주일예배 출석
+                // 구역예배는 구역별 개별 날짜, 주일예배는 공통 날짜
+                const cellWorshipDates = JSON.parse(localStorage.getItem('cellWorshipDates') || '{}');
+                const cellWorshipDate = cellWorshipDates[cell.name] || new Date().toISOString().split('T')[0];
+                const sundayDate = selectedDate;
                 
-                // 현재 탭에 따른 출석 데이터
+                // 현재 탭에 따른 날짜와 출석 데이터
+                const currentDate = currentCellSubTab === 'sunday' ? sundayDate : cellWorshipDate;
+                const attendanceKey = `${cell.name}_${currentDate}`;
+                const cellWorshipAtt = cellAttendance[attendanceKey] || [];
+                const sundayWorshipAtt = cellSundayAttendance[`${cell.name}_${sundayDate}`] || [];
+                
                 const currentAtt = currentCellSubTab === 'sunday' ? sundayWorshipAtt : cellWorshipAtt;
                 const presentCount = currentAtt.length;
-                const absentCount = totalCount - presentCount;
                 const attendanceRate = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
                 
                 // 탭별 색상
                 const tabColor = currentCellSubTab === 'sunday' ? '#7c3aed' : '#0891b2';
+                const tabBgColor = currentCellSubTab === 'sunday' ? '#ede9fe' : '#e0f2fe';
                 const tabIcon = currentCellSubTab === 'sunday' ? '✝️' : '⛪';
                 const tabName = currentCellSubTab === 'sunday' ? '주일예배' : '구역예배';
                 
+                // 날짜 포맷
+                const d = new Date(currentDate + 'T00:00:00');
+                const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                const dateLabel = `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})`;
+                
                 html += `
-                    <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+                    <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 2px solid ${currentCellSubTab === 'sunday' ? '#c4b5fd' : '#a5f3fc'};">
                         <!-- 헤더 -->
-                        <div style="background: ${cell.color}; padding: 18px; color: white;">
+                        <div style="background: ${cell.color}; padding: 15px; color: white;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
                                 <div style="flex-shrink: 0;">
-                                    <h3 style="margin: 0; font-size: 1.3em; white-space: nowrap;">${cell.name}구역</h3>
-                                    <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.85em;">${cell.meeting || '모임 미정'}</p>
+                                    <h3 style="margin: 0; font-size: 1.2em; white-space: nowrap;">${cell.name}구역</h3>
+                                    <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.8em;">${cell.meeting || '모임 미정'}</p>
                                 </div>
                                 <div class="pastor-only cell-edit-btns" style="display: none; flex-shrink: 0; white-space: nowrap;">
-                                    <button onclick="showAddCellMemberModal('${cell.name}')" style="background: rgba(255,255,255,0.3); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; margin-right: 5px;">➕ 구역원</button>
-                                    <button onclick="editCell(${idx})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; margin-right: 5px;">✏️ 수정</button>
-                                    <button onclick="deleteCell(${idx})" style="background: rgba(220,38,38,0.7); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">🗑️ 삭제</button>
+                                    <button onclick="showAddCellMemberModal('${cell.name}')" style="background: rgba(255,255,255,0.3); border: none; color: white; padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 0.75em; margin-right: 3px;">➕</button>
+                                    <button onclick="editCell(${idx})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 0.75em; margin-right: 3px;">✏️</button>
+                                    <button onclick="deleteCell(${idx})" style="background: rgba(220,38,38,0.7); border: none; color: white; padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 0.75em;">🗑️</button>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- 출석 통계 -->
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; padding: 15px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-                            <div>
-                                <div style="font-size: 1.4em; font-weight: bold; color: ${cell.color};">${totalCount}</div>
-                                <div style="font-size: 0.75em; color: #64748b;">총원</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 1.4em; font-weight: bold; color: #16a34a;">${presentCount}</div>
-                                <div style="font-size: 0.75em; color: #64748b;">출석</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 1.4em; font-weight: bold; color: ${absentCount > 0 ? '#dc2626' : '#16a34a'};">${attendanceRate}%</div>
-                                <div style="font-size: 0.75em; color: #64748b;">출석률</div>
-                            </div>
-                        </div>
-                        
-                        <!-- 날짜 및 탭 표시 -->
-                        <div style="padding: 10px 15px; background: ${currentCellSubTab === 'sunday' ? '#ede9fe' : '#e0f2fe'}; border-bottom: 1px solid #e2e8f0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 0.85em; color: ${tabColor}; font-weight: 600;">${tabIcon} ${tabName} 출석 (${selectedDate})</span>
-                                <button onclick="resetCellAttendanceByType('${cell.name}', '${selectedDate}', '${currentCellSubTab}')" style="background: ${currentCellSubTab === 'sunday' ? '#ddd6fe' : '#bae6fd'}; border: none; color: ${tabColor}; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.7em;">초기화</button>
+                        <!-- 날짜 선택 및 출석 현황 -->
+                        <div style="padding: 12px 15px; background: ${tabBgColor}; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 0.9em; color: ${tabColor}; font-weight: 700;">${tabIcon} ${tabName}</span>
+                                    ${currentCellSubTab === 'cell' ? `
+                                        <input type="date" 
+                                               value="${cellWorshipDate}" 
+                                               onchange="setCellWorshipDate('${cell.name}', this.value)"
+                                               style="padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85em; font-weight: 600; color: #0891b2;">
+                                        <button onclick="setCellWorshipDateToday('${cell.name}')" style="background: white; border: 1px solid #cbd5e1; color: #0891b2; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 600;">오늘</button>
+                                    ` : `
+                                        <span style="font-size: 0.85em; color: ${tabColor}; font-weight: 600;">${dateLabel}</span>
+                                    `}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 1.1em; font-weight: bold; color: ${tabColor};">${presentCount}/${totalCount}</span>
+                                    <span style="font-size: 0.85em; padding: 3px 10px; border-radius: 12px; background: ${attendanceRate >= 80 ? '#dcfce7' : attendanceRate >= 50 ? '#fef9c3' : '#fee2e2'}; color: ${attendanceRate >= 80 ? '#166534' : attendanceRate >= 50 ? '#854d0e' : '#991b1b'}; font-weight: 600;">${attendanceRate}%</span>
+                                </div>
                             </div>
                         </div>
                         
                         <!-- 구역원 목록 (출석체크) -->
-                        <div style="padding: 15px;">
+                        <div style="padding: 12px; max-height: 350px; overflow-y: auto;">
                             ${cellMembers.length > 0 ? cellMembers.map((m, mIdx) => {
                                 const isLeader = m.nameKr === cell.leaderName;
                                 const isPresent = currentAtt.includes(m.nameKr);
                                 return `
-                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; margin-bottom: 6px; background: ${isPresent ? '#f0fdf4' : '#fef2f2'}; border-radius: 8px; border: 1px solid ${isPresent ? '#bbf7d0' : '#fecaca'};">
-                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 6px; background: ${isPresent ? '#f0fdf4' : '#fef2f2'}; border-radius: 8px; border: 1px solid ${isPresent ? '#bbf7d0' : '#fecaca'}; transition: all 0.2s;">
+                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;">
                                         <input type="checkbox" 
-                                               id="att_${cell.name}_${mIdx}" 
                                                ${isPresent ? 'checked' : ''} 
-                                               onchange="toggleCellAttendanceByType('${cell.name}', '${m.nameKr}', '${selectedDate}', '${currentCellSubTab}')"
-                                               style="width: 18px; height: 18px; cursor: pointer; accent-color: ${tabColor};">
+                                               onchange="toggleCellAttendanceByType('${cell.name}', '${m.nameKr}', '${currentDate}', '${currentCellSubTab}')"
+                                               style="width: 20px; height: 20px; cursor: pointer; accent-color: ${tabColor};">
                                         <div>
-                                            <div style="font-weight: ${isLeader ? '600' : 'normal'}; color: ${isLeader ? cell.color : '#334155'}; font-size: 0.95em;">
+                                            <div style="font-weight: ${isLeader ? '600' : '500'}; color: ${isLeader ? cell.color : '#334155'}; font-size: 0.95em;">
                                                 ${m.nameKr}
-                                                ${isLeader ? '<span style="font-size: 0.7em; background: ' + cell.color + '; color: white; padding: 2px 6px; border-radius: 6px; margin-left: 5px;">구역장</span>' : ''}
+                                                ${isLeader ? '<span style="font-size: 0.65em; background: ' + cell.color + '; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 4px;">구역장</span>' : ''}
                                             </div>
-                                            <div style="font-size: 0.75em; color: #64748b;">${m.phone || ''}</div>
                                         </div>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span style="font-size: 0.8em; font-weight: 500; color: ${isPresent ? '#16a34a' : '#dc2626'};">
-                                            ${isPresent ? '출석' : '결석'}
+                                    </label>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 0.8em; font-weight: 600; color: ${isPresent ? '#16a34a' : '#dc2626'};">
+                                            ${isPresent ? '✓' : '✗'}
                                         </span>
-                                        <button class="pastor-only cell-remove-btn" style="display: none; background: #fee2e2; color: #dc2626; border: none; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.7em;" onclick="removeCellMember('${cell.name}', '${m.nameKr}')">제거</button>
+                                        <button class="pastor-only cell-remove-btn" style="display: none; background: #fee2e2; color: #dc2626; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7em;" onclick="removeCellMember('${cell.name}', '${m.nameKr}')">제거</button>
                                     </div>
                                 </div>
                                 `;
-                            }).join('') : '<p style="color: #94a3b8; font-size: 0.85em; text-align: center; padding: 20px;">구역원이 없습니다<br><small>➕ 구역원 버튼을 눌러 추가하세요</small></p>'}
+                            }).join('') : '<p style="color: #94a3b8; font-size: 0.85em; text-align: center; padding: 20px;">구역원이 없습니다<br><small>➕ 버튼으로 추가하세요</small></p>'}
+                        </div>
+                        
+                        <!-- 초기화 버튼 -->
+                        <div style="padding: 10px 15px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: right;">
+                            <button onclick="resetCellAttendanceByType('${cell.name}', '${currentDate}', '${currentCellSubTab}')" 
+                                    style="background: white; border: 1px solid #e2e8f0; color: #64748b; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;">
+                                🔄 출석 초기화
+                            </button>
                         </div>
                     </div>
                 `;
