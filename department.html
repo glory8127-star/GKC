@@ -372,8 +372,30 @@
                     <input type="text" class="form-input" id="expenseTitle" placeholder="예: 부서 모임 식대">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">지출 분류 *</label>
+                    <select class="form-select" id="expenseCategory">
+                        <option value="물품구입">물품구입</option>
+                        <option value="행사비">행사비</option>
+                        <option value="식비">식비</option>
+                        <option value="교통비">교통비</option>
+                        <option value="인쇄비">인쇄비</option>
+                        <option value="시설유지">시설유지</option>
+                        <option value="부서활동비">부서활동비</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">금액 (원) *</label>
                     <input type="number" class="form-input" id="expenseAmount" placeholder="50000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">결제 방법 *</label>
+                    <select class="form-select" id="expensePayment" onchange="handlePaymentChange()">
+                        <option value="현금">현금</option>
+                        <option value="Check">Check</option>
+                        <option value="카드">카드</option>
+                    </select>
+                    <input type="text" class="form-input" id="expenseCheckNumber" placeholder="Check # 입력" style="display: none; margin-top: 10px;">
                 </div>
                 <div class="form-group">
                     <label class="form-label">지출 날짜 *</label>
@@ -658,7 +680,8 @@
                 html += `
                     <div class="expense-item ${itemClass}">
                         <div class="expense-title">${req.title}</div>
-                        <div class="expense-info">${req.department} · ${req.date}</div>
+                        <div class="expense-info">${req.department} · ${req.category || '기타'} · ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div>
+                        <div class="expense-info">${req.date}</div>
                         <div class="expense-amount">₩${parseInt(req.amount).toLocaleString()}</div>
                         <span class="expense-status ${statusClass}">${req.status}</span>
                         ${req.status === '거절' && req.rejectReason ? `<div style="font-size: 0.8em; color: #dc2626; margin-top: 5px;">거절 사유: ${req.rejectReason}</div>` : ''}
@@ -684,6 +707,7 @@
                     <div class="expense-item pending">
                         <div class="expense-title">${req.title}</div>
                         <div class="expense-info">${req.department} · ${req.requester} · ${req.date}</div>
+                        <div class="expense-info" style="color: #059669;">📁 ${req.category || '기타'} · 💳 ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div>
                         ${req.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px;">${req.description}</div>` : ''}
                         <div class="expense-amount">₩${parseInt(req.amount).toLocaleString()}</div>
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -700,7 +724,11 @@
         function openExpenseModal() {
             document.getElementById('expenseModal').classList.add('active');
             document.getElementById('expenseTitle').value = '';
+            document.getElementById('expenseCategory').value = '물품구입';
             document.getElementById('expenseAmount').value = '';
+            document.getElementById('expensePayment').value = '현금';
+            document.getElementById('expenseCheckNumber').value = '';
+            document.getElementById('expenseCheckNumber').style.display = 'none';
             document.getElementById('expenseDesc').value = '';
             document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
         }
@@ -709,10 +737,24 @@
             document.getElementById('expenseModal').classList.remove('active');
         }
         
+        function handlePaymentChange() {
+            const payment = document.getElementById('expensePayment').value;
+            const checkInput = document.getElementById('expenseCheckNumber');
+            if (payment === 'Check') {
+                checkInput.style.display = 'block';
+            } else {
+                checkInput.style.display = 'none';
+                checkInput.value = '';
+            }
+        }
+        
         async function submitExpense() {
             const dept = document.getElementById('expenseDept').value;
             const title = document.getElementById('expenseTitle').value.trim();
+            const category = document.getElementById('expenseCategory').value;
             const amount = document.getElementById('expenseAmount').value;
+            const payment = document.getElementById('expensePayment').value;
+            const checkNumber = document.getElementById('expenseCheckNumber').value.trim();
             const date = document.getElementById('expenseDate').value;
             const description = document.getElementById('expenseDesc').value.trim();
             
@@ -721,11 +763,19 @@
                 return;
             }
             
+            if (payment === 'Check' && !checkNumber) {
+                showToast('Check 번호를 입력해주세요');
+                return;
+            }
+            
             const request = {
                 id: Date.now().toString(),
                 department: dept,
                 title: title,
+                category: category,
                 amount: parseInt(amount),
+                payment: payment,
+                checkNumber: payment === 'Check' ? checkNumber : '',
                 date: date,
                 description: description,
                 requester: currentUser.name,
@@ -765,10 +815,13 @@
             const newExpense = {
                 id: Date.now(),
                 date: req.date,
-                category: '부서활동비',
+                category: req.category || '부서활동비',
                 department: req.department,
                 description: req.title + (req.description ? ' - ' + req.description : ''),
+                item: req.title,
                 amount: req.amount,
+                payment: req.payment || '현금',
+                checkNumber: req.checkNumber || '',
                 paidBy: req.requester,
                 receipt: false,
                 createdAt: new Date().toISOString(),
