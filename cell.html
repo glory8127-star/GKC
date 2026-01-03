@@ -686,6 +686,56 @@
                 </div>
             </div>
             
+            <!-- 탭 컨텐츠: 주일예배 출석 -->
+            <div id="tabSunday" class="hidden">
+                <!-- 구역 선택 -->
+                <div class="card" style="margin: 10px; padding: 15px;">
+                    <label style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 10px;">📍 구역 선택</label>
+                    <select class="form-select" id="cellSelectSunday" onchange="onCellSelectSundayChange(this.value)" style="font-size: 1.1em; padding: 12px;">
+                        <option value="">-- 구역을 선택하세요 --</option>
+                    </select>
+                </div>
+                
+                <div class="date-selector">
+                    <span>📅 주일예배 날짜</span>
+                    <input type="date" class="date-input" id="sundayAttendanceDate" onchange="loadSundayAttendance()">
+                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.85em;">이번주일</button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">
+                        <span>✝️</span>
+                        <span id="sundayAttendanceTitle">주일예배 출석</span>
+                    </div>
+                    
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <div class="stat-number" id="sundayStatTotal">0</div>
+                            <div class="stat-label">전체</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="sundayStatPresent" style="color: #16a34a;">0</div>
+                            <div class="stat-label">출석</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="sundayStatAbsent" style="color: #dc2626;">0</div>
+                            <div class="stat-label">결석</div>
+                        </div>
+                    </div>
+                    
+                    <div id="sundayMemberList">
+                        <div class="empty-state">
+                            <div class="empty-icon">👆</div>
+                            <div>위에서 구역을 먼저 선택해주세요</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="padding: 15px;">
+                    <button class="btn btn-success" onclick="saveSundayAttendance()">💾 주일예배 출석 저장</button>
+                </div>
+            </div>
+            
             <!-- 탭 컨텐츠: 보고서 -->
             <div id="tabReport" class="hidden">
                 <div class="date-selector">
@@ -843,6 +893,10 @@
             <span class="tab-icon">⛪</span>
             <span>구역예배</span>
         </button>
+        <button class="tab-btn" onclick="showTab('sunday')" id="tabBtnSunday">
+            <span class="tab-icon">✝️</span>
+            <span>주일예배</span>
+        </button>
         <button class="tab-btn" onclick="showTab('report')" id="tabBtnReport">
             <span class="tab-icon">📝</span>
             <span>보고서</span>
@@ -931,11 +985,13 @@
         let currentUser = null;
         let members = [];
         let cells = [];
-        let cellAttendance = {};
+        let cellAttendance = {};       // 구역예배 출석
+        let cellSundayAttendance = {}; // 주일예배 출석
         let cellReports = {};
         let absentReasons = {};
         let selectedCell = null;
-        let attendanceData = {}; // 현재 날짜의 출석 데이터
+        let attendanceData = {};       // 현재 구역예배 출석 데이터
+        let sundayAttendanceData = {}; // 현재 주일예배 출석 데이터
         
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
@@ -950,33 +1006,37 @@
             }
         });
         
-        // 오늘 날짜 설정
+        // 오늘 날짜 설정 - 구역예배용
         function setToday() {
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
-            document.getElementById('attendanceDate').value = dateStr;
-            document.getElementById('reportDate').value = dateStr;
-            document.getElementById('overviewDate').value = dateStr;
+            
+            const attendanceDate = document.getElementById('attendanceDate');
+            const reportDate = document.getElementById('reportDate');
+            const overviewDate = document.getElementById('overviewDate');
+            
+            if (attendanceDate) attendanceDate.value = dateStr;
+            if (reportDate) reportDate.value = dateStr;
+            if (overviewDate) overviewDate.value = dateStr;
             
             loadAttendance();
         }
         
-        // 이번 주일(일요일) 날짜 설정
+        // 이번 주일(일요일) 날짜 설정 - 주일예배용
         function setThisSunday() {
             const today = new Date();
             const sunday = new Date(today);
             const day = today.getDay();
-            // 일요일(0)이면 오늘, 아니면 다가오는 일요일
+            // 일요일(0)이면 오늘, 아니면 지난 일요일
             if (day !== 0) {
-                sunday.setDate(today.getDate() + (7 - day));
+                sunday.setDate(today.getDate() - day);
             }
             
             const dateStr = sunday.toISOString().split('T')[0];
-            document.getElementById('attendanceDate').value = dateStr;
-            document.getElementById('reportDate').value = dateStr;
-            document.getElementById('overviewDate').value = dateStr;
+            const sundayDate = document.getElementById('sundayAttendanceDate');
+            if (sundayDate) sundayDate.value = dateStr;
             
-            loadAttendance();
+            loadSundayAttendance();
         }
         
         // 로그인
@@ -1063,10 +1123,16 @@
                     cells = cellsDoc.data().list || [];
                 }
                 
-                // 구역 출석 데이터
+                // 구역예배 출석 데이터
                 const attDoc = await db.collection('cellAttendance').doc('main').get();
                 if (attDoc.exists) {
                     cellAttendance = attDoc.data().data || {};
+                }
+                
+                // 주일예배 출석 데이터
+                const sundayAttDoc = await db.collection('cellSundayAttendance').doc('main').get();
+                if (sundayAttDoc.exists) {
+                    cellSundayAttendance = sundayAttDoc.data().data || {};
                 }
                 
                 // 구역 보고서 데이터
@@ -1091,14 +1157,26 @@
         function setupRealtimeListeners() {
             console.log('🔄 실시간 동기화 리스너 설정 중...');
             
-            // 구역 출석 실시간 동기화
+            // 구역예배 출석 실시간 동기화
             db.collection('cellAttendance').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().data) {
                     const newData = doc.data().data;
                     if (JSON.stringify(newData) !== JSON.stringify(cellAttendance)) {
-                        console.log('🔄 구역 출석 실시간 업데이트');
+                        console.log('🔄 구역예배 출석 실시간 업데이트');
                         cellAttendance = newData;
                         loadAttendance();
+                    }
+                }
+            });
+            
+            // 주일예배 출석 실시간 동기화
+            db.collection('cellSundayAttendance').doc('main').onSnapshot(doc => {
+                if (doc.exists && doc.data().data) {
+                    const newData = doc.data().data;
+                    if (JSON.stringify(newData) !== JSON.stringify(cellSundayAttendance)) {
+                        console.log('🔄 주일예배 출석 실시간 업데이트');
+                        cellSundayAttendance = newData;
+                        loadSundayAttendance();
                     }
                 }
             });
@@ -1162,6 +1240,7 @@
         function initCellSelector() {
             const select = document.getElementById('cellSelect');
             const selectAttendance = document.getElementById('cellSelectAttendance');
+            const selectSunday = document.getElementById('cellSelectSunday');
             select.innerHTML = '';
             
             // 관리자는 모든 구역, 구역장은 자기 구역만
@@ -1187,11 +1266,14 @@
             if (availableCells.length === 0) {
                 select.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
                 selectAttendance.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
+                selectSunday.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>';
                 return;
             }
             
-            // 출석탭 구역 선택 초기화
+            // 구역예배 탭 구역 선택 초기화
             selectAttendance.innerHTML = '<option value="">-- 구역을 선택하세요 --</option>';
+            // 주일예배 탭 구역 선택 초기화
+            selectSunday.innerHTML = '<option value="">-- 구역을 선택하세요 --</option>';
             
             availableCells.forEach((cell, idx) => {
                 const option = document.createElement('option');
@@ -1199,11 +1281,17 @@
                 option.textContent = `${cell.name}구역 (구역장: ${cell.leaderName || '미지정'})`;
                 select.appendChild(option);
                 
-                // 출석탭 드롭다운에도 추가
+                // 구역예배 탭 드롭다운에 추가
                 const option2 = document.createElement('option');
                 option2.value = cell.name;
                 option2.textContent = `${cell.name}구역 (${cell.leaderName || '미지정'})`;
                 selectAttendance.appendChild(option2);
+                
+                // 주일예배 탭 드롭다운에 추가
+                const option3 = document.createElement('option');
+                option3.value = cell.name;
+                option3.textContent = `${cell.name}구역 (${cell.leaderName || '미지정'})`;
+                selectSunday.appendChild(option3);
             });
             
             selectedCell = availableCells[0].name;
@@ -1214,17 +1302,28 @@
                     document.getElementById('cellSelector').style.display = 'none';
                 }
                 selectAttendance.value = availableCells[0].name;
+                selectSunday.value = availableCells[0].name;
             }
             
-            // 오늘 날짜 설정
+            // 오늘 날짜 설정 (구역예배)
             setToday();
+            // 주일 날짜 설정 (주일예배)
+            setThisSunday();
         }
         
-        // 출석탭 구역 선택 변경
+        // 구역예배 탭 구역 선택 변경
         function onCellSelectChange(value) {
             if (value) {
                 selectedCell = value;
                 loadAttendance();
+            }
+        }
+        
+        // 주일예배 탭 구역 선택 변경
+        function onCellSelectSundayChange(value) {
+            if (value) {
+                selectedCell = value;
+                loadSundayAttendance();
             }
         }
         
@@ -1424,7 +1523,142 @@
                 await db.collection('cellAttendance').doc('main').set({ data: cellAttendance });
                 await db.collection('absentReasons').doc('main').set({ data: absentReasons });
                 
-                showToast('✅ 출석이 저장되었습니다!');
+                showToast('✅ 구역예배 출석이 저장되었습니다!');
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showToast('저장 중 오류가 발생했습니다');
+            }
+        }
+        
+        // ===== 주일예배 출석 관련 함수 =====
+        
+        // 주일예배 출석 데이터 로드
+        function loadSundayAttendance() {
+            if (!selectedCell) return;
+            
+            const dateStr = document.getElementById('sundayAttendanceDate').value;
+            if (!dateStr) return;
+            
+            const cell = cells.find(c => c.name === selectedCell);
+            if (!cell) return;
+            
+            // 해당 구역 구역원 목록
+            const cellMembers = members.filter(m => {
+                const memberCell = (m.cell || '').replace('구역', '');
+                return memberCell === selectedCell || m.cell === selectedCell + '구역';
+            });
+            
+            // 구역장 추가
+            if (cell.leaderName) {
+                const leader = members.find(m => m.nameKr === cell.leaderName);
+                if (leader && !cellMembers.find(m => m.nameKr === cell.leaderName)) {
+                    cellMembers.unshift(leader);
+                }
+            }
+            
+            // 제목 업데이트
+            document.getElementById('sundayAttendanceTitle').textContent = `${selectedCell}구역 주일예배 출석`;
+            
+            // 해당 날짜의 주일예배 출석 데이터
+            const key = `${selectedCell}_${dateStr}`;
+            const savedAttendance = cellSundayAttendance[key] || [];
+            
+            // 출석 데이터 초기화
+            sundayAttendanceData = {};
+            cellMembers.forEach(m => {
+                sundayAttendanceData[m.nameKr] = savedAttendance.includes(m.nameKr);
+            });
+            
+            // 목록 렌더링
+            const container = document.getElementById('sundayMemberList');
+            
+            if (cellMembers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">👥</div>
+                        <div>구역원이 없습니다</div>
+                    </div>
+                `;
+                updateSundayStats();
+                return;
+            }
+            
+            let html = '';
+            cellMembers.forEach((m, idx) => {
+                const isPresent = sundayAttendanceData[m.nameKr];
+                const isLeader = m.nameKr === cell.leaderName;
+                
+                html += `
+                    <div class="member-item">
+                        <input type="checkbox" class="member-checkbox" 
+                               ${isPresent ? 'checked' : ''} 
+                               onchange="toggleSundayAttendance('${m.nameKr}', this.checked)">
+                        <div class="member-info">
+                            <div class="member-name">
+                                ${m.nameKr}
+                                ${isLeader ? '<span style="color: #4f46e5; font-size: 0.8em;">(구역장)</span>' : ''}
+                                <a href="tel:${m.phone}" class="phone-link" style="color: #64748b; font-size: 0.85em; margin-left: 8px;">${m.phone || ''}</a>
+                            </div>
+                        </div>
+                        <span class="member-status ${isPresent ? 'status-present' : 'status-absent'}">${isPresent ? '출석' : '결석'}</span>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            updateSundayStats();
+        }
+        
+        // 주일예배 출석 토글 - 즉시 저장
+        async function toggleSundayAttendance(name, checked) {
+            sundayAttendanceData[name] = checked;
+            
+            // 즉시 Firebase에 저장
+            const dateStr = document.getElementById('sundayAttendanceDate').value;
+            const key = `${selectedCell}_${dateStr}`;
+            
+            // 출석자 목록 업데이트
+            const presentList = Object.keys(sundayAttendanceData).filter(n => sundayAttendanceData[n]);
+            cellSundayAttendance[key] = presentList;
+            
+            try {
+                await db.collection('cellSundayAttendance').doc('main').set({ data: cellSundayAttendance });
+                console.log('✅ 주일예배 출석 저장:', name, checked ? '출석' : '결석');
+            } catch (error) {
+                console.error('저장 오류:', error);
+            }
+            
+            updateSundayStats();
+            loadSundayAttendance(); // UI 새로고침
+        }
+        
+        // 주일예배 출석 통계 업데이트
+        function updateSundayStats() {
+            const total = Object.keys(sundayAttendanceData).length;
+            const present = Object.values(sundayAttendanceData).filter(v => v).length;
+            const absent = total - present;
+            
+            document.getElementById('sundayStatTotal').textContent = total;
+            document.getElementById('sundayStatPresent').textContent = present;
+            document.getElementById('sundayStatAbsent').textContent = absent;
+        }
+        
+        // 주일예배 출석 저장
+        async function saveSundayAttendance() {
+            if (!selectedCell) return;
+            
+            const dateStr = document.getElementById('sundayAttendanceDate').value;
+            const key = `${selectedCell}_${dateStr}`;
+            
+            // 출석자 목록
+            const presentList = Object.keys(sundayAttendanceData).filter(name => sundayAttendanceData[name]);
+            cellSundayAttendance[key] = presentList;
+            
+            try {
+                // Firebase에 저장
+                await db.collection('cellSundayAttendance').doc('main').set({ data: cellSundayAttendance });
+                
+                showToast('✅ 주일예배 출석이 저장되었습니다!');
             } catch (error) {
                 console.error('저장 오류:', error);
                 showToast('저장 중 오류가 발생했습니다');
@@ -1793,6 +2027,7 @@
         function showTab(tab) {
             // 탭 컨텐츠
             document.getElementById('tabAttendance').classList.add('hidden');
+            document.getElementById('tabSunday').classList.add('hidden');
             document.getElementById('tabReport').classList.add('hidden');
             document.getElementById('tabOverview').classList.add('hidden');
             document.getElementById('tabHistory').classList.add('hidden');
@@ -1810,6 +2045,9 @@
             } else if (tab === 'report') {
                 // 보고서 탭 전환 시 출석 현황 새로고침
                 setTimeout(() => refreshReportAttendance(), 100);
+            } else if (tab === 'sunday') {
+                // 주일예배 탭 전환 시 데이터 로드
+                if (selectedCell) loadSundayAttendance();
             }
         }
         
