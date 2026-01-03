@@ -293,6 +293,15 @@
         }
         
         body.offline .header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+        
+        /* 월 선택 스크롤바 숨기기 */
+        #monthSelector {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #monthSelector::-webkit-scrollbar {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -324,11 +333,21 @@
             </div>
             
             <div id="tabEvent" class="hidden">
-                <div class="card">
-                    <div class="card-title">📅 부서 행사</div>
-                    <select class="form-select" id="eventDeptFilter" onchange="renderEventList()" style="margin-top: 10px;">
-                        <option value="">전체 부서</option>
-                    </select>
+                <!-- 연도/월 선택 헤더 -->
+                <div class="card" style="position: sticky; top: 60px; z-index: 10;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button onclick="changeEventYear(-1)" style="background: #e2e8f0; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2em; cursor: pointer;">◀</button>
+                            <span id="eventYearDisplay" style="font-size: 1.3em; font-weight: 700; color: #059669; min-width: 60px; text-align: center;">2026</span>
+                            <button onclick="changeEventYear(1)" style="background: #e2e8f0; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2em; cursor: pointer;">▶</button>
+                        </div>
+                        <select class="form-select" id="eventDeptFilter" onchange="renderEventList()" style="width: auto; min-width: 120px;">
+                            <option value="">전체 부서</option>
+                        </select>
+                    </div>
+                    <!-- 월 선택 버튼 -->
+                    <div id="monthSelector" style="display: flex; gap: 8px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;">
+                    </div>
                 </div>
                 <div id="eventList"></div>
             </div>
@@ -494,12 +513,17 @@
         let expenses = [];
         let paymentRequests = [];
         let yearlyEvents = [];
+        let selectedEventYear = new Date().getFullYear();
+        let selectedEventMonth = new Date().getMonth() + 1; // 1-12
         
         // 금액 포맷 함수 ($1,000.00 형식)
         function formatMoney(amount) {
             const num = parseFloat(amount) || 0;
             return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
+        
+        // 월 이름
+        const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
         
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
@@ -1034,87 +1058,194 @@
             departments.forEach(dept => {
                 select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
             });
+            
+            // 연도 표시
+            document.getElementById('eventYearDisplay').textContent = selectedEventYear;
+            
+            // 월 선택 버튼 렌더링
+            renderMonthSelector();
         }
         
-        // 행사 목록 렌더링
+        // 연도 변경
+        function changeEventYear(delta) {
+            selectedEventYear += delta;
+            document.getElementById('eventYearDisplay').textContent = selectedEventYear;
+            renderMonthSelector();
+            renderEventList();
+        }
+        
+        // 월 선택
+        function selectMonth(month) {
+            selectedEventMonth = month;
+            renderMonthSelector();
+            renderEventList();
+        }
+        
+        // 월 선택 버튼 렌더링
+        function renderMonthSelector() {
+            const container = document.getElementById('monthSelector');
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth() + 1;
+            
+            let html = '';
+            for (let m = 1; m <= 12; m++) {
+                const isSelected = m === selectedEventMonth;
+                const isCurrent = selectedEventYear === currentYear && m === currentMonth;
+                
+                // 해당 월에 행사가 있는지 확인
+                const hasEvents = yearlyEvents.some(evt => {
+                    const evtDate = evt.date || evt.startDate || '';
+                    if (!evtDate) return false;
+                    const evtYear = parseInt(evtDate.substring(0, 4));
+                    const evtMonth = parseInt(evtDate.substring(5, 7));
+                    return evtYear === selectedEventYear && evtMonth === m;
+                });
+                
+                html += `
+                    <button onclick="selectMonth(${m})" style="
+                        min-width: 50px;
+                        padding: 10px 12px;
+                        border: ${isCurrent ? '2px solid #059669' : '1px solid #e2e8f0'};
+                        border-radius: 12px;
+                        background: ${isSelected ? 'linear-gradient(135deg, #059669, #047857)' : 'white'};
+                        color: ${isSelected ? 'white' : '#333'};
+                        font-weight: ${isSelected || isCurrent ? '700' : '500'};
+                        cursor: pointer;
+                        position: relative;
+                        transition: all 0.2s;
+                    ">
+                        ${m}월
+                        ${hasEvents ? `<span style="position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; background: ${isSelected ? 'white' : '#059669'}; border-radius: 50%;"></span>` : ''}
+                    </button>
+                `;
+            }
+            container.innerHTML = html;
+        }
+        
+        // 행사 목록 렌더링 (월별)
         function renderEventList() {
             const container = document.getElementById('eventList');
             const filterDept = document.getElementById('eventDeptFilter').value;
             
+            // 선택된 연도/월의 행사만 필터링
+            let filteredEvents = yearlyEvents.filter(evt => {
+                const evtDate = evt.date || evt.startDate || '';
+                if (!evtDate) return false;
+                const evtYear = parseInt(evtDate.substring(0, 4));
+                const evtMonth = parseInt(evtDate.substring(5, 7));
+                return evtYear === selectedEventYear && evtMonth === selectedEventMonth;
+            });
+            
             // 부서별 필터링
-            let filteredEvents = yearlyEvents;
             if (filterDept) {
-                filteredEvents = yearlyEvents.filter(e => e.department === filterDept);
+                filteredEvents = filteredEvents.filter(e => e.department === filterDept);
             }
             
-            // 날짜순 정렬 (가까운 미래 먼저)
-            const today = new Date().toISOString().split('T')[0];
+            // 날짜순 정렬
             filteredEvents.sort((a, b) => {
                 const dateA = a.date || a.startDate || '';
                 const dateB = b.date || b.startDate || '';
                 return dateA.localeCompare(dateB);
             });
             
-            // 지난 행사와 예정 행사 분리
-            const upcomingEvents = filteredEvents.filter(e => (e.date || e.startDate || '') >= today);
-            const pastEvents = filteredEvents.filter(e => (e.date || e.startDate || '') < today);
+            const today = new Date().toISOString().split('T')[0];
             
             if (filteredEvents.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>등록된 행사가 없습니다</p><p style="font-size: 0.85em; margin-top: 10px;">+ 버튼을 눌러 새 행사를 등록하세요</p></div>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 4em; margin-bottom: 15px;">📭</div>
+                        <div style="color: #64748b; font-size: 1.1em;">${selectedEventYear}년 ${selectedEventMonth}월</div>
+                        <div style="color: #94a3b8; margin-top: 5px;">등록된 행사가 없습니다</div>
+                        <button onclick="openEventModal()" style="margin-top: 20px; background: linear-gradient(135deg, #059669, #047857); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-weight: 600; cursor: pointer;">
+                            + 행사 등록하기
+                        </button>
+                    </div>
+                `;
                 return;
             }
             
-            let html = '';
-            
-            // 예정 행사
-            if (upcomingEvents.length > 0) {
-                html += '<div class="card"><div class="card-title">📌 예정된 행사</div>';
-                upcomingEvents.forEach(evt => {
-                    html += renderEventItem(evt, false);
-                });
-                html += '</div>';
-            }
-            
-            // 지난 행사
-            if (pastEvents.length > 0) {
-                html += '<div class="card" style="opacity: 0.7;"><div class="card-title">📁 지난 행사</div>';
-                pastEvents.slice(-10).reverse().forEach(evt => {
-                    html += renderEventItem(evt, true);
-                });
-                html += '</div>';
-            }
-            
-            container.innerHTML = html;
-        }
-        
-        function renderEventItem(evt, isPast) {
-            const date = evt.date || evt.startDate || '-';
-            const time = evt.startTime ? ` ${evt.startTime}` : '';
-            const endTime = evt.endTime ? `~${evt.endTime}` : '';
-            
-            return `
-                <div style="padding: 15px 0; border-bottom: 1px solid #f1f5f9;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <div style="font-weight: 600; color: #1e293b;">${evt.name || evt.title || '행사명 없음'}</div>
-                            <div style="font-size: 0.85em; color: #64748b; margin-top: 3px;">
-                                📅 ${date}${time}${endTime}
-                            </div>
-                            ${evt.location ? `<div style="font-size: 0.85em; color: #64748b;">📍 ${evt.location}</div>` : ''}
-                            ${evt.department ? `<div style="font-size: 0.8em; color: #059669; margin-top: 5px;">🏛️ ${evt.department}</div>` : ''}
-                        </div>
-                        ${!isPast && currentUser.role === '관리자' ? `<button onclick="deleteEvent('${evt.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em;">×</button>` : ''}
+            // 월 헤더
+            let html = `
+                <div style="padding: 20px 15px 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 1.8em; font-weight: 700; color: #059669;">${selectedEventMonth}월</span>
+                        <span style="font-size: 1em; color: #64748b; margin-left: 5px;">${selectedEventYear}</span>
                     </div>
-                    ${evt.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px; padding: 10px; background: #f8fafc; border-radius: 8px;">${evt.description}</div>` : ''}
+                    <div style="background: #dcfce7; color: #166534; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.9em;">
+                        ${filteredEvents.length}개 행사
+                    </div>
                 </div>
             `;
+            
+            // 행사 카드들
+            filteredEvents.forEach((evt, idx) => {
+                const evtDate = evt.date || evt.startDate || '';
+                const day = evtDate ? parseInt(evtDate.substring(8, 10)) : '-';
+                const dayOfWeek = evtDate ? ['일', '월', '화', '수', '목', '금', '토'][new Date(evtDate).getDay()] : '';
+                const isPast = evtDate < today;
+                const isToday = evtDate === today;
+                
+                const colors = ['#059669', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
+                const color = colors[idx % colors.length];
+                
+                html += `
+                    <div style="
+                        margin: 10px 15px;
+                        background: white;
+                        border-radius: 16px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+                        opacity: ${isPast ? '0.6' : '1'};
+                        border-left: 4px solid ${color};
+                    ">
+                        <div style="display: flex;">
+                            <!-- 날짜 영역 -->
+                            <div style="
+                                min-width: 70px;
+                                padding: 15px;
+                                background: ${isToday ? 'linear-gradient(135deg, #059669, #047857)' : '#f8fafc'};
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: center;
+                            ">
+                                <div style="font-size: 1.8em; font-weight: 700; color: ${isToday ? 'white' : '#1e293b'};">${day}</div>
+                                <div style="font-size: 0.8em; color: ${isToday ? 'rgba(255,255,255,0.9)' : '#64748b'}; font-weight: 500;">${dayOfWeek}요일</div>
+                                ${isToday ? '<div style="font-size: 0.7em; color: white; background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 10px; margin-top: 5px;">오늘</div>' : ''}
+                            </div>
+                            
+                            <!-- 내용 영역 -->
+                            <div style="flex: 1; padding: 15px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div style="font-weight: 600; font-size: 1.05em; color: #1e293b;">${evt.name || evt.title || '행사명 없음'}</div>
+                                    ${!isPast && currentUser.role === '관리자' ? `<button onclick="deleteEvent('${evt.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em; padding: 0 5px;">×</button>` : ''}
+                                </div>
+                                
+                                <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.85em; color: #64748b;">
+                                    ${evt.startTime ? `<span>🕐 ${evt.startTime}${evt.endTime ? '~' + evt.endTime : ''}</span>` : ''}
+                                    ${evt.location ? `<span>📍 ${evt.location}</span>` : ''}
+                                </div>
+                                
+                                ${evt.department ? `<div style="margin-top: 8px;"><span style="background: ${color}20; color: ${color}; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 500;">🏛️ ${evt.department}</span></div>` : ''}
+                                
+                                ${evt.description ? `<div style="margin-top: 10px; font-size: 0.85em; color: #475569; padding: 10px; background: #f8fafc; border-radius: 8px;">${evt.description}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
         }
         
         // 행사 모달 열기
         function openEventModal() {
             document.getElementById('eventModal').classList.add('active');
             document.getElementById('eventName').value = '';
-            document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
+            // 선택된 월의 1일로 기본 날짜 설정
+            const defaultDate = `${selectedEventYear}-${String(selectedEventMonth).padStart(2, '0')}-01`;
+            document.getElementById('eventDate').value = defaultDate;
             document.getElementById('eventStartTime').value = '';
             document.getElementById('eventEndTime').value = '';
             document.getElementById('eventLocation').value = '';
@@ -1167,6 +1298,12 @@
             try {
                 await db.collection('yearlyEvents').doc('main').set({ list: yearlyEvents });
                 localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+                
+                // 등록된 행사의 연도/월로 이동
+                selectedEventYear = parseInt(date.substring(0, 4));
+                selectedEventMonth = parseInt(date.substring(5, 7));
+                document.getElementById('eventYearDisplay').textContent = selectedEventYear;
+                renderMonthSelector();
                 
                 closeEventModal();
                 showToast('행사가 등록되었습니다');
