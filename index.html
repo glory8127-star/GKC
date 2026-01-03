@@ -10664,20 +10664,46 @@
             // 멘티 목록
             const mentees = members.filter(m => m.mentoring?.role === 'mentee');
             
+            // 멘토별 멘티 목록 구성 (menteeNames + mentorName 양방향 연동)
+            const mentorMenteeMap = {};
+            
+            // 1. 멘토의 menteeNames에서 멘티 추가
+            mentors.forEach(mentor => {
+                mentorMenteeMap[mentor.nameKr] = new Set();
+                if (mentor.mentoring?.menteeNames) {
+                    mentor.mentoring.menteeNames.split(',').forEach(name => {
+                        const trimmedName = name.trim();
+                        if (trimmedName) mentorMenteeMap[mentor.nameKr].add(trimmedName);
+                    });
+                }
+            });
+            
+            // 2. 멘티의 mentorName에서 멘토에게 멘티 추가
+            mentees.forEach(mentee => {
+                const mentorName = mentee.mentoring?.mentorName?.trim();
+                if (mentorName) {
+                    // 해당 멘토가 멘토 목록에 있으면 추가
+                    if (mentorMenteeMap[mentorName]) {
+                        mentorMenteeMap[mentorName].add(mentee.nameKr);
+                    } else {
+                        // 멘토로 등록되지 않은 경우에도 표시를 위해 추가
+                        mentorMenteeMap[mentorName] = new Set([mentee.nameKr]);
+                    }
+                }
+            });
+            
             // 통계 업데이트
             const totalMentorsEl = document.getElementById('totalMentors');
             const totalMenteesEl = document.getElementById('totalMentees');
             const totalPairsEl = document.getElementById('totalPairs');
             
-            if (totalMentorsEl) totalMentorsEl.textContent = mentors.length;
+            if (totalMentorsEl) totalMentorsEl.textContent = Object.keys(mentorMenteeMap).length;
             if (totalMenteesEl) totalMenteesEl.textContent = mentees.length;
             
             // 매칭 수 계산
             let pairCount = 0;
-            mentors.forEach(m => {
-                if (m.mentoring?.menteeNames) {
-                    pairCount += m.mentoring.menteeNames.split(',').filter(n => n.trim()).length;
-                }
+            Object.values(mentorMenteeMap).forEach(menteeSet => {
+                pairCount += menteeSet.size;
             });
             if (totalPairsEl) totalPairsEl.textContent = pairCount;
             
@@ -10685,7 +10711,7 @@
             const programListEl = document.getElementById('mentoringProgramList');
             if (!programListEl) return;
             
-            if (mentors.length === 0) {
+            if (Object.keys(mentorMenteeMap).length === 0) {
                 programListEl.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">등록된 멘토링 관계가 없습니다.<br>교인 등록에서 멘토/멘티를 지정하세요.</p>';
                 return;
             }
@@ -10694,11 +10720,13 @@
             let mentoringProgress = JSON.parse(localStorage.getItem('mentoringProgress') || '{}');
             
             let html = '';
-            mentors.forEach((mentor, mIdx) => {
-                const menteeNames = mentor.mentoring?.menteeNames || '';
-                const menteeList = menteeNames.split(',').filter(n => n.trim());
+            Object.entries(mentorMenteeMap).forEach(([mentorName, menteeSet], mIdx) => {
+                const menteeList = Array.from(menteeSet);
                 
                 if (menteeList.length === 0) return;
+                
+                // 멘토 정보 찾기
+                const mentor = members.find(m => m.nameKr === mentorName) || { nameKr: mentorName, position: '', phone: '' };
                 
                 html += `
                     <div style="background: white; border: 2px solid #e2e8f0; border-radius: 16px; margin-bottom: 20px; overflow: hidden;">
@@ -10722,7 +10750,7 @@
                         <!-- 멘티별 4주 체크리스트 -->
                         <div style="padding: 20px;">
                             ${menteeList.map((menteeName, menteeIdx) => {
-                                const progressKey = `${mentor.memberNumber || mIdx}_${menteeName.trim()}`;
+                                const progressKey = `${mentor.number || mentorName}_${menteeName.trim()}`;
                                 const progress = mentoringProgress[progressKey] || { week1: false, week2: false, week3: false, week4: false, pastorConfirmed: false };
                                 const completedWeeks = [progress.week1, progress.week2, progress.week3, progress.week4].filter(w => w).length;
                                 const progressPercent = (completedWeeks / 4) * 100;
