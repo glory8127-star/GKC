@@ -15,11 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
@@ -28,15 +24,12 @@
             color: #333;
         }
         
-        /* 헤더 */
         .header {
             background: linear-gradient(135deg, #059669 0%, #047857 100%);
             color: white;
             padding: 15px 20px;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 100;
             display: flex;
             justify-content: space-between;
@@ -44,10 +37,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         
-        .header h1 {
-            font-size: 1.2em;
-            font-weight: 600;
-        }
+        .header h1 { font-size: 1.2em; font-weight: 600; }
         
         .header-btn {
             background: rgba(255,255,255,0.2);
@@ -59,14 +49,12 @@
             cursor: pointer;
         }
         
-        /* 메인 컨텐츠 */
         .main-content {
             padding-top: 70px;
-            padding-bottom: 80px;
+            padding-bottom: 100px;
             min-height: 100vh;
         }
         
-        /* 로그인 화면 */
         .login-container {
             display: flex;
             flex-direction: column;
@@ -86,32 +74,13 @@
             text-align: center;
         }
         
-        .login-logo {
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
+        .login-logo { font-size: 3em; margin-bottom: 10px; }
+        .login-title { font-size: 1.5em; color: #059669; margin-bottom: 30px; font-weight: 700; }
         
-        .login-title {
-            font-size: 1.5em;
-            color: #059669;
-            margin-bottom: 30px;
-            font-weight: 700;
-        }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; font-size: 0.9em; }
         
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #374151;
-            font-size: 0.9em;
-        }
-        
-        .form-input {
+        .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e5e7eb;
@@ -120,12 +89,13 @@
             transition: border-color 0.2s;
         }
         
-        .form-input:focus {
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: #059669;
         }
         
-        /* 버튼 */
+        .form-textarea { min-height: 100px; resize: vertical; }
+        
         .btn {
             width: 100%;
             padding: 14px;
@@ -134,25 +104,14 @@
             font-size: 1em;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
         }
         
-        .btn:active {
-            transform: scale(0.98);
-        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; }
+        .btn-secondary { background: #f1f5f9; color: #475569; }
+        .btn-danger { background: #ef4444; color: white; }
         
-        .btn-primary {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
-        }
-        
-        .btn-secondary {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        
-        /* 카드 */
         .card {
             background: white;
             border-radius: 16px;
@@ -171,34 +130,19 @@
             gap: 10px;
         }
         
-        /* 부서 카드 */
         .dept-card {
             background: white;
             border-radius: 16px;
             margin: 15px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
         }
         
-        .dept-header {
-            padding: 20px;
-            color: white;
-        }
-        
-        .dept-name {
-            font-size: 1.3em;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .dept-leader {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-        
-        .dept-body {
-            padding: 20px;
-        }
+        .dept-header { padding: 20px; color: white; }
+        .dept-name { font-size: 1.3em; font-weight: 700; margin-bottom: 5px; }
+        .dept-leader { font-size: 0.9em; opacity: 0.9; }
+        .dept-body { padding: 20px; }
         
         .dept-stats {
             display: grid;
@@ -207,118 +151,41 @@
             text-align: center;
         }
         
-        .dept-stat-number {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #059669;
-        }
+        .dept-stat-number { font-size: 1.5em; font-weight: 700; color: #059669; }
+        .dept-stat-label { font-size: 0.8em; color: #64748b; }
         
-        .dept-stat-label {
-            font-size: 0.8em;
-            color: #64748b;
-        }
-        
-        /* 팀 목록 */
-        .team-list {
-            margin-top: 15px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 15px;
-        }
-        
-        .team-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .team-item:last-child {
-            border-bottom: none;
-        }
-        
-        .team-name {
-            font-weight: 600;
-            color: #1e293b;
-        }
-        
-        .team-count {
-            background: #f0fdf4;
-            color: #059669;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-        
-        /* 구성원 목록 */
-        .member-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #f1f5f9;
-            gap: 15px;
-        }
-        
-        .member-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        
-        .member-info {
-            flex: 1;
-        }
-        
-        .member-name {
-            font-weight: 600;
-            color: #1e293b;
-        }
-        
-        .member-role {
-            font-size: 0.85em;
-            color: #64748b;
-        }
-        
-        /* 탭 네비게이션 */
-        .tab-nav {
-            display: flex;
+        .expense-item {
             background: white;
-            padding: 10px;
-            gap: 10px;
-            border-bottom: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 10px 15px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid #059669;
         }
         
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
+        .expense-item.pending { border-left-color: #f59e0b; }
+        .expense-item.rejected { border-left-color: #ef4444; }
+        
+        .expense-title { font-weight: 600; color: #1e293b; margin-bottom: 5px; }
+        .expense-info { font-size: 0.85em; color: #64748b; }
+        .expense-amount { font-size: 1.3em; font-weight: 700; color: #059669; margin-top: 10px; }
+        
+        .expense-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
             font-weight: 600;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: #f1f5f9;
-            color: #64748b;
+            margin-top: 10px;
         }
         
-        .tab-btn.active {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            color: white;
-        }
+        .status-approved { background: #dcfce7; color: #16a34a; }
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-rejected { background: #fee2e2; color: #dc2626; }
         
-        /* 하단 네비게이션 */
         .bottom-nav {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: white;
             display: flex;
             justify-content: space-around;
@@ -331,41 +198,20 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 8px 20px;
+            padding: 8px 15px;
             color: #94a3b8;
-            text-decoration: none;
             font-size: 0.75em;
             cursor: pointer;
-            transition: color 0.2s;
         }
         
-        .nav-item.active {
-            color: #059669;
-        }
+        .nav-item.active { color: #059669; }
+        .nav-icon { font-size: 1.5em; margin-bottom: 4px; }
         
-        .nav-icon {
-            font-size: 1.5em;
-            margin-bottom: 4px;
-        }
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .empty-icon { font-size: 3em; margin-bottom: 15px; }
         
-        /* 빈 상태 */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #94a3b8;
-        }
+        .hidden { display: none !important; }
         
-        .empty-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-        }
-        
-        /* 숨김 */
-        .hidden {
-            display: none !important;
-        }
-        
-        /* 토스트 */
         .toast {
             position: fixed;
             bottom: 100px;
@@ -380,82 +226,82 @@
             display: none;
         }
         
-        .toast.show {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
+        .toast.show { display: block; animation: fadeIn 0.3s; }
         
         @keyframes fadeIn {
             from { opacity: 0; transform: translateX(-50%) translateY(20px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         
-        /* 결재 요청 */
-        .request-card {
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
             background: white;
-            border-radius: 12px;
-            margin: 10px 15px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-left: 4px solid #f59e0b;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
-        .request-title {
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 5px;
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .request-info {
-            font-size: 0.85em;
-            color: #64748b;
-        }
+        .modal-title { font-size: 1.2em; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 1.5em; cursor: pointer; color: #64748b; }
+        .modal-body { padding: 20px; }
         
-        .request-amount {
-            font-size: 1.2em;
-            font-weight: 700;
-            color: #059669;
-            margin-top: 10px;
-        }
-        
-        .request-actions {
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e2e8f0;
             display: flex;
             gap: 10px;
-            margin-top: 15px;
         }
         
-        .request-actions .btn {
-            flex: 1;
-            padding: 10px;
-            font-size: 0.9em;
-        }
+        .modal-footer .btn { flex: 1; }
         
-        .btn-approve {
-            background: #059669;
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
             color: white;
+            border: none;
+            font-size: 1.5em;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+            cursor: pointer;
+            z-index: 50;
         }
         
-        .btn-reject {
-            background: #ef4444;
-            color: white;
-        }
-        
-        /* 오프라인 */
-        body.offline .header {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-        }
+        body.offline .header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
     </style>
 </head>
 <body>
-    <!-- 헤더 -->
     <div class="header">
         <h1>🏛️ GKC 부서관리</h1>
         <button class="header-btn" id="logoutBtn" onclick="logout()" style="display: none;">로그아웃</button>
     </div>
     
-    <!-- 메인 컨텐츠 -->
     <div class="main-content">
-        <!-- 로그인 화면 -->
         <div id="loginScreen" class="login-container">
             <div class="login-box">
                 <div class="login-logo">🏛️</div>
@@ -472,51 +318,79 @@
             </div>
         </div>
         
-        <!-- 앱 화면 (로그인 후) -->
         <div id="appScreen" class="hidden">
-            <!-- 탭: 부서 목록 -->
             <div id="tabDeptList">
-                <div id="deptList">
-                    <!-- 동적 생성 -->
-                </div>
+                <div id="deptList"></div>
             </div>
             
-            <!-- 탭: 내 부서 상세 -->
-            <div id="tabMyDept" class="hidden">
-                <div id="myDeptContent">
-                    <!-- 동적 생성 -->
-                </div>
-            </div>
-            
-            <!-- 탭: 결재 요청 (담당자용) -->
-            <div id="tabRequests" class="hidden">
+            <div id="tabExpense" class="hidden">
                 <div class="card">
-                    <div class="card-title">📋 결재 대기 목록</div>
-                    <div id="requestList">
-                        <!-- 동적 생성 -->
-                    </div>
+                    <div class="card-title">📋 내 지출결의서</div>
                 </div>
+                <div id="expenseList"></div>
+            </div>
+            
+            <div id="tabApproval" class="hidden">
+                <div class="card">
+                    <div class="card-title">⏳ 결재 대기 목록</div>
+                </div>
+                <div id="approvalList"></div>
             </div>
         </div>
     </div>
     
-    <!-- 하단 네비게이션 -->
     <div class="bottom-nav hidden" id="bottomNav">
         <div class="nav-item active" onclick="showTab('deptList')">
             <div class="nav-icon">🏛️</div>
             <span>부서</span>
         </div>
-        <div class="nav-item" onclick="showTab('myDept')">
-            <div class="nav-icon">👤</div>
-            <span>내 부서</span>
+        <div class="nav-item" onclick="showTab('expense')">
+            <div class="nav-icon">📝</div>
+            <span>지출결의</span>
         </div>
-        <div class="nav-item" id="navRequests" onclick="showTab('requests')" style="display: none;">
-            <div class="nav-icon">📋</div>
+        <div class="nav-item hidden" id="navApproval" onclick="showTab('approval')">
+            <div class="nav-icon">✅</div>
             <span>결재</span>
         </div>
     </div>
     
-    <!-- 토스트 -->
+    <button class="fab hidden" id="fabExpense" onclick="openExpenseModal()">+</button>
+    
+    <div class="modal" id="expenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📝 지출결의서 작성</div>
+                <button class="modal-close" onclick="closeExpenseModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">부서 선택 *</label>
+                    <select class="form-select" id="expenseDept"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">지출 항목 *</label>
+                    <input type="text" class="form-input" id="expenseTitle" placeholder="예: 부서 모임 식대">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">금액 (원) *</label>
+                    <input type="number" class="form-input" id="expenseAmount" placeholder="50000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">지출 날짜 *</label>
+                    <input type="date" class="form-input" id="expenseDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">상세 내역</label>
+                    <textarea class="form-textarea" id="expenseDesc" placeholder="지출 내역을 상세히 작성해주세요"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeExpenseModal()">취소</button>
+                <button class="btn btn-primary" onclick="submitExpense()">제출</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="toast" id="toast"></div>
     
     <script>
@@ -533,14 +407,22 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // 전역 변수
         let currentUser = null;
         let departments = [];
         let members = [];
-        let users = [];
-        let paymentRequests = [];
+        let expenses = [];
+        let expenseRequests = [];
         
-        // 로그인
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            
+            const savedUser = localStorage.getItem('deptAppUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                initApp();
+            }
+        });
+        
         async function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -550,67 +432,59 @@
                 return;
             }
             
-            // Firebase에서 사용자 데이터 로드
             try {
                 const usersDoc = await db.collection('registeredUsers').doc('main').get();
-                if (usersDoc.exists) {
-                    users = usersDoc.data().list || [];
-                }
-            } catch (e) {
-                console.error('사용자 로드 실패:', e);
-                users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-            }
-            
-            // 관리자 계정
-            if (username === 'gkc8127' && password === '4581') {
-                currentUser = {
-                    username: 'gkc8127',
-                    name: '정준연',
-                    role: '관리자',
-                    permissions: ['department', 'offeringEdit']
-                };
-            } else {
-                // 일반 사용자
-                const user = users.find(u => u.username === username && u.password === password);
-                if (!user) {
-                    showToast('아이디 또는 비밀번호가 틀립니다');
+                if (!usersDoc.exists) {
+                    showToast('사용자 정보를 불러올 수 없습니다');
                     return;
                 }
                 
-                if (!user.permissions?.includes('department')) {
-                    showToast('부서관리 권한이 없습니다');
-                    return;
+                const users = usersDoc.data().list || [];
+                
+                // 관리자 계정
+                if (username === 'gkc8127' && password === '4581') {
+                    currentUser = {
+                        username: 'gkc8127',
+                        name: '정준연',
+                        role: '관리자',
+                        permissions: ['department', 'offering', 'offeringEdit']
+                    };
+                } else {
+                    const user = users.find(u => u.username === username && u.password === password);
+                    
+                    if (!user) {
+                        showToast('아이디 또는 비밀번호가 틀립니다');
+                        return;
+                    }
+                    
+                    // department 권한 확인
+                    const hasAccess = user.role === '관리자' || 
+                                      (user.permissions && user.permissions.includes('department'));
+                    
+                    if (!hasAccess) {
+                        showToast('부서관리 접근 권한이 없습니다');
+                        return;
+                    }
+                    
+                    currentUser = {
+                        username: user.username,
+                        name: user.name || user.memberName || user.username,
+                        role: user.role,
+                        permissions: user.permissions || [],
+                        memberName: user.memberName
+                    };
                 }
                 
-                currentUser = {
-                    username: user.username,
-                    name: user.name,
-                    role: user.role,
-                    permissions: user.permissions || [],
-                    memberName: user.memberName
-                };
+                localStorage.setItem('deptAppUser', JSON.stringify(currentUser));
+                initApp();
+                showToast('로그인 성공!');
+                
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                showToast('로그인 중 오류가 발생했습니다');
             }
-            
-            // 로그인 성공
-            localStorage.setItem('deptAppUser', JSON.stringify(currentUser));
-            
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('appScreen').classList.remove('hidden');
-            document.getElementById('bottomNav').classList.remove('hidden');
-            document.getElementById('logoutBtn').style.display = 'block';
-            
-            // 결재 권한이 있으면 결재 탭 표시
-            if (currentUser.role === '관리자' || currentUser.permissions?.includes('offeringEdit')) {
-                document.getElementById('navRequests').style.display = 'flex';
-            }
-            
-            await loadData();
-            renderDeptList();
-            
-            showToast('로그인 성공!');
         }
         
-        // 로그아웃
         function logout() {
             currentUser = null;
             localStorage.removeItem('deptAppUser');
@@ -618,58 +492,92 @@
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('appScreen').classList.add('hidden');
             document.getElementById('bottomNav').classList.add('hidden');
+            document.getElementById('fabExpense').classList.add('hidden');
             document.getElementById('logoutBtn').style.display = 'none';
             
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
         }
         
-        // 데이터 로드
+        async function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.remove('hidden');
+            document.getElementById('fabExpense').classList.remove('hidden');
+            document.getElementById('logoutBtn').style.display = 'block';
+            
+            const canApprove = currentUser.role === '관리자' || 
+                               currentUser.permissions?.includes('offeringEdit');
+            if (canApprove) {
+                document.getElementById('navApproval').classList.remove('hidden');
+            }
+            
+            await loadData();
+            renderDeptList();
+            setupRealtimeListeners();
+        }
+        
         async function loadData() {
             try {
-                // 부서 데이터
                 const deptDoc = await db.collection('departments').doc('main').get();
                 if (deptDoc.exists) {
                     departments = deptDoc.data().list || [];
+                    localStorage.setItem('departments', JSON.stringify(departments));
                 }
                 
-                // 교인 데이터
                 const membersDoc = await db.collection('churchMembers').doc('main').get();
                 if (membersDoc.exists) {
                     members = membersDoc.data().list || [];
+                    localStorage.setItem('churchMembers', JSON.stringify(members));
                 }
                 
-                // 결재 요청
-                const requestsDoc = await db.collection('paymentRequests').doc('main').get();
+                const expensesDoc = await db.collection('churchExpenses').doc('main').get();
+                if (expensesDoc.exists) {
+                    expenses = expensesDoc.data().list || [];
+                    localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                }
+                
+                const requestsDoc = await db.collection('expenseRequests').doc('main').get();
                 if (requestsDoc.exists) {
-                    paymentRequests = requestsDoc.data().list || [];
+                    expenseRequests = requestsDoc.data().list || [];
+                    localStorage.setItem('expenseRequests', JSON.stringify(expenseRequests));
                 }
-                
-                // localStorage 백업
-                localStorage.setItem('departments', JSON.stringify(departments));
-                localStorage.setItem('churchMembers', JSON.stringify(members));
-                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
                 
             } catch (e) {
                 console.error('데이터 로드 실패:', e);
-                // 오프라인 - localStorage에서 로드
                 departments = JSON.parse(localStorage.getItem('departments') || '[]');
                 members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
-                paymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+                expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+                expenseRequests = JSON.parse(localStorage.getItem('expenseRequests') || '[]');
             }
         }
         
-        // 부서 목록 렌더링
+        function setupRealtimeListeners() {
+            db.collection('expenseRequests').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    expenseRequests = doc.data().list || [];
+                    localStorage.setItem('expenseRequests', JSON.stringify(expenseRequests));
+                    
+                    const expenseTab = document.getElementById('tabExpense');
+                    const approvalTab = document.getElementById('tabApproval');
+                    if (!expenseTab.classList.contains('hidden')) renderExpenseList();
+                    if (!approvalTab.classList.contains('hidden')) renderApprovalList();
+                }
+            });
+            
+            db.collection('churchExpenses').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    expenses = doc.data().list || [];
+                    localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                }
+            });
+        }
+        
         function renderDeptList() {
             const container = document.getElementById('deptList');
             
             if (departments.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🏛️</div>
-                        <p>등록된 부서가 없습니다</p>
-                    </div>
-                `;
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">🏛️</div><p>등록된 부서가 없습니다</p></div>';
                 return;
             }
             
@@ -680,12 +588,14 @@
                 const color = colors[idx % colors.length];
                 const deptMembers = members.filter(m => m.department === dept.name);
                 const teams = dept.teams || [];
+                const deptExpenses = expenses.filter(e => e.department === dept.name);
+                const totalExpense = deptExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
                 
                 html += `
                     <div class="dept-card" onclick="showDeptDetail(${idx})">
                         <div class="dept-header" style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);">
                             <div class="dept-name">${dept.name}</div>
-                            <div class="dept-leader">👤 ${dept.leader || '미정'}</div>
+                            <div class="dept-leader">👤 ${dept.leader || '부장 미정'}</div>
                         </div>
                         <div class="dept-body">
                             <div class="dept-stats">
@@ -698,123 +608,87 @@
                                     <div class="dept-stat-label">팀</div>
                                 </div>
                                 <div>
-                                    <div class="dept-stat-number">${dept.budget ? Math.round(dept.budget/10000) + '만' : '-'}</div>
-                                    <div class="dept-stat-label">예산</div>
+                                    <div class="dept-stat-number">${totalExpense > 0 ? Math.round(totalExpense/10000) + '만' : '-'}</div>
+                                    <div class="dept-stat-label">지출</div>
                                 </div>
                             </div>
-                            ${teams.length > 0 ? `
-                                <div class="team-list">
-                                    ${teams.slice(0, 3).map(team => `
-                                        <div class="team-item">
-                                            <span class="team-name">${team.name}</span>
-                                            <span class="team-count">${team.members?.length || 0}명</span>
-                                        </div>
-                                    `).join('')}
-                                    ${teams.length > 3 ? `<div style="text-align: center; color: #94a3b8; font-size: 0.85em; padding-top: 10px;">+${teams.length - 3}개 더보기</div>` : ''}
-                                </div>
-                            ` : ''}
                         </div>
                     </div>
                 `;
             });
             
             container.innerHTML = html;
+            updateDeptSelect();
         }
         
-        // 부서 상세
+        function updateDeptSelect() {
+            const select = document.getElementById('expenseDept');
+            select.innerHTML = '<option value="">-- 부서 선택 --</option>';
+            departments.forEach(dept => {
+                select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
+            });
+        }
+        
         function showDeptDetail(idx) {
             const dept = departments[idx];
             if (!dept) return;
             
-            showTab('myDept');
-            
-            const container = document.getElementById('myDeptContent');
             const deptMembers = members.filter(m => m.department === dept.name);
-            const teams = dept.teams || [];
-            const colors = ['#059669', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
-            const color = colors[idx % colors.length];
+            const memberNames = deptMembers.map(m => m.nameKr).join(', ') || '없음';
             
-            let html = `
-                <div class="dept-card">
-                    <div class="dept-header" style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);">
-                        <div class="dept-name">${dept.name}</div>
-                        <div class="dept-leader">👤 부장: ${dept.leader || '미정'}</div>
-                    </div>
-                    <div class="dept-body">
-                        <div class="dept-stats">
-                            <div>
-                                <div class="dept-stat-number">${deptMembers.length}</div>
-                                <div class="dept-stat-label">구성원</div>
-                            </div>
-                            <div>
-                                <div class="dept-stat-number">${teams.length}</div>
-                                <div class="dept-stat-label">팀</div>
-                            </div>
-                            <div>
-                                <div class="dept-stat-number">${dept.budget ? Math.round(dept.budget/10000) + '만원' : '-'}</div>
-                                <div class="dept-stat-label">예산</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            alert(`📌 ${dept.name}\n\n👤 부장: ${dept.leader || '미정'}\n👥 구성원 (${deptMembers.length}명):\n${memberNames}`);
+        }
+        
+        function renderExpenseList() {
+            const container = document.getElementById('expenseList');
+            const myRequests = expenseRequests.filter(r => r.requester === currentUser.name);
+            
+            if (myRequests.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>작성한 지출결의서가 없습니다</p><p style="font-size: 0.85em; margin-top: 10px;">+ 버튼을 눌러 새 결의서를 작성하세요</p></div>';
+                return;
+            }
+            
+            myRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            let html = '';
+            myRequests.forEach(req => {
+                const statusClass = req.status === '승인' ? 'status-approved' : req.status === '거절' ? 'status-rejected' : 'status-pending';
+                const itemClass = req.status === '대기중' ? 'pending' : req.status === '거절' ? 'rejected' : '';
                 
-                <!-- 팀 목록 -->
-                ${teams.length > 0 ? `
-                    <div class="card">
-                        <div class="card-title">👥 소속 팀</div>
-                        ${teams.map(team => `
-                            <div class="team-item">
-                                <div>
-                                    <div class="team-name">${team.name}</div>
-                                    <div style="font-size: 0.8em; color: #64748b;">팀장: ${team.leader || '미정'}</div>
-                                </div>
-                                <span class="team-count">${team.members?.length || 0}명</span>
-                            </div>
-                        `).join('')}
+                html += `
+                    <div class="expense-item ${itemClass}">
+                        <div class="expense-title">${req.title}</div>
+                        <div class="expense-info">${req.department} · ${req.date}</div>
+                        <div class="expense-amount">₩${parseInt(req.amount).toLocaleString()}</div>
+                        <span class="expense-status ${statusClass}">${req.status}</span>
+                        ${req.status === '거절' && req.rejectReason ? `<div style="font-size: 0.8em; color: #dc2626; margin-top: 5px;">거절 사유: ${req.rejectReason}</div>` : ''}
                     </div>
-                ` : ''}
-                
-                <!-- 구성원 목록 -->
-                <div class="card">
-                    <div class="card-title">👤 구성원 (${deptMembers.length}명)</div>
-                    ${deptMembers.length > 0 ? deptMembers.map(m => `
-                        <div class="member-item">
-                            <div class="member-avatar" style="background: ${color};">${m.nameKr?.charAt(0) || '?'}</div>
-                            <div class="member-info">
-                                <div class="member-name">${m.nameKr || '-'}</div>
-                                <div class="member-role">${m.position || '성도'} ${m.phone ? '· ' + m.phone : ''}</div>
-                            </div>
-                        </div>
-                    `).join('') : '<div class="empty-state">등록된 구성원이 없습니다</div>'}
-                </div>
-            `;
+                `;
+            });
             
             container.innerHTML = html;
         }
         
-        // 결재 요청 목록
-        function renderRequests() {
-            const container = document.getElementById('requestList');
+        function renderApprovalList() {
+            const container = document.getElementById('approvalList');
+            const pendingRequests = expenseRequests.filter(r => r.status === '대기중');
             
-            const pending = paymentRequests.filter(r => r.status === '대기중' || r.status === '승인대기');
-            
-            if (pending.length === 0) {
-                container.innerHTML = '<div class="empty-state">대기중인 결재가 없습니다</div>';
+            if (pendingRequests.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>대기중인 결재가 없습니다</p></div>';
                 return;
             }
             
             let html = '';
-            pending.forEach((req, idx) => {
+            pendingRequests.forEach((req, idx) => {
                 html += `
-                    <div class="request-card">
-                        <div class="request-title">${req.title || '지출 요청'}</div>
-                        <div class="request-info">
-                            ${req.department || '-'} · ${req.requester || '-'} · ${req.date || '-'}
-                        </div>
-                        <div class="request-amount">₩${(req.amount || 0).toLocaleString()}</div>
-                        <div class="request-actions">
-                            <button class="btn btn-approve" onclick="approveRequest(${idx})">승인</button>
-                            <button class="btn btn-reject" onclick="rejectRequest(${idx})">거절</button>
+                    <div class="expense-item pending">
+                        <div class="expense-title">${req.title}</div>
+                        <div class="expense-info">${req.department} · ${req.requester} · ${req.date}</div>
+                        ${req.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px;">${req.description}</div>` : ''}
+                        <div class="expense-amount">₩${parseInt(req.amount).toLocaleString()}</div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="approveRequest('${req.id}')">승인</button>
+                            <button class="btn btn-danger" style="flex: 1; padding: 10px;" onclick="rejectRequest('${req.id}')">거절</button>
                         </div>
                     </div>
                 `;
@@ -823,30 +697,105 @@
             container.innerHTML = html;
         }
         
-        // 결재 승인
-        async function approveRequest(idx) {
-            const pending = paymentRequests.filter(r => r.status === '대기중' || r.status === '승인대기');
-            const req = pending[idx];
-            if (!req) return;
+        function openExpenseModal() {
+            document.getElementById('expenseModal').classList.add('active');
+            document.getElementById('expenseTitle').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseDesc').value = '';
+            document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+        }
+        
+        function closeExpenseModal() {
+            document.getElementById('expenseModal').classList.remove('active');
+        }
+        
+        async function submitExpense() {
+            const dept = document.getElementById('expenseDept').value;
+            const title = document.getElementById('expenseTitle').value.trim();
+            const amount = document.getElementById('expenseAmount').value;
+            const date = document.getElementById('expenseDate').value;
+            const description = document.getElementById('expenseDesc').value.trim();
             
-            req.status = '승인';
-            req.approvedBy = currentUser.name;
-            req.approvedDate = new Date().toISOString().split('T')[0];
+            if (!dept || !title || !amount || !date) {
+                showToast('필수 항목을 모두 입력해주세요');
+                return;
+            }
+            
+            const request = {
+                id: Date.now().toString(),
+                department: dept,
+                title: title,
+                amount: parseInt(amount),
+                date: date,
+                description: description,
+                requester: currentUser.name,
+                status: '대기중',
+                createdAt: new Date().toISOString()
+            };
+            
+            expenseRequests.push(request);
             
             try {
-                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
-                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
-                showToast('승인되었습니다');
-                renderRequests();
-            } catch (e) {
-                showToast('저장 실패');
+                await db.collection('expenseRequests').doc('main').set({ list: expenseRequests });
+                localStorage.setItem('expenseRequests', JSON.stringify(expenseRequests));
+                
+                closeExpenseModal();
+                showToast('지출결의서가 제출되었습니다');
+                renderExpenseList();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showToast('저장 중 오류가 발생했습니다');
             }
         }
         
-        // 결재 거절
-        async function rejectRequest(idx) {
-            const pending = paymentRequests.filter(r => r.status === '대기중' || r.status === '승인대기');
-            const req = pending[idx];
+        async function approveRequest(id) {
+            const req = expenseRequests.find(r => r.id === id);
+            if (!req) return;
+            
+            if (!confirm(`"${req.title}" 지출결의서를 승인하시겠습니까?\n금액: ₩${parseInt(req.amount).toLocaleString()}`)) {
+                return;
+            }
+            
+            req.status = '승인';
+            req.approvedBy = currentUser.name;
+            req.approvedAt = new Date().toISOString();
+            
+            // 재정관리 지출에 자동 추가
+            const newExpense = {
+                id: Date.now(),
+                date: req.date,
+                category: '부서활동비',
+                department: req.department,
+                description: req.title + (req.description ? ' - ' + req.description : ''),
+                amount: req.amount,
+                paidBy: req.requester,
+                receipt: false,
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.name,
+                fromExpenseRequest: req.id
+            };
+            
+            expenses.push(newExpense);
+            
+            try {
+                await db.collection('expenseRequests').doc('main').set({ list: expenseRequests });
+                await db.collection('churchExpenses').doc('main').set({ list: expenses });
+                
+                localStorage.setItem('expenseRequests', JSON.stringify(expenseRequests));
+                localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                
+                showToast('승인 완료! 재정관리 지출에 반영되었습니다');
+                renderApprovalList();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showToast('저장 중 오류가 발생했습니다');
+            }
+        }
+        
+        async function rejectRequest(id) {
+            const req = expenseRequests.find(r => r.id === id);
             if (!req) return;
             
             const reason = prompt('거절 사유를 입력하세요:');
@@ -855,80 +804,52 @@
             req.status = '거절';
             req.rejectedBy = currentUser.name;
             req.rejectReason = reason;
+            req.rejectedAt = new Date().toISOString();
             
             try {
-                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
-                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                await db.collection('expenseRequests').doc('main').set({ list: expenseRequests });
+                localStorage.setItem('expenseRequests', JSON.stringify(expenseRequests));
+                
                 showToast('거절되었습니다');
-                renderRequests();
-            } catch (e) {
-                showToast('저장 실패');
+                renderApprovalList();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showToast('저장 중 오류가 발생했습니다');
             }
         }
         
-        // 탭 전환
         function showTab(tab) {
-            // 모든 탭 숨기기
             document.getElementById('tabDeptList').classList.add('hidden');
-            document.getElementById('tabMyDept').classList.add('hidden');
-            document.getElementById('tabRequests').classList.add('hidden');
+            document.getElementById('tabExpense').classList.add('hidden');
+            document.getElementById('tabApproval').classList.add('hidden');
             
-            // 모든 네비 비활성화
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             
-            // 선택된 탭 표시
             if (tab === 'deptList') {
                 document.getElementById('tabDeptList').classList.remove('hidden');
                 document.querySelectorAll('.nav-item')[0].classList.add('active');
                 renderDeptList();
-            } else if (tab === 'myDept') {
-                document.getElementById('tabMyDept').classList.remove('hidden');
+            } else if (tab === 'expense') {
+                document.getElementById('tabExpense').classList.remove('hidden');
                 document.querySelectorAll('.nav-item')[1].classList.add('active');
-            } else if (tab === 'requests') {
-                document.getElementById('tabRequests').classList.remove('hidden');
-                document.getElementById('navRequests').classList.add('active');
-                renderRequests();
+                renderExpenseList();
+            } else if (tab === 'approval') {
+                document.getElementById('tabApproval').classList.remove('hidden');
+                document.getElementById('navApproval').classList.add('active');
+                renderApprovalList();
             }
         }
         
-        // 토스트
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
+            setTimeout(() => toast.classList.remove('show'), 2500);
         }
         
-        // 오프라인 감지
-        window.addEventListener('online', () => {
-            document.body.classList.remove('offline');
-            loadData();
-        });
-        
-        window.addEventListener('offline', () => {
-            document.body.classList.add('offline');
-        });
-        
-        // 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            // 저장된 로그인 상태 확인
-            const saved = localStorage.getItem('deptAppUser');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('appScreen').classList.remove('hidden');
-                document.getElementById('bottomNav').classList.remove('hidden');
-                document.getElementById('logoutBtn').style.display = 'block';
-                
-                if (currentUser.role === '관리자' || currentUser.permissions?.includes('offeringEdit')) {
-                    document.getElementById('navRequests').style.display = 'flex';
-                }
-                
-                loadData().then(() => {
-                    renderDeptList();
-                });
-            }
-        });
+        window.addEventListener('online', () => { document.body.classList.remove('offline'); loadData(); });
+        window.addEventListener('offline', () => { document.body.classList.add('offline'); showToast('오프라인 모드입니다'); });
     </script>
 </body>
 </html>
