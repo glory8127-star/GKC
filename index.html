@@ -16916,9 +16916,17 @@
                 memberTotals[o.name].details[o.type] = (memberTotals[o.name].details[o.type] || 0) + o.amount;
             });
             
-            // 영어 컬럼명 매핑
-            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
-            const typesEn = ['Tithe', 'Thanksgiving', 'Sunday', 'Building', 'Mission', 'Benevolence', 'Special', 'Other'];
+            // 영어 컬럼명 매핑 (한글과 1:1 매칭)
+            const typeMapping = [
+                { kr: '십일조', en: 'Tithe' },
+                { kr: '감사헌금', en: 'Thanksgiving' },
+                { kr: '주일헌금', en: 'Sunday' },
+                { kr: '건축헌금', en: 'Building' },
+                { kr: '선교헌금', en: 'Mission' },
+                { kr: '구제헌금', en: 'Benevolence' },
+                { kr: '특별헌금', en: 'Special' },
+                { kr: '기타', en: 'Other' }
+            ];
             
             let html = `
                 <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px;">
@@ -16931,7 +16939,7 @@
                     <thead>
                         <tr style="background: #f7fafc;">
                             <th style="border: 1px solid #ddd; padding: 10px;">Donor Name</th>
-                            ${typesEn.map(t => `<th style="border: 1px solid #ddd; padding: 10px;">${t}</th>`).join('')}
+                            ${typeMapping.map(t => `<th style="border: 1px solid #ddd; padding: 10px;">${t.en}</th>`).join('')}
                             <th style="border: 1px solid #ddd; padding: 10px; background: #667eea; color: white;">Total</th>
                         </tr>
                     </thead>
@@ -16942,7 +16950,7 @@
                 html += `
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 10px; font-weight: bold;">${member.nameEn}</td>
-                        ${types.map(t => `<td style="border: 1px solid #ddd; padding: 10px; text-align: right;">$${(member.details[t] || 0).toFixed(2)}</td>`).join('')}
+                        ${typeMapping.map(t => `<td style="border: 1px solid #ddd; padding: 10px; text-align: right;">$${(member.details[t.kr] || 0).toFixed(2)}</td>`).join('')}
                         <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: bold; color: #667eea;">$${member.total.toFixed(2)}</td>
                     </tr>
                 `;
@@ -16955,8 +16963,8 @@
                     <tfoot>
                         <tr style="background: #edf2f7; font-weight: bold;">
                             <td style="border: 1px solid #ddd; padding: 10px;">Total</td>
-                            ${types.map(t => {
-                                const typeTotal = Object.values(memberTotals).reduce((sum, m) => sum + (m.details[t] || 0), 0);
+                            ${typeMapping.map(t => {
+                                const typeTotal = Object.values(memberTotals).reduce((sum, m) => sum + (m.details[t.kr] || 0), 0);
                                 return `<td style="border: 1px solid #ddd; padding: 10px; text-align: right;">$${typeTotal.toFixed(2)}</td>`;
                             }).join('')}
                             <td style="border: 1px solid #ddd; padding: 10px; text-align: right; color: #e53e3e;">$${grandTotal.toFixed(2)}</td>
@@ -17025,23 +17033,31 @@
                 memberTotals[o.name].details[o.type] = (memberTotals[o.name].details[o.type] || 0) + o.amount;
             });
             
-            const types = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
-            const typesEn = ['Tithe', 'Thanksgiving', 'Sunday', 'Building', 'Mission', 'Benevolence', 'Special', 'Other'];
+            const typeMapping = [
+                { kr: '십일조', en: 'Tithe' },
+                { kr: '감사헌금', en: 'Thanksgiving' },
+                { kr: '주일헌금', en: 'Sunday' },
+                { kr: '건축헌금', en: 'Building' },
+                { kr: '선교헌금', en: 'Mission' },
+                { kr: '구제헌금', en: 'Benevolence' },
+                { kr: '특별헌금', en: 'Special' },
+                { kr: '기타', en: 'Other' }
+            ];
             
             // CSV 생성
             let csv = 'Sacramento Glory Korean Church\n';
             csv += 'EIN# 88-1719323\n';
             csv += year + ' Contribution Statement (For IRS Tax Deduction Purposes)\n\n';
-            csv += 'Donor Name,' + typesEn.join(',') + ',Total\n';
+            csv += 'Donor Name,' + typeMapping.map(t => t.en).join(',') + ',Total\n';
             
             Object.values(memberTotals).sort((a, b) => b.total - a.total).forEach(member => {
-                csv += member.name + ',' + types.map(t => (member.details[t] || 0).toFixed(2)).join(',') + ',' + member.total.toFixed(2) + '\n';
+                csv += member.name + ',' + typeMapping.map(t => (member.details[t.kr] || 0).toFixed(2)).join(',') + ',' + member.total.toFixed(2) + '\n';
             });
             
             // 합계 추가
             const grandTotal = Object.values(memberTotals).reduce((sum, m) => sum + m.total, 0);
-            csv += 'Total,' + types.map(t => {
-                const typeTotal = Object.values(memberTotals).reduce((sum, m) => sum + (m.details[t] || 0), 0);
+            csv += 'Total,' + typeMapping.map(t => {
+                const typeTotal = Object.values(memberTotals).reduce((sum, m) => sum + (m.details[t.kr] || 0), 0);
                 return typeTotal.toFixed(2);
             }).join(',') + ',' + grandTotal.toFixed(2) + '\n';
             
