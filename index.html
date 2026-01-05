@@ -10693,10 +10693,10 @@
             let total = 0;
             offerings.forEach(o => {
                 total += o.amount || 0;
-                html += `<tr><td>${o.date}</td><td>${o.memberName}</td><td>${o.type}</td><td>$${(o.amount || 0).toFixed(2)}</td><td>${o.payment || '현금'}</td></tr>`;
+                html += `<tr><td>${o.date}</td><td>${o.memberName}</td><td>${o.type}</td><td>$${(o.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td>${o.payment || '현금'}</td></tr>`;
             });
             
-            html += `<tr class="total"><td colspan="3">합계</td><td colspan="2">$${total.toFixed(2)}</td></tr></tbody></table>
+            html += `<tr class="total"><td colspan="3">합계</td><td colspan="2">$${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr></tbody></table>
                 <p class="footer">Sacramento Glory Korean Church | EIN# 88-1719323</p></body></html>`;
             
             const printWindow = window.open('', '_blank');
@@ -10742,10 +10742,10 @@
             let total = 0;
             expenses.forEach(e => {
                 total += e.amount || 0;
-                html += `<tr><td>${e.date}</td><td>${e.department || '-'}</td><td>${e.category}</td><td>${e.item}</td><td>$${(e.amount || 0).toFixed(2)}</td><td>${e.payment || '현금'}</td></tr>`;
+                html += `<tr><td>${e.date}</td><td>${e.department || '-'}</td><td>${e.category}</td><td>${e.item}</td><td>$${(e.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td>${e.payment || '현금'}</td></tr>`;
             });
             
-            html += `<tr class="total"><td colspan="4">합계</td><td colspan="2">$${total.toFixed(2)}</td></tr></tbody></table>
+            html += `<tr class="total"><td colspan="4">합계</td><td colspan="2">$${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr></tbody></table>
                 <p class="footer">Sacramento Glory Korean Church | EIN# 88-1719323</p></body></html>`;
             
             const printWindow = window.open('', '_blank');
@@ -11427,7 +11427,7 @@
                                         ${statusText ? `<span style="display: inline-block; margin-top: 5px; background: ${statusBg}; color: ${exp.paymentApproved ? 'white' : '#333'}; padding: 3px 10px; border-radius: 12px; font-size: 0.8em;">${statusText}</span>` : ''}
                                     </div>
                                     <div style="text-align: right;">
-                                        <div style="font-size: 1.2em; font-weight: bold; color: #e53e3e;">$${exp.amount?.toFixed(2) || '0.00'}</div>
+                                        <div style="font-size: 1.2em; font-weight: bold; color: #e53e3e;">${formatMoney(exp.amount || 0)}</div>
                                         <div style="margin-top: 8px; display: flex; gap: 5px;">
                                             ${!exp.paymentRequested ? `<button onclick="requestPayment(${deptIndex}, ${expIndex}); showDeptDetailModal(${deptIndex}, 'expense');" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">결제요청</button>` : ''}
                                             <button onclick="deleteDeptExpense(${deptIndex}, ${expIndex}); showDeptDetailModal(${deptIndex}, 'expense');" style="background: #fc8181; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">삭제</button>
@@ -11951,7 +11951,7 @@
                         <td>${exp.date}</td>
                         <td>${exp.item}</td>
                         <td>${exp.category}</td>
-                        <td style="font-weight: 600;">$${exp.amount.toFixed(2)}</td>
+                        <td style="font-weight: 600;">${formatMoney(exp.amount)}</td>
                         <td>${exp.payment}${exp.checkNumber ? ' #' + exp.checkNumber : ''}</td>
                         <td>${exp.approver || '-'}</td>
                         <td>${exp.receipt ? '<a href="' + exp.receipt + '" target="_blank" style="color: #e94560;">보기</a>' : '-'}</td>
@@ -13526,7 +13526,7 @@
                             ${req.description ? `<div style="font-size: 0.8em; color: #64748b;">${req.description}</div>` : ''}
                         </td>
                         <td style="padding: 10px; text-align: center;">${receiptBtn}</td>
-                        <td style="padding: 10px; text-align: right; font-weight: 600; color: #e94560;">$${req.amount.toFixed(2)}</td>
+                        <td style="padding: 10px; text-align: right; font-weight: 600; color: #e94560;">${formatMoney(req.amount)}</td>
                         <td style="padding: 10px; text-align: center;">
                             <button onclick="approvePayment(${idx})" class="btn btn-success" style="padding: 5px 10px; font-size: 0.85em;">승인</button>
                             <button onclick="rejectPayment(${idx})" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;">거절</button>
@@ -16950,8 +16950,8 @@
                 html += `
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 10px; font-weight: bold;">${member.nameEn}</td>
-                        ${typeMapping.map(t => `<td style="border: 1px solid #ddd; padding: 10px; text-align: right;">$${(member.details[t.kr] || 0).toFixed(2)}</td>`).join('')}
-                        <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: bold; color: #667eea;">$${member.total.toFixed(2)}</td>
+                        ${typeMapping.map(t => `<td style="border: 1px solid #ddd; padding: 10px; text-align: right;">${formatMoney(member.details[t.kr] || 0)}</td>`).join('')}
+                        <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: bold; color: #667eea;">${formatMoney(member.total)}</td>
                     </tr>
                 `;
             });
@@ -16965,9 +16965,9 @@
                             <td style="border: 1px solid #ddd; padding: 10px;">Total</td>
                             ${typeMapping.map(t => {
                                 const typeTotal = Object.values(memberTotals).reduce((sum, m) => sum + (m.details[t.kr] || 0), 0);
-                                return `<td style="border: 1px solid #ddd; padding: 10px; text-align: right;">$${typeTotal.toFixed(2)}</td>`;
+                                return `<td style="border: 1px solid #ddd; padding: 10px; text-align: right;">${formatMoney(typeTotal)}</td>`;
                             }).join('')}
-                            <td style="border: 1px solid #ddd; padding: 10px; text-align: right; color: #e53e3e;">$${grandTotal.toFixed(2)}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px; text-align: right; color: #e53e3e;">${formatMoney(grandTotal)}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -17176,7 +17176,7 @@
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 10px;">${type}</td>
                                 <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">${count}건</td>
-                                <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">$${amount.toFixed(2)}</td>
+                                <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">${formatMoney(amount)}</td>
                             </tr>
                         `;
                     }
@@ -17188,7 +17188,7 @@
                             <tr style="background: #e6fffa; font-weight: bold;">
                                 <td style="border: 1px solid #ddd; padding: 10px;">수입 합계</td>
                                 <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">${filteredIncome.length}건</td>
-                                <td style="border: 1px solid #ddd; padding: 10px; text-align: right; color: #48bb78;">$${incomeTotal.toFixed(2)}</td>
+                                <td style="border: 1px solid #ddd; padding: 10px; text-align: right; color: #48bb78;">${formatMoney(incomeTotal)}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -17231,7 +17231,7 @@
                             <td style="border: 1px solid #ddd; padding: 10px;">${e.department}</td>
                             <td style="border: 1px solid #ddd; padding: 10px;">${e.category}</td>
                             <td style="border: 1px solid #ddd; padding: 10px;">${e.item}</td>
-                            <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">$${e.amount.toFixed(2)}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">${formatMoney(e.amount)}</td>
                             <td style="border: 1px solid #ddd; padding: 10px;">${paymentDisplay}</td>
                         </tr>
                     `;
@@ -17242,7 +17242,7 @@
                         <tfoot>
                             <tr style="background: #fed7d7; font-weight: bold;">
                                 <td colspan="4" style="border: 1px solid #ddd; padding: 10px;">지출 합계</td>
-                                <td style="border: 1px solid #ddd; padding: 10px; text-align: right; color: #e53e3e;">$${expenseTotal.toFixed(2)}</td>
+                                <td style="border: 1px solid #ddd; padding: 10px; text-align: right; color: #e53e3e;">${formatMoney(expenseTotal)}</td>
                                 <td style="border: 1px solid #ddd; padding: 10px;"></td>
                             </tr>
                         </tfoot>
@@ -17271,15 +17271,15 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; text-align: center;">
                             <div>
                                 <div style="font-size: 0.9em; opacity: 0.9;">총 수입</div>
-                                <div style="font-size: 1.5em; font-weight: bold;">$${incomeTotal.toFixed(2)}</div>
+                                <div style="font-size: 1.5em; font-weight: bold;">${formatMoney(incomeTotal)}</div>
                             </div>
                             <div>
                                 <div style="font-size: 0.9em; opacity: 0.9;">총 지출</div>
-                                <div style="font-size: 1.5em; font-weight: bold;">$${expenseTotal.toFixed(2)}</div>
+                                <div style="font-size: 1.5em; font-weight: bold;">${formatMoney(expenseTotal)}</div>
                             </div>
                             <div>
                                 <div style="font-size: 0.9em; opacity: 0.9;">잔액</div>
-                                <div style="font-size: 1.5em; font-weight: bold;">${balance >= 0 ? '+' : ''}$${balance.toFixed(2)}</div>
+                                <div style="font-size: 1.5em; font-weight: bold;">${balance >= 0 ? '+' : ''}${formatMoney(balance)}</div>
                             </div>
                         </div>
                     </div>
