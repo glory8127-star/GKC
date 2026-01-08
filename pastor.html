@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e3a5f">
+    <title>GKC 목회자</title>
+    <link rel="manifest" href="pastor.json">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+        
+        /* 로그인 화면 */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            padding: 20px;
+        }
+        
+        .login-box {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .login-logo {
+            text-align: center;
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+        
+        .login-title {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.9em;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #1e3a5f;
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+        }
+        
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+            color: white;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        /* 앱 화면 */
+        .hidden { display: none !important; }
+        
+        /* 상단 헤더 */
+        .app-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white;
+            padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-title {
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+        
+        .header-user {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+        }
+        
+        .nav-item.active {
+            color: #1e3a5f;
+        }
+        
+        .nav-item .nav-icon {
+            font-size: 1.8em;
+            margin-bottom: 4px;
+        }
+        
+        /* 탭 컨텐츠 */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 카드 스타일 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 통계 카드 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        /* 알림 카드 */
+        .alert-card {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 리스트 아이템 */
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .list-item-content {
+            flex: 1;
+        }
+        
+        .list-item-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.95em;
+        }
+        
+        .list-item-sub {
+            font-size: 0.8em;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        /* 버튼 그룹 */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-sm {
+            padding: 8px 14px;
+            font-size: 0.8em;
+            border-radius: 8px;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #64748b;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        /* 필터 탭 */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .filter-tab {
+            padding: 8px 16px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .filter-tab.active {
+            background: #1e3a5f;
+            color: white;
+        }
+        
+        /* 검색 */
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 14px 16px 14px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1em;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+        
+        /* 진행률 바 */
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        /* 배지 */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        
+        .badge-red { background: #fee2e2; color: #dc2626; }
+        .badge-green { background: #dcfce7; color: #16a34a; }
+        .badge-yellow { background: #fef3c7; color: #d97706; }
+        .badge-blue { background: #dbeafe; color: #2563eb; }
+        
+        /* 토스트 */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-size: 0.9em;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        /* 플로팅 버튼 */
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+            color: white;
+            border: none;
+            font-size: 1.5em;
+            box-shadow: 0 4px 20px rgba(30, 58, 95, 0.4);
+            cursor: pointer;
+            z-index: 50;
+            display: none;
+        }
+        
+        .fab.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 텍스트영역 */
+        textarea.form-input {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        /* 구역 현황 바 */
+        .cell-status-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .cell-status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .cell-name {
+            width: 60px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .cell-progress {
+            flex: 1;
+        }
+        
+        .cell-rate {
+            width: 50px;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .cell-report-status {
+            width: 80px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 로그인 화면 -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="login-logo">⛪</div>
+            <div class="login-title">GKC 목회자</div>
+            <div class="form-group">
+                <label class="form-label">아이디</label>
+                <input type="text" class="form-input" id="loginUsername" placeholder="아이디 입력">
+            </div>
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" class="form-input" id="loginPassword" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') login()">
+            </div>
+            <button class="btn btn-primary" onclick="login()">로그인</button>
+        </div>
+    </div>
+    
+    <!-- 앱 화면 -->
+    <div id="appScreen" class="hidden">
+        <!-- 상단 헤더 -->
+        <header class="app-header">
+            <div class="header-top">
+                <div>
+                    <div class="header-title">⛪ GKC 목회자</div>
+                    <div class="header-user" id="headerUserName">목사님</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </header>
+        
+        <!-- 탭 컨텐츠 -->
+        <!-- 홈 (대시보드) -->
+        <div id="tabHome" class="tab-content active">
+            <div class="stats-grid" id="dashboardStats">
+                <!-- 동적 생성 -->
+            </div>
+            
+            <div class="card alert-card" id="alertCard" style="display: none;">
+                <div class="card-title">⚠️ 확인 필요</div>
+                <div id="alertList">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">📅 오늘 심방 일정</div>
+                <div id="todayVisits">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">🙏 긴급 기도제목</div>
+                <div id="urgentPrayers">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 심방 관리 -->
+        <div id="tabVisit" class="tab-content">
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterVisits('all')">전체</button>
+                <button class="filter-tab" onclick="filterVisits('scheduled')">예정</button>
+                <button class="filter-tab" onclick="filterVisits('completed')">완료</button>
+            </div>
+            
+            <div id="visitList">
+                <!-- 동적 생성 -->
+            </div>
+        </div>
+        
+        <!-- 기도제목 -->
+        <div id="tabPrayer" class="tab-content">
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterPrayers('all')">전체</button>
+                <button class="filter-tab" onclick="filterPrayers('urgent')">🔴 긴급</button>
+                <button class="filter-tab" onclick="filterPrayers('cell')">구역별</button>
+                <button class="filter-tab" onclick="filterPrayers('answered')">✅ 응답</button>
+            </div>
+            
+            <div id="prayerList">
+                <!-- 동적 생성 -->
+            </div>
+        </div>
+        
+        <!-- 교인 현황 -->
+        <div id="tabMember" class="tab-content">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="memberSearch" placeholder="교인 검색..." oninput="searchMembers()">
+            </div>
+            
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterMembers('absent')">⚠️ 장기결석</button>
+                <button class="filter-tab" onclick="filterMembers('new')">🆕 새신자</button>
+                <button class="filter-tab" onclick="filterMembers('all')">전체</button>
+            </div>
+            
+            <div id="memberList">
+                <!-- 동적 생성 -->
+            </div>
+        </div>
+        
+        <!-- 구역/부서 현황 -->
+        <div id="tabStatus" class="tab-content">
+            <div class="card">
+                <div class="card-title">⛪ 구역 현황</div>
+                <div id="cellStatusList">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">🏢 부서 현황</div>
+                <div id="deptStatusList">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 하단 네비게이션 -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="showTab('Home')">
+                <span class="nav-icon">🏠</span>
+                <span>홈</span>
+            </button>
+            <button class="nav-item" onclick="showTab('Visit')">
+                <span class="nav-icon">🏠</span>
+                <span>심방</span>
+            </button>
+            <button class="nav-item" onclick="showTab('Prayer')">
+                <span class="nav-icon">🙏</span>
+                <span>기도</span>
+            </button>
+            <button class="nav-item" onclick="showTab('Member')">
+                <span class="nav-icon">👥</span>
+                <span>교인</span>
+            </button>
+            <button class="nav-item" onclick="showTab('Status')">
+                <span class="nav-icon">📊</span>
+                <span>현황</span>
+            </button>
+        </nav>
+        
+        <!-- 플로팅 버튼 -->
+        <button class="fab" id="fabBtn" onclick="handleFabClick()">+</button>
+    </div>
+    
+    <!-- 심방 추가/수정 모달 -->
+    <div id="visitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="visitModalTitle">🏠 심방 일정 추가</h3>
+                <button class="modal-close" onclick="closeModal('visitModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="visitForm">
+                    <input type="hidden" id="visitEditId">
+                    <div class="form-group">
+                        <label class="form-label">날짜 *</label>
+                        <input type="date" class="form-input" id="visitDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">시간</label>
+                        <input type="time" class="form-input" id="visitTime">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">대상 (이름) *</label>
+                        <input type="text" class="form-input" id="visitTarget" placeholder="김OO 집사" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">주소</label>
+                        <input type="text" class="form-input" id="visitAddress" placeholder="주소 입력">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">심방 유형</label>
+                        <select class="form-input" id="visitType">
+                            <option value="일반">일반 심방</option>
+                            <option value="새신자">새신자 심방</option>
+                            <option value="병문안">병문안</option>
+                            <option value="위로">위로 심방</option>
+                            <option value="감사">감사 심방</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">메모</label>
+                        <textarea class="form-input" id="visitMemo" placeholder="심방 목적, 기도제목 등"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 기도제목 추가/수정 모달 -->
+    <div id="prayerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="prayerModalTitle">🙏 기도제목 추가</h3>
+                <button class="modal-close" onclick="closeModal('prayerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="prayerForm">
+                    <input type="hidden" id="prayerEditId">
+                    <div class="form-group">
+                        <label class="form-label">이름 *</label>
+                        <input type="text" class="form-input" id="prayerName" placeholder="김OO 집사" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">구역</label>
+                        <select class="form-input" id="prayerCell">
+                            <option value="">선택안함</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">기도제목 *</label>
+                        <textarea class="form-input" id="prayerContent" placeholder="기도제목 내용" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">긴급도</label>
+                        <select class="form-input" id="prayerUrgency">
+                            <option value="normal">일반</option>
+                            <option value="urgent">🔴 긴급</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 심방 완료 모달 -->
+    <div id="visitCompleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">✅ 심방 완료</h3>
+                <button class="modal-close" onclick="closeModal('visitCompleteModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="visitCompleteForm">
+                    <input type="hidden" id="completeVisitId">
+                    <div class="form-group">
+                        <label class="form-label">심방 기록</label>
+                        <textarea class="form-input" id="visitRecord" placeholder="심방 내용, 특이사항 등"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">완료 처리</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 토스트 -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWNVhTy0DGRfKyEu_NFAZI8fmBC-1zS0s",
+            authDomain: "sac-gkc.firebaseapp.com",
+            projectId: "sac-gkc",
+            storageBucket: "sac-gkc.firebasestorage.app",
+            messagingSenderId: "307475986498",
+            appId: "1:307475986498:web:5765b65d9edaboratory42cdfd"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // 전역 변수
+        let currentUser = null;
+        let members = [];
+        let cells = [];
+        let departments = [];
+        let pastorVisits = [];
+        let prayerRequests = [];
+        let cellAttendance = {};
+        let cellSundayAttendance = {};
+        let cellReports = {};
+        let churchAttendance = {};
+        
+        let currentTab = 'Home';
+        let currentVisitFilter = 'all';
+        let currentPrayerFilter = 'all';
+        let currentMemberFilter = 'absent';
+        
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('pastorAppUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    initApp();
+                } catch (e) {
+                    localStorage.removeItem('pastorAppUser');
+                }
+            }
+        });
+        
+        // 로그인
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showToast('아이디와 비밀번호를 입력하세요');
+                return;
+            }
+            
+            try {
+                const usersDoc = await db.collection('registeredUsers').doc('main').get();
+                if (!usersDoc.exists) {
+                    showToast('사용자 정보를 불러올 수 없습니다');
+                    return;
+                }
+                
+                const users = usersDoc.data().list || [];
+                const user = users.find(u => u.username === username && u.password === password);
+                
+                if (!user) {
+                    showToast('아이디 또는 비밀번호가 틀립니다');
+                    return;
+                }
+                
+                // 권한 확인 (목회자 권한 또는 관리자)
+                const hasAccess = user.role === '관리자' || 
+                                  (user.permissions && user.permissions.includes('pastor'));
+                
+                if (!hasAccess) {
+                    showToast('목회자 앱 접근 권한이 없습니다');
+                    return;
+                }
+                
+                currentUser = user;
+                localStorage.setItem('pastorAppUser', JSON.stringify(user));
+                
+                initApp();
+                showToast('로그인 성공!');
+                
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                showToast('로그인 중 오류가 발생했습니다');
+            }
+        }
+        
+        // 앱 초기화
+        async function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('headerUserName').textContent = currentUser.name || currentUser.username;
+            
+            await loadData();
+            setupRealtimeListeners();
+            showTab('Home');
+        }
+        
+        // 로그아웃
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                currentUser = null;
+                localStorage.removeItem('pastorAppUser');
+                document.getElementById('appScreen').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('loginPassword').value = '';
+            }
+        }
+        
+        // 데이터 로드
+        async function loadData() {
+            try {
+                // 교인 데이터
+                const membersDoc = await db.collection('churchMembers').doc('main').get();
+                if (membersDoc.exists) {
+                    members = membersDoc.data().list || [];
+                }
+                
+                // 구역 데이터
+                const cellsDoc = await db.collection('churchCells').doc('main').get();
+                if (cellsDoc.exists) {
+                    cells = cellsDoc.data().list || [];
+                }
+                
+                // 부서 데이터
+                const deptsDoc = await db.collection('churchDepartments').doc('main').get();
+                if (deptsDoc.exists) {
+                    departments = deptsDoc.data().list || [];
+                }
+                
+                // 심방 데이터
+                const visitsDoc = await db.collection('pastorVisits').doc('main').get();
+                if (visitsDoc.exists) {
+                    pastorVisits = visitsDoc.data().list || [];
+                }
+                
+                // 기도제목 데이터
+                const prayersDoc = await db.collection('prayerRequests').doc('main').get();
+                if (prayersDoc.exists) {
+                    prayerRequests = prayersDoc.data().list || [];
+                }
+                
+                // 구역예배 출석
+                const cellAttDoc = await db.collection('cellAttendance').doc('main').get();
+                if (cellAttDoc.exists) {
+                    cellAttendance = cellAttDoc.data().data || {};
+                }
+                
+                // 주일예배 출석 (구역)
+                const sundayAttDoc = await db.collection('cellSundayAttendance').doc('main').get();
+                if (sundayAttDoc.exists) {
+                    cellSundayAttendance = sundayAttDoc.data().data || {};
+                }
+                
+                // 구역 보고서
+                const reportsDoc = await db.collection('cellReports').doc('main').get();
+                if (reportsDoc.exists) {
+                    cellReports = reportsDoc.data().data || {};
+                }
+                
+                // 출석 데이터
+                const attDoc = await db.collection('churchAttendance').doc('main').get();
+                if (attDoc.exists) {
+                    churchAttendance = attDoc.data().dates || {};
+                }
+                
+                // 기도제목 모달의 구역 선택 업데이트
+                updatePrayerCellSelect();
+                
+            } catch (error) {
+                console.error('데이터 로드 오류:', error);
+                showToast('데이터를 불러오는 중 오류가 발생했습니다');
+            }
+        }
+        
+        // 실시간 리스너
+        function setupRealtimeListeners() {
+            // 심방 데이터
+            db.collection('pastorVisits').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    pastorVisits = doc.data().list || [];
+                    if (currentTab === 'Home') loadDashboard();
+                    if (currentTab === 'Visit') loadVisitList();
+                }
+            });
+            
+            // 기도제목
+            db.collection('prayerRequests').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    prayerRequests = doc.data().list || [];
+                    if (currentTab === 'Home') loadDashboard();
+                    if (currentTab === 'Prayer') loadPrayerList();
+                }
+            });
+            
+            // 교인 데이터
+            db.collection('churchMembers').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    members = doc.data().list || [];
+                    if (currentTab === 'Home') loadDashboard();
+                    if (currentTab === 'Member') loadMemberList();
+                }
+            });
+            
+            // 구역 보고서
+            db.collection('cellReports').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    cellReports = doc.data().data || {};
+                    if (currentTab === 'Status') loadStatusTab();
+                }
+            });
+        }
+        
+        // 탭 전환
+        function showTab(tab) {
+            currentTab = tab;
+            
+            // 모든 탭 숨기기
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // 선택된 탭 표시
+            document.getElementById('tab' + tab).classList.add('active');
+            document.querySelectorAll('.nav-item')[['Home', 'Visit', 'Prayer', 'Member', 'Status'].indexOf(tab)].classList.add('active');
+            
+            // FAB 버튼
+            const fab = document.getElementById('fabBtn');
+            if (tab === 'Visit' || tab === 'Prayer') {
+                fab.classList.add('show');
+            } else {
+                fab.classList.remove('show');
+            }
+            
+            // 탭별 데이터 로드
+            switch (tab) {
+                case 'Home': loadDashboard(); break;
+                case 'Visit': loadVisitList(); break;
+                case 'Prayer': loadPrayerList(); break;
+                case 'Member': loadMemberList(); break;
+                case 'Status': loadStatusTab(); break;
+            }
+        }
+        
+        // 대시보드 로드
+        function loadDashboard() {
+            // 통계
+            const totalMembers = members.length;
+            const today = new Date().toISOString().split('T')[0];
+            const lastSunday = getLastSunday();
+            
+            // 주일 출석
+            let sundayAttendance = 0;
+            Object.keys(cellSundayAttendance).forEach(key => {
+                if (key.endsWith('_' + lastSunday)) {
+                    sundayAttendance += cellSundayAttendance[key].length;
+                }
+            });
+            
+            // 새신자 (최근 3개월)
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            const newMembers = members.filter(m => m.registrationDate && new Date(m.registrationDate) >= threeMonthsAgo);
+            
+            document.getElementById('dashboardStats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalMembers}</div>
+                    <div class="stat-label">전체 교인</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${sundayAttendance}</div>
+                    <div class="stat-label">주일 출석</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${newMembers.length}</div>
+                    <div class="stat-label">새신자</div>
+                </div>
+            `;
+            
+            // 알림
+            const alerts = [];
+            
+            // 장기 결석자
+            const absentees = getLongAbsentees();
+            if (absentees.length > 0) {
+                alerts.push({ icon: '⚠️', text: `장기 결석자: ${absentees.length}명` });
+            }
+            
+            // 미제출 구역보고서
+            const missingReports = getMissingReports();
+            if (missingReports.length > 0) {
+                alerts.push({ icon: '📋', text: `미제출 보고서: ${missingReports.length}개` });
+            }
+            
+            // 긴급 기도제목
+            const urgentPrayers = prayerRequests.filter(p => p.urgency === 'urgent' && !p.answered);
+            if (urgentPrayers.length > 0) {
+                alerts.push({ icon: '🙏', text: `긴급 기도제목: ${urgentPrayers.length}건` });
+            }
+            
+            const alertCard = document.getElementById('alertCard');
+            if (alerts.length > 0) {
+                alertCard.style.display = 'block';
+                document.getElementById('alertList').innerHTML = alerts.map(a => `
+                    <div class="alert-item">
+                        <span>${a.icon}</span>
+                        <span>${a.text}</span>
+                    </div>
+                `).join('');
+            } else {
+                alertCard.style.display = 'none';
+            }
+            
+            // 오늘 심방
+            const todayVisits = pastorVisits.filter(v => v.date === today && v.status !== 'completed');
+            document.getElementById('todayVisits').innerHTML = todayVisits.length > 0 ? 
+                todayVisits.map(v => `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${v.target}</div>
+                            <div class="list-item-sub">${v.time || '시간 미정'} · ${v.type || '일반'}</div>
+                        </div>
+                        <span class="badge badge-blue">${v.type || '일반'}</span>
+                    </div>
+                `).join('') : '<p style="color: #94a3b8; text-align: center; padding: 20px;">오늘 예정된 심방이 없습니다</p>';
+            
+            // 긴급 기도제목
+            document.getElementById('urgentPrayers').innerHTML = urgentPrayers.length > 0 ?
+                urgentPrayers.slice(0, 3).map(p => `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${p.name}</div>
+                            <div class="list-item-sub">${p.content.substring(0, 50)}${p.content.length > 50 ? '...' : ''}</div>
+                        </div>
+                        <span class="badge badge-red">긴급</span>
+                    </div>
+                `).join('') : '<p style="color: #94a3b8; text-align: center; padding: 20px;">긴급 기도제목이 없습니다</p>';
+        }
+        
+        // 심방 목록
+        function loadVisitList() {
+            let filtered = [...pastorVisits];
+            
+            if (currentVisitFilter === 'scheduled') {
+                filtered = filtered.filter(v => v.status !== 'completed');
+            } else if (currentVisitFilter === 'completed') {
+                filtered = filtered.filter(v => v.status === 'completed');
+            }
+            
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            document.getElementById('visitList').innerHTML = filtered.length > 0 ?
+                filtered.map((v, idx) => {
+                    const originalIdx = pastorVisits.indexOf(v);
+                    const isCompleted = v.status === 'completed';
+                    const isPast = new Date(v.date) < new Date().setHours(0, 0, 0, 0);
+                    
+                    return `
+                        <div class="list-item" style="${isCompleted ? 'opacity: 0.7;' : ''}">
+                            <div class="list-item-content">
+                                <div class="list-item-title">
+                                    ${isCompleted ? '✅ ' : ''}${v.target}
+                                </div>
+                                <div class="list-item-sub">
+                                    📅 ${v.date} ${v.time ? '⏰ ' + v.time : ''}<br>
+                                    ${v.type || '일반'} ${v.address ? '· 📍 ' + v.address : ''}
+                                </div>
+                                ${v.memo ? `<div class="list-item-sub" style="margin-top: 5px; color: #1e3a5f;">📝 ${v.memo}</div>` : ''}
+                                ${v.record ? `<div class="list-item-sub" style="margin-top: 5px; color: #16a34a;">✅ ${v.record}</div>` : ''}
+                            </div>
+                            <div class="btn-group" style="flex-direction: column; gap: 4px;">
+                                ${!isCompleted ? `
+                                    <button class="btn btn-sm btn-success" onclick="showCompleteVisitModal(${originalIdx})">완료</button>
+                                    <button class="btn btn-sm btn-secondary" onclick="editVisit(${originalIdx})">수정</button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-danger" onclick="deleteVisit(${originalIdx})">삭제</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 40px;">심방 일정이 없습니다</p>';
+        }
+        
+        // 기도제목 목록
+        function loadPrayerList() {
+            let filtered = [...prayerRequests];
+            
+            if (currentPrayerFilter === 'urgent') {
+                filtered = filtered.filter(p => p.urgency === 'urgent' && !p.answered);
+            } else if (currentPrayerFilter === 'answered') {
+                filtered = filtered.filter(p => p.answered);
+            } else if (currentPrayerFilter === 'cell') {
+                filtered = filtered.filter(p => p.cell);
+            } else {
+                filtered = filtered.filter(p => !p.answered);
+            }
+            
+            filtered.sort((a, b) => {
+                if (a.urgency === 'urgent' && b.urgency !== 'urgent') return -1;
+                if (a.urgency !== 'urgent' && b.urgency === 'urgent') return 1;
+                return new Date(b.date || 0) - new Date(a.date || 0);
+            });
+            
+            document.getElementById('prayerList').innerHTML = filtered.length > 0 ?
+                filtered.map((p, idx) => {
+                    const originalIdx = prayerRequests.indexOf(p);
+                    
+                    return `
+                        <div class="list-item" style="${p.answered ? 'opacity: 0.7; background: #f0fdf4;' : ''}">
+                            <div class="list-item-content">
+                                <div class="list-item-title">
+                                    ${p.urgency === 'urgent' ? '🔴 ' : ''}${p.name}
+                                    ${p.cell ? `<span class="badge badge-blue" style="margin-left: 8px;">${p.cell}구역</span>` : ''}
+                                </div>
+                                <div class="list-item-sub" style="margin-top: 8px; white-space: pre-wrap;">${p.content}</div>
+                                ${p.answered ? `<div class="list-item-sub" style="margin-top: 5px; color: #16a34a;">✅ 응답됨</div>` : ''}
+                            </div>
+                            <div class="btn-group" style="flex-direction: column; gap: 4px;">
+                                ${!p.answered ? `
+                                    <button class="btn btn-sm btn-success" onclick="markPrayerAnswered(${originalIdx})">응답</button>
+                                    <button class="btn btn-sm btn-secondary" onclick="editPrayer(${originalIdx})">수정</button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-danger" onclick="deletePrayer(${originalIdx})">삭제</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 40px;">기도제목이 없습니다</p>';
+        }
+        
+        // 교인 목록
+        function loadMemberList() {
+            const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
+            let filtered = [...members];
+            
+            // 검색 필터
+            if (searchTerm) {
+                filtered = filtered.filter(m => 
+                    (m.nameKr || '').toLowerCase().includes(searchTerm) ||
+                    (m.nameEn || '').toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // 카테고리 필터
+            if (currentMemberFilter === 'absent') {
+                filtered = getLongAbsentees();
+            } else if (currentMemberFilter === 'new') {
+                const threeMonthsAgo = new Date();
+                threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                filtered = filtered.filter(m => m.registrationDate && new Date(m.registrationDate) >= threeMonthsAgo);
+            }
+            
+            document.getElementById('memberList').innerHTML = filtered.length > 0 ?
+                filtered.map(m => {
+                    const absentWeeks = getAbsentWeeks(m.nameKr);
+                    
+                    return `
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-title">${m.nameKr}</div>
+                                <div class="list-item-sub">
+                                    ${m.role || ''} ${m.cell ? '· ' + m.cell : ''}
+                                    ${m.phone ? '<br>📞 ' + m.phone : ''}
+                                </div>
+                            </div>
+                            ${absentWeeks >= 4 ? `<span class="badge badge-red">${absentWeeks}주 결석</span>` : 
+                              m.registrationDate ? `<span class="badge badge-green">새신자</span>` : ''}
+                        </div>
+                    `;
+                }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 40px;">해당하는 교인이 없습니다</p>';
+        }
+        
+        // 구역/부서 현황
+        function loadStatusTab() {
+            const lastSunday = getLastSunday();
+            
+            // 구역 현황
+            let cellHtml = '';
+            cells.forEach(cell => {
+                const key = `${cell.name}_${lastSunday}`;
+                const attendance = cellSundayAttendance[key] || [];
+                const cellMembers = members.filter(m => {
+                    const memberCell = (m.cell || '').replace('구역', '');
+                    return memberCell === cell.name || m.cell === cell.name + '구역';
+                });
+                const total = cellMembers.length + (cell.leaderName ? 1 : 0);
+                const rate = total > 0 ? Math.round((attendance.length / total) * 100) : 0;
+                const hasReport = cellReports[key];
+                
+                cellHtml += `
+                    <div class="cell-status-item">
+                        <div class="cell-name">[${cell.name}]</div>
+                        <div class="cell-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${rate}%; background: ${rate >= 80 ? '#10b981' : rate >= 50 ? '#f59e0b' : '#ef4444'};"></div>
+                            </div>
+                        </div>
+                        <div class="cell-rate" style="color: ${rate >= 80 ? '#10b981' : rate >= 50 ? '#f59e0b' : '#ef4444'};">${rate}%</div>
+                        <div class="cell-report-status">
+                            ${hasReport ? '<span class="badge badge-green">✅ 제출</span>' : '<span class="badge badge-yellow">⏳ 미제출</span>'}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('cellStatusList').innerHTML = cellHtml || '<p style="color: #94a3b8; text-align: center;">구역 정보가 없습니다</p>';
+            
+            // 부서 현황
+            let deptHtml = '';
+            departments.forEach(dept => {
+                const eventCount = dept.eventPlan ? dept.eventPlan.length : 0;
+                const budget = dept.budget || 0;
+                
+                deptHtml += `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${dept.name}</div>
+                            <div class="list-item-sub">담당: ${dept.leader || '미정'}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.8em; color: #64748b;">행사 ${eventCount}건</div>
+                            <div style="font-weight: 600; color: #1e3a5f;">$${budget.toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('deptStatusList').innerHTML = deptHtml || '<p style="color: #94a3b8; text-align: center;">부서 정보가 없습니다</p>';
+        }
+        
+        // 필터 함수들
+        function filterVisits(filter) {
+            currentVisitFilter = filter;
+            document.querySelectorAll('#tabVisit .filter-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadVisitList();
+        }
+        
+        function filterPrayers(filter) {
+            currentPrayerFilter = filter;
+            document.querySelectorAll('#tabPrayer .filter-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadPrayerList();
+        }
+        
+        function filterMembers(filter) {
+            currentMemberFilter = filter;
+            document.querySelectorAll('#tabMember .filter-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadMemberList();
+        }
+        
+        function searchMembers() {
+            loadMemberList();
+        }
+        
+        // FAB 클릭
+        function handleFabClick() {
+            if (currentTab === 'Visit') {
+                showAddVisitModal();
+            } else if (currentTab === 'Prayer') {
+                showAddPrayerModal();
+            }
+        }
+        
+        // 심방 모달
+        function showAddVisitModal() {
+            document.getElementById('visitForm').reset();
+            document.getElementById('visitEditId').value = '';
+            document.getElementById('visitModalTitle').textContent = '🏠 심방 일정 추가';
+            document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('visitModal').classList.add('active');
+        }
+        
+        function editVisit(idx) {
+            const visit = pastorVisits[idx];
+            document.getElementById('visitEditId').value = idx;
+            document.getElementById('visitModalTitle').textContent = '🏠 심방 일정 수정';
+            document.getElementById('visitDate').value = visit.date || '';
+            document.getElementById('visitTime').value = visit.time || '';
+            document.getElementById('visitTarget').value = visit.target || '';
+            document.getElementById('visitAddress').value = visit.address || '';
+            document.getElementById('visitType').value = visit.type || '일반';
+            document.getElementById('visitMemo').value = visit.memo || '';
+            document.getElementById('visitModal').classList.add('active');
+        }
+        
+        // 심방 저장
+        document.getElementById('visitForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const editId = document.getElementById('visitEditId').value;
+            const visitData = {
+                date: document.getElementById('visitDate').value,
+                time: document.getElementById('visitTime').value,
+                target: document.getElementById('visitTarget').value,
+                address: document.getElementById('visitAddress').value,
+                type: document.getElementById('visitType').value,
+                memo: document.getElementById('visitMemo').value,
+                status: 'scheduled',
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editId !== '') {
+                visitData.status = pastorVisits[editId].status;
+                visitData.record = pastorVisits[editId].record;
+                pastorVisits[editId] = visitData;
+            } else {
+                pastorVisits.push(visitData);
+            }
+            
+            await saveVisits();
+            closeModal('visitModal');
+            showToast('심방 일정이 저장되었습니다');
+            loadVisitList();
+        });
+        
+        // 심방 완료 모달
+        function showCompleteVisitModal(idx) {
+            document.getElementById('completeVisitId').value = idx;
+            document.getElementById('visitRecord').value = '';
+            document.getElementById('visitCompleteModal').classList.add('active');
+        }
+        
+        document.getElementById('visitCompleteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const idx = document.getElementById('completeVisitId').value;
+            const record = document.getElementById('visitRecord').value;
+            
+            pastorVisits[idx].status = 'completed';
+            pastorVisits[idx].record = record;
+            pastorVisits[idx].completedAt = new Date().toISOString();
+            
+            await saveVisits();
+            closeModal('visitCompleteModal');
+            showToast('심방이 완료 처리되었습니다');
+            loadVisitList();
+        });
+        
+        // 심방 삭제
+        async function deleteVisit(idx) {
+            if (confirm('이 심방 일정을 삭제하시겠습니까?')) {
+                pastorVisits.splice(idx, 1);
+                await saveVisits();
+                showToast('심방 일정이 삭제되었습니다');
+                loadVisitList();
+            }
+        }
+        
+        // 심방 저장
+        async function saveVisits() {
+            try {
+                await db.collection('pastorVisits').doc('main').set({ list: pastorVisits });
+            } catch (error) {
+                console.error('심방 저장 오류:', error);
+                showToast('저장 중 오류가 발생했습니다');
+            }
+        }
+        
+        // 기도제목 모달
+        function showAddPrayerModal() {
+            document.getElementById('prayerForm').reset();
+            document.getElementById('prayerEditId').value = '';
+            document.getElementById('prayerModalTitle').textContent = '🙏 기도제목 추가';
+            document.getElementById('prayerModal').classList.add('active');
+        }
+        
+        function editPrayer(idx) {
+            const prayer = prayerRequests[idx];
+            document.getElementById('prayerEditId').value = idx;
+            document.getElementById('prayerModalTitle').textContent = '🙏 기도제목 수정';
+            document.getElementById('prayerName').value = prayer.name || '';
+            document.getElementById('prayerCell').value = prayer.cell || '';
+            document.getElementById('prayerContent').value = prayer.content || '';
+            document.getElementById('prayerUrgency').value = prayer.urgency || 'normal';
+            document.getElementById('prayerModal').classList.add('active');
+        }
+        
+        // 기도제목 저장
+        document.getElementById('prayerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const editId = document.getElementById('prayerEditId').value;
+            const prayerData = {
+                name: document.getElementById('prayerName').value,
+                cell: document.getElementById('prayerCell').value,
+                content: document.getElementById('prayerContent').value,
+                urgency: document.getElementById('prayerUrgency').value,
+                date: new Date().toISOString().split('T')[0],
+                answered: false
+            };
+            
+            if (editId !== '') {
+                prayerData.answered = prayerRequests[editId].answered;
+                prayerRequests[editId] = prayerData;
+            } else {
+                prayerRequests.push(prayerData);
+            }
+            
+            await savePrayers();
+            closeModal('prayerModal');
+            showToast('기도제목이 저장되었습니다');
+            loadPrayerList();
+        });
+        
+        // 기도 응답
+        async function markPrayerAnswered(idx) {
+            if (confirm('이 기도제목을 응답됨으로 표시하시겠습니까?')) {
+                prayerRequests[idx].answered = true;
+                prayerRequests[idx].answeredAt = new Date().toISOString();
+                await savePrayers();
+                showToast('기도가 응답되었습니다! 🙏');
+                loadPrayerList();
+            }
+        }
+        
+        // 기도제목 삭제
+        async function deletePrayer(idx) {
+            if (confirm('이 기도제목을 삭제하시겠습니까?')) {
+                prayerRequests.splice(idx, 1);
+                await savePrayers();
+                showToast('기도제목이 삭제되었습니다');
+                loadPrayerList();
+            }
+        }
+        
+        // 기도제목 저장
+        async function savePrayers() {
+            try {
+                await db.collection('prayerRequests').doc('main').set({ list: prayerRequests });
+            } catch (error) {
+                console.error('기도제목 저장 오류:', error);
+                showToast('저장 중 오류가 발생했습니다');
+            }
+        }
+        
+        // 기도제목 구역 선택 업데이트
+        function updatePrayerCellSelect() {
+            const select = document.getElementById('prayerCell');
+            select.innerHTML = '<option value="">선택안함</option>';
+            cells.forEach(cell => {
+                select.innerHTML += `<option value="${cell.name}">${cell.name}구역</option>`;
+            });
+        }
+        
+        // 유틸리티 함수들
+        function getLastSunday() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = day === 0 ? 0 : day;
+            const sunday = new Date(today);
+            sunday.setDate(today.getDate() - diff);
+            return sunday.toISOString().split('T')[0];
+        }
+        
+        function getLongAbsentees() {
+            const fourWeeksAgo = new Date();
+            fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+            
+            return members.filter(m => {
+                const weeks = getAbsentWeeks(m.nameKr);
+                return weeks >= 4;
+            });
+        }
+        
+        function getAbsentWeeks(memberName) {
+            let lastAttended = null;
+            
+            // 주일 출석 기록 확인
+            Object.keys(cellSundayAttendance).forEach(key => {
+                const date = key.split('_')[1];
+                if (cellSundayAttendance[key].includes(memberName)) {
+                    if (!lastAttended || date > lastAttended) {
+                        lastAttended = date;
+                    }
+                }
+            });
+            
+            if (!lastAttended) return 99;
+            
+            const lastDate = new Date(lastAttended);
+            const today = new Date();
+            const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+            return Math.floor(diffDays / 7);
+        }
+        
+        function getMissingReports() {
+            const lastSunday = getLastSunday();
+            return cells.filter(cell => {
+                const key = `${cell.name}_${lastSunday}`;
+                return !cellReports[key];
+            });
+        }
+        
+        // 모달 닫기
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // 토스트
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // 모달 외부 클릭 시 닫기
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
