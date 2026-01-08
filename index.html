@@ -4378,7 +4378,7 @@
                 </div>
             </div>
             <div style="overflow-x: auto;">
-                <table id="userListTable" style="width: 100%; border-collapse: collapse; min-width: 900px;">
+                <table id="userListTable" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
                     <thead>
                         <tr style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
                             <th style="padding: 12px 10px; text-align: left; font-weight: 600; white-space: nowrap;">이름</th>
@@ -4392,6 +4392,7 @@
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">재정보기</th>
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em; color: #dc2626;">재정수정</th>
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">교적관리</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em; color: #1e3a5f; background: rgba(255,255,255,0.2);">목회자</th>
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">사용자관리</th>
                             <th style="padding: 12px 10px; text-align: center; font-weight: 600;">관리</th>
                         </tr>
@@ -4560,6 +4561,10 @@
                     <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" id="permMembers" style="width: 20px; height: 20px;">
                         <span>교적관리</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #e0e7ff; border-radius: 8px; cursor: pointer; border: 1px solid #a5b4fc;">
+                        <input type="checkbox" id="permPastor" style="width: 20px; height: 20px;">
+                        <span style="color: #1e3a5f; font-weight: 600;">⛪ 목회자앱</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #fef3c7; border-radius: 8px; cursor: pointer; border: 1px solid #fcd34d;">
                         <input type="checkbox" id="permStudentRecords" style="width: 20px; height: 20px;">
@@ -6094,7 +6099,7 @@
                 username: 'gkc8127', 
                 name: '정준연', 
                 role: '관리자',
-                permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'users']
+                permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'pastor', 'users']
             };
             
             document.getElementById('authButtons').style.display = 'none';
@@ -6649,7 +6654,7 @@
             if (table) table.style.display = 'table';
             if (emptyMsg) emptyMsg.style.display = 'none';
             
-            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'users'];
+            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'pastor', 'users'];
             
             let html = '';
             users.forEach((user, index) => {
@@ -6835,8 +6840,8 @@
             const isPastor = user.role === '관리자';
             
             // 현재 권한 체크 (관리자는 모든 권한 체크 + 비활성화)
-            const permissionCheckboxes = ['permDashboard', 'permAttendance', 'permCell', 'permDepartment', 'permMentor', 'permOffering', 'permOfferingEdit', 'permMembers', 'permStudentRecords', 'permUsers'];
-            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'studentRecords', 'users'];
+            const permissionCheckboxes = ['permDashboard', 'permAttendance', 'permCell', 'permDepartment', 'permMentor', 'permOffering', 'permOfferingEdit', 'permMembers', 'permPastor', 'permStudentRecords', 'permUsers'];
+            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'pastor', 'studentRecords', 'users'];
             
             permissionCheckboxes.forEach((id, index) => {
                 const checkbox = document.getElementById(id);
@@ -6873,6 +6878,7 @@
             if (document.getElementById('permOffering').checked) permissions.push('offering');
             if (document.getElementById('permOfferingEdit').checked) permissions.push('offeringEdit');
             if (document.getElementById('permMembers').checked) permissions.push('members');
+            if (document.getElementById('permPastor').checked) permissions.push('pastor');
             if (document.getElementById('permStudentRecords').checked) permissions.push('studentRecords');
             if (document.getElementById('permUsers').checked) permissions.push('users');
             
@@ -10210,7 +10216,7 @@
                     username: 'gkc8127', 
                     name: '정준연', 
                     role: '관리자',
-                    permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'users']
+                    permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'pastor', 'users']
                 };
                 
                 // 로그인 상태 저장
@@ -10246,7 +10252,7 @@
                         name: '정준연',
                         password: '4581',
                         role: '관리자',
-                        permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'users'],
+                        permissions: ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'pastor', 'users'],
                         approved: true
                     });
                     localStorage.setItem('registeredUsers', JSON.stringify(adminUsers));
