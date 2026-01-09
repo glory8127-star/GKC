@@ -633,14 +633,12 @@
         
         <!-- 구역/부서 현황 -->
         <div id="tabStatus" class="tab-content">
-            <div class="card">
-                <div class="card-title">⛪ 구역 현황</div>
-                <div id="cellStatusList">
-                    <!-- 동적 생성 -->
-                </div>
+            <div class="card-title" style="margin-bottom: 12px;">⛪ 구역별 출석 현황</div>
+            <div id="cellStatusList">
+                <!-- 동적 생성 -->
             </div>
             
-            <div class="card">
+            <div class="card" style="margin-top: 20px;">
                 <div class="card-title">🏢 부서 현황</div>
                 <div id="deptStatusList">
                     <!-- 동적 생성 -->
@@ -810,6 +808,7 @@
         let prayerRequests = [];
         let cellAttendance = {};
         let cellSundayAttendance = {};
+        let cellWorshipDates = {};
         let cellReports = {};
         let churchAttendance = {};
         
@@ -938,6 +937,12 @@
                     cellAttendance = cellAttDoc.data().data || {};
                 }
                 
+                // 구역예배 날짜
+                const cellDatesDoc = await db.collection('cellWorshipDates').doc('main').get();
+                if (cellDatesDoc.exists) {
+                    cellWorshipDates = cellDatesDoc.data().dates || {};
+                }
+                
                 // 주일예배 출석 (구역)
                 const sundayAttDoc = await db.collection('cellSundayAttendance').doc('main').get();
                 if (sundayAttDoc.exists) {
@@ -1051,7 +1056,7 @@
             // 새신자 (최근 3개월)
             const threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            const newMembers = members.filter(m => m.registrationDate && new Date(m.registrationDate) >= threeMonthsAgo);
+            const newMembers = members.filter(m => m.regDate && new Date(m.regDate) >= threeMonthsAgo);
             
             document.getElementById('dashboardStats').innerHTML = `
                 <div class="stat-card">
@@ -1236,24 +1241,37 @@
             } else if (currentMemberFilter === 'new') {
                 const threeMonthsAgo = new Date();
                 threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-                filtered = filtered.filter(m => m.registrationDate && new Date(m.registrationDate) >= threeMonthsAgo);
+                filtered = filtered.filter(m => m.regDate && new Date(m.regDate) >= threeMonthsAgo);
+                filtered.sort((a, b) => new Date(b.regDate) - new Date(a.regDate));
             }
             
             document.getElementById('memberList').innerHTML = filtered.length > 0 ?
                 filtered.map(m => {
                     const absentWeeks = getAbsentWeeks(m.nameKr);
+                    const isNewMember = m.regDate && new Date(m.regDate) >= new Date(new Date().setMonth(new Date().getMonth() - 3));
+                    
+                    // 전화번호 포맷
+                    const phoneDisplay = m.phone ? `
+                        <a href="tel:${m.phone.replace(/[^0-9+]/g, '')}" 
+                           style="display: inline-flex; align-items: center; gap: 5px; background: #10b981; color: white; padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 0.85em; margin-top: 8px;">
+                            📞 ${m.phone}
+                        </a>
+                    ` : '';
                     
                     return `
-                        <div class="list-item">
-                            <div class="list-item-content">
-                                <div class="list-item-title">${m.nameKr}</div>
-                                <div class="list-item-sub">
-                                    ${m.role || ''} ${m.cell ? '· ' + m.cell : ''}
-                                    ${m.phone ? '<br>📞 ' + m.phone : ''}
+                        <div class="list-item" style="flex-direction: column; align-items: flex-start;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                <div class="list-item-content">
+                                    <div class="list-item-title">${m.nameKr}</div>
+                                    <div class="list-item-sub">
+                                        ${m.role || ''} ${m.cell ? '· ' + m.cell : ''}
+                                        ${m.regDate ? '<br>등록: ' + m.regDate : ''}
+                                    </div>
                                 </div>
+                                ${absentWeeks >= 4 ? `<span class="badge badge-red">${absentWeeks}주 결석</span>` : 
+                                  isNewMember ? `<span class="badge badge-green">새신자</span>` : ''}
                             </div>
-                            ${absentWeeks >= 4 ? `<span class="badge badge-red">${absentWeeks}주 결석</span>` : 
-                              m.registrationDate ? `<span class="badge badge-green">새신자</span>` : ''}
+                            ${phoneDisplay}
                         </div>
                     `;
                 }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 40px;">해당하는 교인이 없습니다</p>';
@@ -1266,27 +1284,76 @@
             // 구역 현황
             let cellHtml = '';
             cells.forEach(cell => {
-                const key = `${cell.name}_${lastSunday}`;
-                const attendance = cellSundayAttendance[key] || [];
+                // 구역원 목록 가져오기
                 const cellMembers = members.filter(m => {
                     const memberCell = (m.cell || '').replace('구역', '');
                     return memberCell === cell.name || m.cell === cell.name + '구역';
                 });
-                const total = cellMembers.length + (cell.leaderName ? 1 : 0);
-                const rate = total > 0 ? Math.round((attendance.length / total) * 100) : 0;
-                const hasReport = cellReports[key];
+                
+                // 구역장 포함한 전체 명단
+                let allMembers = [...cellMembers.map(m => m.nameKr)];
+                if (cell.leaderName && !allMembers.includes(cell.leaderName)) {
+                    allMembers.unshift(cell.leaderName);
+                }
+                const total = allMembers.length;
+                
+                // 주일예배 출석
+                const sundayKey = `${cell.name}_${lastSunday}`;
+                const sundayAtt = cellSundayAttendance[sundayKey] || [];
+                const sundayRate = total > 0 ? Math.round((sundayAtt.length / total) * 100) : 0;
+                const sundayAbsent = allMembers.filter(name => !sundayAtt.includes(name));
+                
+                // 구역모임 출석 (구역별 날짜 사용)
+                const cellDate = cellWorshipDates[cell.name] || lastSunday;
+                const cellKey = `${cell.name}_${cellDate}`;
+                const cellAtt = cellAttendance[cellKey] || [];
+                const cellRate = total > 0 ? Math.round((cellAtt.length / total) * 100) : 0;
+                const cellAbsent = allMembers.filter(name => !cellAtt.includes(name));
+                
+                // 보고서 제출 여부
+                const hasReport = cellReports[sundayKey];
                 
                 cellHtml += `
-                    <div class="cell-status-item">
-                        <div class="cell-name">[${cell.name}]</div>
-                        <div class="cell-progress">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${rate}%; background: ${rate >= 80 ? '#10b981' : rate >= 50 ? '#f59e0b' : '#ef4444'};"></div>
-                            </div>
+                    <div class="card" style="margin-bottom: 12px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="font-weight: 700; font-size: 1.1em; color: ${cell.color || '#1e3a5f'};">[${cell.name}구역]</div>
+                            ${hasReport ? '<span class="badge badge-green">✅ 보고서</span>' : '<span class="badge badge-yellow">⏳ 미제출</span>'}
                         </div>
-                        <div class="cell-rate" style="color: ${rate >= 80 ? '#10b981' : rate >= 50 ? '#f59e0b' : '#ef4444'};">${rate}%</div>
-                        <div class="cell-report-status">
-                            ${hasReport ? '<span class="badge badge-green">✅ 제출</span>' : '<span class="badge badge-yellow">⏳ 미제출</span>'}
+                        
+                        <!-- 주일예배 -->
+                        <div style="margin-bottom: 12px; padding: 12px; background: #eff6ff; border-radius: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #1e40af;">⛪ 주일예배 (${lastSunday})</span>
+                                <span style="font-weight: 700; color: ${sundayRate >= 80 ? '#10b981' : sundayRate >= 50 ? '#f59e0b' : '#ef4444'};">
+                                    ${sundayAtt.length}/${total}명 (${sundayRate}%)
+                                </span>
+                            </div>
+                            <div class="progress-bar" style="margin-bottom: 8px;">
+                                <div class="progress-fill" style="width: ${sundayRate}%; background: #3b82f6;"></div>
+                            </div>
+                            ${sundayAbsent.length > 0 ? `
+                                <div style="font-size: 0.85em; color: #dc2626;">
+                                    <span style="font-weight: 600;">결석:</span> ${sundayAbsent.join(', ')}
+                                </div>
+                            ` : '<div style="font-size: 0.85em; color: #10b981;">✓ 전원 출석</div>'}
+                        </div>
+                        
+                        <!-- 구역모임 -->
+                        <div style="padding: 12px; background: #fef3c7; border-radius: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #92400e;">🏠 구역모임 (${cellDate})</span>
+                                <span style="font-weight: 700; color: ${cellRate >= 80 ? '#10b981' : cellRate >= 50 ? '#f59e0b' : '#ef4444'};">
+                                    ${cellAtt.length}/${total}명 (${cellRate}%)
+                                </span>
+                            </div>
+                            <div class="progress-bar" style="margin-bottom: 8px;">
+                                <div class="progress-fill" style="width: ${cellRate}%; background: #f59e0b;"></div>
+                            </div>
+                            ${cellAbsent.length > 0 ? `
+                                <div style="font-size: 0.85em; color: #dc2626;">
+                                    <span style="font-weight: 600;">결석:</span> ${cellAbsent.join(', ')}
+                                </div>
+                            ` : '<div style="font-size: 0.85em; color: #10b981;">✓ 전원 출석</div>'}
                         </div>
                     </div>
                 `;
@@ -1544,29 +1611,29 @@
         }
         
         function getLongAbsentees() {
-            const fourWeeksAgo = new Date();
-            fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-            
             return members.filter(m => {
                 const weeks = getAbsentWeeks(m.nameKr);
+                // 2026년도 출석 기록이 있고 4주 이상 결석한 사람만
                 return weeks >= 4;
             });
         }
         
         function getAbsentWeeks(memberName) {
             let lastAttended = null;
+            const year2026Start = '2026-01-01';
             
-            // 주일 출석 기록 확인
+            // 주일 출석 기록 확인 (2026년도 이후만)
             Object.keys(cellSundayAttendance).forEach(key => {
                 const date = key.split('_')[1];
-                if (cellSundayAttendance[key].includes(memberName)) {
+                if (date >= year2026Start && cellSundayAttendance[key].includes(memberName)) {
                     if (!lastAttended || date > lastAttended) {
                         lastAttended = date;
                     }
                 }
             });
             
-            if (!lastAttended) return 99;
+            // 2026년도 출석 기록이 없으면 -1 반환 (표시 안함)
+            if (!lastAttended) return -1;
             
             const lastDate = new Date(lastAttended);
             const today = new Date();
