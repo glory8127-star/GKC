@@ -871,6 +871,7 @@
         // 페이지 로드 시 버전 체크 시작
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(startVersionCheck, 2000); // 2초 후 버전 체크 시작
+            trackVisitor(); // 방문자 추적
         });
         
         // Firestore 데이터 저장 함수
@@ -4356,6 +4357,9 @@
             <button class="user-tab" onclick="showUserTab('list')" id="userTabList" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
                 회원 목록
             </button>
+            <button class="user-tab" onclick="showUserTab('visitor')" id="userTabVisitor" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                📊 방문자 통계
+            </button>
             <button class="user-tab" onclick="showUserTab('backup')" id="userTabBackup" style="background: white; color: #333; padding: 12px 25px; border: 1px solid #e2e8f0; font-weight: 600; border-radius: 8px; cursor: pointer;">
                 💾 백업/복원
             </button>
@@ -4404,6 +4408,47 @@
             </div>
             <div id="userListEmpty" style="text-align: center; color: #718096; padding: 40px; display: none;">
                 등록된 회원이 없습니다.
+            </div>
+        </div>
+        
+        <!-- 방문자 통계 탭 -->
+        <div id="userVisitorTab" class="card" style="display: none;">
+            <h3 style="margin: 0 0 20px 0; color: #667eea;">📊 웹사이트 방문자 통계</h3>
+            
+            <!-- 통계 카드 -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2.2em; font-weight: 700;" id="visitorToday">0</div>
+                    <div style="opacity: 0.9; font-size: 0.9em;">오늘</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2.2em; font-weight: 700;" id="visitorWeek">0</div>
+                    <div style="opacity: 0.9; font-size: 0.9em;">이번 주</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2.2em; font-weight: 700;" id="visitorMonth">0</div>
+                    <div style="opacity: 0.9; font-size: 0.9em;">이번 달</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2.2em; font-weight: 700;" id="visitorTotal">0</div>
+                    <div style="opacity: 0.9; font-size: 0.9em;">전체</div>
+                </div>
+            </div>
+            
+            <!-- 페이지별 방문 -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #1e293b;">📄 페이지별 방문 (오늘)</h4>
+                <div id="pageVisitList">
+                    <p style="color: #94a3b8; text-align: center;">로딩 중...</p>
+                </div>
+            </div>
+            
+            <!-- 일별 방문 기록 -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #1e293b;">📅 최근 7일 방문 기록</h4>
+                <div id="dailyVisitList">
+                    <p style="color: #94a3b8; text-align: center;">로딩 중...</p>
+                </div>
             </div>
         </div>
         
@@ -6303,6 +6348,139 @@
             loadSignupRequests();
         }
         
+        // ===== 방문자 통계 기능 =====
+        
+        // 방문 기록 저장
+        async function trackVisitor() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const page = window.location.pathname.split('/').pop() || 'index.html';
+                
+                // 세션 체크 (중복 방문 방지)
+                const sessionKey = `visited_${today}_${page}`;
+                if (sessionStorage.getItem(sessionKey)) return;
+                sessionStorage.setItem(sessionKey, 'true');
+                
+                // Firebase에 방문 기록
+                const visitorRef = db.collection('visitorStats').doc('main');
+                const doc = await visitorRef.get();
+                
+                let data = doc.exists ? doc.data() : { daily: {}, pages: {}, total: 0 };
+                
+                // 일별 카운트
+                if (!data.daily) data.daily = {};
+                if (!data.daily[today]) data.daily[today] = 0;
+                data.daily[today]++;
+                
+                // 페이지별 카운트 (오늘)
+                if (!data.pages) data.pages = {};
+                if (!data.pages[today]) data.pages[today] = {};
+                if (!data.pages[today][page]) data.pages[today][page] = 0;
+                data.pages[today][page]++;
+                
+                // 전체 카운트
+                if (!data.total) data.total = 0;
+                data.total++;
+                
+                await visitorRef.set(data);
+                
+            } catch (error) {
+                console.log('방문자 추적 오류:', error);
+            }
+        }
+        
+        // 방문자 통계 로드
+        async function loadVisitorStats() {
+            try {
+                const doc = await db.collection('visitorStats').doc('main').get();
+                const data = doc.exists ? doc.data() : { daily: {}, pages: {}, total: 0 };
+                
+                const today = new Date().toISOString().split('T')[0];
+                
+                // 이번 주 시작일 (일요일)
+                const now = new Date();
+                const dayOfWeek = now.getDay();
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - dayOfWeek);
+                const weekStartStr = weekStart.toISOString().split('T')[0];
+                
+                // 이번 달 시작일
+                const monthStart = today.substring(0, 7) + '-01';
+                
+                // 통계 계산
+                let todayCount = data.daily && data.daily[today] ? data.daily[today] : 0;
+                let weekCount = 0;
+                let monthCount = 0;
+                
+                if (data.daily) {
+                    Object.keys(data.daily).forEach(date => {
+                        if (date >= weekStartStr) weekCount += data.daily[date];
+                        if (date >= monthStart) monthCount += data.daily[date];
+                    });
+                }
+                
+                // 통계 표시
+                document.getElementById('visitorToday').textContent = todayCount.toLocaleString();
+                document.getElementById('visitorWeek').textContent = weekCount.toLocaleString();
+                document.getElementById('visitorMonth').textContent = monthCount.toLocaleString();
+                document.getElementById('visitorTotal').textContent = (data.total || 0).toLocaleString();
+                
+                // 페이지별 방문 (오늘)
+                const pageList = document.getElementById('pageVisitList');
+                const todayPages = data.pages && data.pages[today] ? data.pages[today] : {};
+                
+                if (Object.keys(todayPages).length > 0) {
+                    const sortedPages = Object.entries(todayPages).sort((a, b) => b[1] - a[1]);
+                    pageList.innerHTML = sortedPages.map(([page, count]) => {
+                        const pageName = {
+                            'index.html': '메인 웹사이트',
+                            'cell.html': '구역관리 앱',
+                            'department.html': '부서관리 앱',
+                            'pastor.html': '목회자 앱'
+                        }[page] || page;
+                        
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 10px; background: white; border-radius: 8px; margin-bottom: 8px;">
+                                <span>${pageName}</span>
+                                <span style="font-weight: 600; color: #667eea;">${count}회</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    pageList.innerHTML = '<p style="color: #94a3b8; text-align: center;">오늘 방문 기록이 없습니다</p>';
+                }
+                
+                // 최근 7일 방문 기록
+                const dailyList = document.getElementById('dailyVisitList');
+                const last7Days = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    last7Days.push(d.toISOString().split('T')[0]);
+                }
+                
+                dailyList.innerHTML = last7Days.map(date => {
+                    const count = data.daily && data.daily[date] ? data.daily[date] : 0;
+                    const dayName = new Date(date).toLocaleDateString('ko-KR', { weekday: 'short', month: 'numeric', day: 'numeric' });
+                    const maxCount = Math.max(...last7Days.map(d => (data.daily && data.daily[d]) || 0), 1);
+                    const barWidth = Math.round((count / maxCount) * 100);
+                    
+                    return `
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="width: 80px; font-size: 0.9em; color: #64748b;">${dayName}</span>
+                            <div style="flex: 1; background: #e2e8f0; border-radius: 4px; height: 20px; overflow: hidden;">
+                                <div style="width: ${barWidth}%; background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; border-radius: 4px;"></div>
+                            </div>
+                            <span style="width: 40px; text-align: right; font-weight: 600; color: #1e293b;">${count}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('방문자 통계 로드 오류:', error);
+            }
+        }
+        
         // ===== 백업/복원 기능 =====
         
         // 데이터 현황 로드
@@ -6785,15 +6963,17 @@
         function showUserTab(tab) {
             document.getElementById('userRequestsTab').style.display = tab === 'requests' ? 'block' : 'none';
             document.getElementById('userListTab').style.display = tab === 'list' ? 'block' : 'none';
+            document.getElementById('userVisitorTab').style.display = tab === 'visitor' ? 'block' : 'none';
             document.getElementById('userBackupTab').style.display = tab === 'backup' ? 'block' : 'none';
             
             // 탭 버튼 스타일 업데이트
             const reqTab = document.getElementById('userTabRequests');
             const listTab = document.getElementById('userTabList');
+            const visitorTab = document.getElementById('userTabVisitor');
             const backupTab = document.getElementById('userTabBackup');
             
             // 모든 탭 기본 스타일
-            [reqTab, listTab, backupTab].forEach(t => {
+            [reqTab, listTab, visitorTab, backupTab].forEach(t => {
                 if (t) {
                     t.style.background = 'white';
                     t.style.color = '#333';
@@ -6802,7 +6982,12 @@
             });
             
             // 선택된 탭 활성화 스타일
-            const activeTab = tab === 'requests' ? reqTab : (tab === 'list' ? listTab : backupTab);
+            let activeTab;
+            if (tab === 'requests') activeTab = reqTab;
+            else if (tab === 'list') activeTab = listTab;
+            else if (tab === 'visitor') activeTab = visitorTab;
+            else activeTab = backupTab;
+            
             if (activeTab) {
                 activeTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
                 activeTab.style.color = 'white';
@@ -6811,6 +6996,10 @@
             
             if (tab === 'list') {
                 loadRegisteredUsers();
+            }
+            
+            if (tab === 'visitor') {
+                loadVisitorStats();
             }
             
             if (tab === 'backup') {
