@@ -819,6 +819,7 @@
         
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
+            trackVisitor(); // 방문자 추적
             const savedUser = localStorage.getItem('pastorAppUser');
             if (savedUser) {
                 try {
@@ -829,6 +830,37 @@
                 }
             }
         });
+        
+        // 방문자 추적
+        async function trackVisitor() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const page = 'pastor.html';
+                const sessionKey = `visited_${today}_${page}`;
+                if (sessionStorage.getItem(sessionKey)) return;
+                sessionStorage.setItem(sessionKey, 'true');
+                
+                const visitorRef = db.collection('visitorStats').doc('main');
+                const doc = await visitorRef.get();
+                let data = doc.exists ? doc.data() : { daily: {}, pages: {}, total: 0 };
+                
+                if (!data.daily) data.daily = {};
+                if (!data.daily[today]) data.daily[today] = 0;
+                data.daily[today]++;
+                
+                if (!data.pages) data.pages = {};
+                if (!data.pages[today]) data.pages[today] = {};
+                if (!data.pages[today][page]) data.pages[today][page] = 0;
+                data.pages[today][page]++;
+                
+                if (!data.total) data.total = 0;
+                data.total++;
+                
+                await visitorRef.set(data);
+            } catch (error) {
+                console.log('방문자 추적 오류:', error);
+            }
+        }
         
         // 로그인
         async function login() {
