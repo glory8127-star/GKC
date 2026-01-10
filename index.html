@@ -8770,7 +8770,7 @@
             if (!url) return null;
             // 다양한 유튜브 URL 형식 지원
             const patterns = [
-                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/,
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/live\/|youtube\.com\/shorts\/)([^&\?\/]+)/,
                 /^([a-zA-Z0-9_-]{11})$/
             ];
             for (const pattern of patterns) {
