@@ -2484,6 +2484,15 @@
                     <div id="dashNewFamilySummary"></div>
                 </div>
                 
+                <!-- 최근 방문자 명단 -->
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #10b981; font-weight: 600;">🚶 최근 방문자</h3>
+                        <span style="font-size: 0.8em; color: #888;">최근 2개월</span>
+                    </div>
+                    <div id="dashMainRecentVisitors"></div>
+                </div>
+                
                 <!-- 이번달/다음달 생일 -->
                 <div class="card" style="border-left: 4px solid #ec4899;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -8604,6 +8613,39 @@
             
             // 새가족 명단 연동 - loadMemberDashboard()에서 dashNewFamilySummary도 업데이트
             loadMemberDashboard();
+            
+            // 메인 대시보드 방문자 명단 (2개월)
+            const visitors = JSON.parse(localStorage.getItem('churchVisitors') || '[]');
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+            
+            const recentVisitors = visitors.filter(v => {
+                if (v.visitDate) {
+                    return new Date(v.visitDate) >= twoMonthsAgo;
+                }
+                return false;
+            }).sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate));
+            
+            let mainVisitorHtml = '';
+            if (recentVisitors.length > 0) {
+                recentVisitors.forEach(v => {
+                    const isRegistered = !!v.regDate;
+                    mainVisitorHtml += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                            <div>
+                                <span style="font-weight: 600;">${v.name}</span>
+                                ${isRegistered ? '<span style="background: #dcfce7; color: #16a34a; padding: 2px 6px; border-radius: 8px; font-size: 0.7em; margin-left: 6px;">등록</span>' : ''}
+                                <span style="font-size: 0.8em; color: #888; margin-left: 8px;">${v.visitDate || ''}</span>
+                            </div>
+                            <span style="color: #10b981; font-size: 0.85em;">${v.phone || '-'}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                mainVisitorHtml = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 15px;">최근 2개월 내 방문자 없음</p>';
+            }
+            const mainVisitorEl = document.getElementById('dashMainRecentVisitors');
+            if (mainVisitorEl) mainVisitorEl.innerHTML = mainVisitorHtml;
             
             // 교회 조직도 로드
             loadOrgChart();
