@@ -4039,22 +4039,25 @@
                     </div>
                 </div>
                 
-                <!-- 새가족 명단 (3개월 이내 등록) -->
-                <div class="card" style="margin-bottom: 20px; border-left: 4px solid #ed8936;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0; color: #ed8936;">새가족 명단</h3>
-                        <span style="font-size: 0.85em; color: #888;">최근 3개월 내 등록</span>
+                <!-- 새가족 명단 + 최근 방문자 (좌우 배치) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <!-- 새가족 명단 (3개월 이내 등록) -->
+                    <div class="card" style="border-left: 4px solid #ed8936;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #ed8936;">새가족 명단</h3>
+                            <span style="font-size: 0.8em; color: #888;">최근 3개월</span>
+                        </div>
+                        <div id="dashNewFamilyList" style="max-height: 350px; overflow-y: auto;"></div>
                     </div>
-                    <div id="dashNewFamilyList"></div>
-                </div>
-                
-                <!-- 최근 방문자 명단 (2개월) -->
-                <div class="card" style="margin-bottom: 20px; border-left: 4px solid #10b981;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0; color: #10b981;">🚶 최근 방문자</h3>
-                        <span style="font-size: 0.85em; color: #888;">최근 2개월</span>
+                    
+                    <!-- 최근 방문자 명단 (2개월) -->
+                    <div class="card" style="border-left: 4px solid #10b981;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #10b981;">🚶 최근 방문자</h3>
+                            <span style="font-size: 0.8em; color: #888;">최근 2개월</span>
+                        </div>
+                        <div id="dashRecentVisitors" style="max-height: 350px; overflow-y: auto;"></div>
                     </div>
-                    <div id="dashRecentVisitors"></div>
                 </div>
                 
                 <!-- 빠른 통계 -->
@@ -8635,9 +8638,8 @@
                             <div>
                                 <span style="font-weight: 600;">${v.name}</span>
                                 ${isRegistered ? '<span style="background: #dcfce7; color: #16a34a; padding: 2px 6px; border-radius: 8px; font-size: 0.7em; margin-left: 6px;">등록</span>' : ''}
-                                <span style="font-size: 0.8em; color: #888; margin-left: 8px;">${v.visitDate || ''}</span>
                             </div>
-                            <span style="color: #10b981; font-size: 0.85em;">${v.phone || '-'}</span>
+                            <span style="color: #888; font-size: 0.85em;">${v.visitDate || ''}</span>
                         </div>
                     `;
                 });
