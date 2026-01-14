@@ -4902,6 +4902,20 @@
                     console.log('localStorage 방문자 명단을 Firebase에 저장:', localChurchVisitors.length + '명');
                 }
                 
+                // 출석 방문자 수 로드
+                const attendanceVisitorsData = await loadFromFirestore('attendanceVisitors');
+                const localAttVisitors = JSON.parse(localStorage.getItem('attendanceVisitors') || '{}');
+                const fbAttVisitorsCount = attendanceVisitorsData?.data ? Object.keys(attendanceVisitorsData.data).length : 0;
+                const localAttVisitorsCount = Object.keys(localAttVisitors).length;
+                
+                if (fbAttVisitorsCount >= localAttVisitorsCount && fbAttVisitorsCount > 0) {
+                    localStorage.setItem('attendanceVisitors', JSON.stringify(attendanceVisitorsData.data));
+                    console.log('Firebase에서 출석 방문자 로드:', fbAttVisitorsCount + '건');
+                } else if (localAttVisitorsCount > 0) {
+                    await saveToFirestore('attendanceVisitors', { data: localAttVisitors });
+                    console.log('localStorage 출석 방문자를 Firebase에 저장:', localAttVisitorsCount + '건');
+                }
+                
                 // 헌금 데이터 로드
                 const offeringsData = await loadFromFirestore('offerings');
                 if (offeringsData && offeringsData.list) {
@@ -14737,6 +14751,28 @@
             return Array.from(attendees);
         }
         
+        // 출석표 방문자 수 업데이트
+        function updateAttendanceVisitor(dateStr, value) {
+            const visitorData = JSON.parse(localStorage.getItem('attendanceVisitors') || '{}');
+            const count = parseInt(value) || 0;
+            
+            if (count > 0) {
+                visitorData[dateStr] = count;
+            } else {
+                delete visitorData[dateStr];
+            }
+            
+            localStorage.setItem('attendanceVisitors', JSON.stringify(visitorData));
+            
+            // Firebase 저장
+            if (typeof saveToFirestore === 'function') {
+                saveToFirestore('attendanceVisitors', { data: visitorData });
+            }
+            
+            // 출석표 새로고침
+            renderAttendanceTable();
+        }
+        
         // 출석표에서 직접 출석 체크 토글
         function toggleMainAttendance(memberName, dateStr) {
             // 최신 데이터 로드
@@ -15030,8 +15066,33 @@
         function renderStatRowsForYear(year, sundays, totalSundayCount, yearMembers) {
             let html = '';
             const today = new Date();
+            const visitorData = JSON.parse(localStorage.getItem('attendanceVisitors') || '{}');
             
-            // 출석 합계 행
+            // 방문자 행 (입력 가능)
+            html += `<tr style="background: #f0f9ff; font-weight: bold;">
+                <td colspan="2" style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; position: sticky; left: 0; background: #f0f9ff; z-index: 1; font-size: 10px; color: #0891b2;">방문자</td>`;
+            
+            for (let m = 1; m <= 12; m++) {
+                if (sundays[m].length === 0) {
+                    html += `<td style="padding: 3px; border: 1px solid #e2e8f0; text-align: center; background: #f5f5f5; font-size: 9px;">-</td>`;
+                } else {
+                    sundays[m].forEach(day => {
+                        const dateStr = `${year}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                        const isPast = new Date(dateStr) <= today;
+                        const visitorCount = visitorData[dateStr] || 0;
+                        html += `<td style="padding: 1px; border: 1px solid #e2e8f0; text-align: center; background: #f0f9ff;">
+                            <input type="number" min="0" max="99" value="${isPast ? visitorCount : ''}" 
+                                onchange="updateAttendanceVisitor('${dateStr}', this.value)"
+                                style="width: 100%; border: none; background: transparent; text-align: center; font-size: 9px; font-weight: bold; color: #0891b2; padding: 2px 0;"
+                                ${!isPast ? 'disabled' : ''} placeholder="-">
+                        </td>`;
+                    });
+                }
+            }
+            
+            html += `<td colspan="2" style="border: 1px solid #e2e8f0;"></td></tr>`;
+            
+            // 출석 합계 행 (교인 + 방문자)
             html += `<tr style="background: #ecfdf5; font-weight: bold;">
                 <td colspan="2" style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; position: sticky; left: 0; background: #ecfdf5; z-index: 1; font-size: 10px;">출석 합계</td>`;
             
@@ -15042,8 +15103,10 @@
                     sundays[m].forEach(day => {
                         const dateStr = `${year}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
                         const attendees = getAttendanceForDate(dateStr);
+                        const visitorCount = parseInt(visitorData[dateStr]) || 0;
                         const isPast = new Date(dateStr) <= today;
-                        html += `<td style="padding: 3px; border: 1px solid #e2e8f0; text-align: center; color: #16a34a; font-size: 9px;">${isPast ? attendees.length : '-'}</td>`;
+                        const totalCount = attendees.length + visitorCount;
+                        html += `<td style="padding: 3px; border: 1px solid #e2e8f0; text-align: center; color: #16a34a; font-size: 9px;">${isPast ? totalCount : '-'}</td>`;
                     });
                 }
             }
