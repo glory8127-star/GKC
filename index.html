@@ -4039,6 +4039,15 @@
                     <div id="dashNewFamilyList"></div>
                 </div>
                 
+                <!-- 최근 방문자 명단 (2개월) -->
+                <div class="card" style="margin-bottom: 20px; border-left: 4px solid #10b981;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #10b981;">🚶 최근 방문자</h3>
+                        <span style="font-size: 0.85em; color: #888;">최근 2개월</span>
+                    </div>
+                    <div id="dashRecentVisitors"></div>
+                </div>
+                
                 <!-- 빠른 통계 -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="card">
@@ -4330,14 +4339,14 @@
                     <h2 style="margin: 0 0 20px 0;">🚶 방문자 등록</h2>
                     <form id="visitorForm" onsubmit="saveVisitor(event)">
                         <input type="hidden" id="visitorEditId" value="">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
                             <div class="form-group">
-                                <label class="form-label">성명 *</label>
-                                <input type="text" class="form-input" id="visitorName" required placeholder="홍길동">
+                                <label class="form-label" style="font-size: 1em; font-weight: 600; margin-bottom: 8px;">성명 *</label>
+                                <input type="text" class="form-input" id="visitorName" required placeholder="홍길동" style="padding: 14px 16px; font-size: 1.05em;">
                             </div>
                             <div class="form-group">
-                                <label class="form-label">직분</label>
-                                <select class="form-input" id="visitorRole">
+                                <label class="form-label" style="font-size: 1em; font-weight: 600; margin-bottom: 8px;">직분</label>
+                                <select class="form-input" id="visitorRole" style="padding: 14px 16px; font-size: 1.05em;">
                                     <option value="">선택</option>
                                     <option value="성도">성도</option>
                                     <option value="집사">집사</option>
@@ -4348,29 +4357,29 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">전화번호</label>
-                                <input type="tel" class="form-input" id="visitorPhone" placeholder="010-0000-0000">
+                                <label class="form-label" style="font-size: 1em; font-weight: 600; margin-bottom: 8px;">전화번호</label>
+                                <input type="tel" class="form-input" id="visitorPhone" placeholder="010-0000-0000" style="padding: 14px 16px; font-size: 1.05em;">
                             </div>
                             <div class="form-group">
-                                <label class="form-label">주소</label>
-                                <input type="text" class="form-input" id="visitorAddress" placeholder="Sacramento, CA">
+                                <label class="form-label" style="font-size: 1em; font-weight: 600; margin-bottom: 8px;">방문일 *</label>
+                                <input type="date" class="form-input" id="visitorVisitDate" required style="padding: 14px 16px; font-size: 1.05em;">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" style="font-size: 1em; font-weight: 600; margin-bottom: 8px;">주소</label>
+                                <input type="text" class="form-input" id="visitorAddress" placeholder="Sacramento, CA" style="padding: 14px 16px; font-size: 1.05em;">
                             </div>
                             <div class="form-group">
-                                <label class="form-label">방문일 *</label>
-                                <input type="date" class="form-input" id="visitorVisitDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">등록일</label>
-                                <input type="date" class="form-input" id="visitorRegDate" disabled placeholder="교인 등록 시 자동 입력">
+                                <label class="form-label" style="font-size: 1em; font-weight: 600; margin-bottom: 8px;">등록일</label>
+                                <input type="date" class="form-input" id="visitorRegDate" disabled placeholder="교인 등록 시 자동 입력" style="padding: 14px 16px; font-size: 1.05em; background: #f1f5f9;">
                             </div>
                         </div>
-                        <div class="form-group" style="margin-top: 15px;">
-                            <label class="form-label">방문동기</label>
-                            <textarea class="form-input" id="visitorReason" rows="2" placeholder="예: 지인 소개, 인터넷 검색, 전도 등"></textarea>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label" style="font-size: 1em; font-weight: 600; margin-bottom: 8px;">방문동기</label>
+                            <textarea class="form-input" id="visitorReason" rows="3" placeholder="예: 지인 소개, 인터넷 검색, 전도 등" style="padding: 14px 16px; font-size: 1.05em;"></textarea>
                         </div>
-                        <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button type="submit" class="btn btn-primary">저장</button>
-                            <button type="button" class="btn btn-secondary" onclick="resetVisitorForm()">초기화</button>
+                        <div style="display: flex; gap: 12px; margin-top: 25px;">
+                            <button type="submit" class="btn btn-primary" style="padding: 14px 30px; font-size: 1.05em;">저장</button>
+                            <button type="button" class="btn btn-secondary" onclick="resetVisitorForm()" style="padding: 14px 30px; font-size: 1.05em;">초기화</button>
                         </div>
                     </form>
                 </div>
@@ -4378,8 +4387,10 @@
                 <!-- 방문자 목록 -->
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                        <h2 style="margin: 0;">📋 방문자 목록</h2>
+                        <h2 style="margin: 0;">📋 방문자 목록 <span id="visitorYearCount" style="font-size: 0.7em; color: #667eea; font-weight: normal;"></span></h2>
                         <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="visitorFilterYear" onchange="loadVisitorList()" style="padding: 8px 15px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </select>
                             <select id="visitorFilterStatus" onchange="loadVisitorList()" style="padding: 8px 15px; border: 1px solid #e2e8f0; border-radius: 8px;">
                                 <option value="all">전체</option>
                                 <option value="pending">미등록</option>
@@ -4389,9 +4400,10 @@
                         </div>
                     </div>
                     <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; min-width: 700px;">
+                        <table style="width: 100%; border-collapse: collapse; min-width: 750px;">
                             <thead>
                                 <tr style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                    <th style="padding: 12px; text-align: center; width: 50px;">번호</th>
                                     <th style="padding: 12px; text-align: left;">성명</th>
                                     <th style="padding: 12px; text-align: center;">직분</th>
                                     <th style="padding: 12px; text-align: center;">전화번호</th>
@@ -7386,10 +7398,14 @@
             
             // 차트 연도 선택 초기화
             const yearSelect = document.getElementById('visitorChartYear');
+            const filterYearSelect = document.getElementById('visitorFilterYear');
             const currentYear = new Date().getFullYear();
+            
             yearSelect.innerHTML = '';
-            for (let y = currentYear; y >= currentYear - 2; y--) {
+            filterYearSelect.innerHTML = '';
+            for (let y = currentYear; y >= currentYear - 3; y--) {
                 yearSelect.innerHTML += `<option value="${y}">${y}년</option>`;
+                filterYearSelect.innerHTML += `<option value="${y}">${y}년</option>`;
             }
             
             loadVisitorChart();
@@ -7448,9 +7464,18 @@
         function loadVisitorList() {
             const visitors = JSON.parse(localStorage.getItem('churchVisitors') || '[]');
             const filterStatus = document.getElementById('visitorFilterStatus').value;
+            const filterYear = document.getElementById('visitorFilterYear')?.value || new Date().getFullYear().toString();
             const searchTerm = document.getElementById('visitorSearch').value.toLowerCase();
             
             let filtered = visitors;
+            
+            // 연도 필터
+            filtered = filtered.filter(v => {
+                if (v.visitDate) {
+                    return v.visitDate.startsWith(filterYear);
+                }
+                return false;
+            });
             
             // 상태 필터
             if (filterStatus === 'pending') {
@@ -7464,8 +7489,15 @@
                 filtered = filtered.filter(v => (v.name || '').toLowerCase().includes(searchTerm));
             }
             
-            // 최근순 정렬
-            filtered.sort((a, b) => new Date(b.visitDate || 0) - new Date(a.visitDate || 0));
+            // 방문일순 정렬 (오래된 순 = 번호 순서대로)
+            filtered.sort((a, b) => new Date(a.visitDate || 0) - new Date(b.visitDate || 0));
+            
+            // 해당 연도 전체 방문자 수 표시
+            const yearTotal = visitors.filter(v => v.visitDate && v.visitDate.startsWith(filterYear)).length;
+            const yearCountEl = document.getElementById('visitorYearCount');
+            if (yearCountEl) {
+                yearCountEl.textContent = `(${filterYear}년 총 ${yearTotal}명)`;
+            }
             
             const tbody = document.getElementById('visitorListBody');
             const emptyMsg = document.getElementById('visitorListEmpty');
@@ -7480,9 +7512,11 @@
             tbody.innerHTML = filtered.map((v, idx) => {
                 const originalIdx = visitors.indexOf(v);
                 const isRegistered = !!v.regDate;
+                const rowNum = idx + 1; // 번호 (해당 연도 내 순번)
                 
                 return `
                     <tr style="border-bottom: 1px solid #e2e8f0; ${isRegistered ? 'background: #f0fdf4;' : ''}">
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #667eea;">${rowNum}</td>
                         <td style="padding: 12px; font-weight: 600;">${v.name || '-'}</td>
                         <td style="padding: 12px; text-align: center;">${v.role || '-'}</td>
                         <td style="padding: 12px; text-align: center;">${v.phone || '-'}</td>
@@ -7709,6 +7743,65 @@
             }
             const newFamilyListEl = document.getElementById('dashNewFamilyList');
             if (newFamilyListEl) newFamilyListEl.innerHTML = newFamilyListHtml;
+            
+            // 최근 방문자 명단 (2개월)
+            const visitors = JSON.parse(localStorage.getItem('churchVisitors') || '[]');
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+            
+            const recentVisitors = visitors.filter(v => {
+                if (v.visitDate) {
+                    return new Date(v.visitDate) >= twoMonthsAgo;
+                }
+                return false;
+            }).sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate));
+            
+            let recentVisitorsHtml = '';
+            if (recentVisitors.length > 0) {
+                recentVisitorsHtml = '<div style="display: grid; gap: 10px;">';
+                recentVisitors.forEach(v => {
+                    const visitDate = v.visitDate ? new Date(v.visitDate) : null;
+                    const daysAgo = visitDate ? Math.floor((new Date() - visitDate) / (1000 * 60 * 60 * 24)) : 0;
+                    let timeLabel = '';
+                    if (daysAgo === 0) timeLabel = '오늘';
+                    else if (daysAgo === 1) timeLabel = '어제';
+                    else if (daysAgo < 7) timeLabel = `${daysAgo}일 전`;
+                    else if (daysAgo < 30) timeLabel = `${Math.floor(daysAgo / 7)}주 전`;
+                    else timeLabel = `${Math.floor(daysAgo / 30)}개월 전`;
+                    
+                    const isRegistered = !!v.regDate;
+                    
+                    recentVisitorsHtml += `
+                        <div style="background: ${isRegistered ? '#f0fdf4' : '#f0f9ff'}; padding: 12px 15px; border-radius: 10px; border-left: 3px solid ${isRegistered ? '#16a34a' : '#10b981'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, ${isRegistered ? '#16a34a' : '#10b981'}, ${isRegistered ? '#22c55e' : '#34d399'}); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1em;">
+                                        ${v.name?.charAt(0) || '?'}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; color: #333;">
+                                            ${v.name}
+                                            ${isRegistered ? '<span style="background: #dcfce7; color: #16a34a; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; margin-left: 8px;">등록완료</span>' : ''}
+                                        </div>
+                                        <div style="font-size: 0.8em; color: #888;">
+                                            방문: ${v.visitDate || ''} <span style="color: #10b981; font-weight: 500;">(${timeLabel})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.85em; color: #666;">${v.phone || '-'}</div>
+                                    <div style="font-size: 0.75em; color: #999;">${v.role || '성도'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                recentVisitorsHtml += '</div>';
+            } else {
+                recentVisitorsHtml = '<p style="color: #999; text-align: center; padding: 30px;">최근 2개월 내 방문자가 없습니다.</p>';
+            }
+            const recentVisitorsEl = document.getElementById('dashRecentVisitors');
+            if (recentVisitorsEl) recentVisitorsEl.innerHTML = recentVisitorsHtml;
             
             // 대시보드 섹션의 새가족 명단도 연동 (dashNewFamilySummary)
             let newFamilySummaryHtml = '';
