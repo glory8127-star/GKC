@@ -8523,7 +8523,10 @@
             // 데이터 로드 (최신 데이터로 다시 읽기)
             const offerings = JSON.parse(localStorage.getItem('churchOfferings') || '[]');
             const expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
-            const membersData = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            
+            // 최신 교인 데이터 로드 (전역 변수 갱신)
+            members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+            const membersData = members;
             
             // 기본 통계
             document.getElementById('dashTotal').textContent = membersData.length;
