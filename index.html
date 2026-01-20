@@ -906,6 +906,43 @@
             return '$' + parseFloat(amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
+        // 기도제목 미리보기 포맷 (성명:내용 형태로 정리)
+        function formatPrayerPreview(prayer) {
+            if (!prayer) return '';
+            const lines = prayer.split('\n').slice(0, 3); // 최대 3줄만
+            let result = '';
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                const match = line.match(/^([^:;]+)[:;](.+)$/);
+                if (match) {
+                    result += `<div style="margin-bottom:4px;"><b style="color:#b45309;">${match[1].trim()}</b>: ${match[2].trim().substring(0,30)}${match[2].length>30?'...':''}</div>`;
+                } else {
+                    result += `<div style="margin-bottom:4px;">${line.substring(0,40)}${line.length>40?'...':''}</div>`;
+                }
+            });
+            if (prayer.split('\n').length > 3) result += '<div style="color:#999;font-size:0.85em;">...</div>';
+            return result;
+        }
+        
+        // 기도제목 상세보기 포맷 (전체 표시)
+        function formatPrayerDetail(prayer) {
+            if (!prayer) return '-';
+            const lines = prayer.split('\n');
+            let result = '';
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                const match = line.match(/^([^:;]+)[:;](.+)$/);
+                if (match) {
+                    result += `<div style="margin-bottom:8px; padding:8px; background:#fff; border-radius:6px;"><span style="font-weight:600;color:#b45309;">${match[1].trim()}</span><span style="margin-left:8px;color:#78350f;">${match[2].trim()}</span></div>`;
+                } else {
+                    result += `<div style="margin-bottom:8px; padding:8px; background:#fff; border-radius:6px; color:#78350f;">${line}</div>`;
+                }
+            });
+            return result || '-';
+        }
+        
         // 금액 입력 시 자동 콤마 추가
         function formatAmountInput(input) {
             // 커서 위치 저장
@@ -16026,8 +16063,8 @@
                             ` : ''}
                             ${report.prayer ? `
                             <div style="background: #fef3c7; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
-                                <div style="font-size: 0.75em; color: #92400e; margin-bottom: 3px;">🙏 기도제목</div>
-                                <div style="font-size: 0.85em; color: #78350f; white-space: pre-wrap;">${report.prayer.substring(0, 100)}${report.prayer.length > 100 ? '...' : ''}</div>
+                                <div style="font-size: 0.75em; color: #92400e; margin-bottom: 5px;">🙏 기도제목</div>
+                                <div style="font-size: 0.85em; color: #78350f;">${formatPrayerPreview(report.prayer)}</div>
                             </div>
                             ` : ''}
                             <div style="display: flex; gap: 8px; margin-top: 15px;">
@@ -16060,16 +16097,34 @@
             // 목록 렌더링
             document.getElementById('cellReportsList').innerHTML = listHtml || '<p style="text-align: center; color: #94a3b8; padding: 40px;">구역 데이터가 없습니다.</p>';
             
-            // 기도제목 렌더링
+            // 기도제목 렌더링 (성명:기도제목 형태로 정리)
             let prayerHtml = '';
             prayers.forEach(p => {
+                // 기도제목 파싱 (각 줄을 성명:내용 형태로 분리)
+                let formattedPrayer = '';
+                if (p.prayer) {
+                    const lines = p.prayer.split('\n');
+                    lines.forEach(line => {
+                        line = line.trim();
+                        if (!line) return;
+                        // "이름:내용" 또는 "이름;내용" 형태 찾기
+                        const colonMatch = line.match(/^([^:;]+)[:;](.+)$/);
+                        if (colonMatch) {
+                            const name = colonMatch[1].trim();
+                            const content = colonMatch[2].trim();
+                            formattedPrayer += `<div style="margin-bottom:8px;"><span style="font-weight:600;color:#b45309;margin-right:8px;">${name}</span><span style="color:#78350f;">${content}</span></div>`;
+                        } else {
+                            formattedPrayer += `<div style="margin-bottom:8px;color:#78350f;">${line}</div>`;
+                        }
+                    });
+                }
                 prayerHtml += `
                     <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 10px; border-radius: 0 10px 10px 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-weight: 600; color: #92400e;">${p.cell}구역</span>
-                            <span style="font-size: 0.8em; color: #b45309;">${p.leader || ''}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;">
+                            <span style="font-weight: 600; color: #92400e; font-size: 1.05em;">${p.cell}구역</span>
+                            <span style="font-size: 0.85em; color: #b45309; background: #fef3c7; padding: 3px 10px; border-radius: 12px;">${p.leader || ''}</span>
                         </div>
-                        <div style="color: #78350f; white-space: pre-wrap; font-size: 0.95em;">${p.prayer}</div>
+                        <div style="font-size: 0.95em;">${formattedPrayer}</div>
                     </div>
                 `;
             });
@@ -16166,8 +16221,8 @@
                         </div>
                         
                         <div style="background: #fef3c7; padding: 15px; border-radius: 10px;">
-                            <div style="font-size: 0.85em; color: #d97706; font-weight: 600;">🙏 기도제목</div>
-                            <div style="margin-top: 10px; white-space: pre-wrap;">${report.prayer || '-'}</div>
+                            <div style="font-size: 0.85em; color: #d97706; font-weight: 600; margin-bottom: 10px;">🙏 기도제목</div>
+                            <div style="font-size: 0.95em;">${formatPrayerDetail(report.prayer)}</div>
                         </div>
                         
                         <div style="background: #f1f5f9; padding: 15px; border-radius: 10px;">
