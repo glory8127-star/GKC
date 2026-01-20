@@ -3272,6 +3272,7 @@
                         <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
                             <div style="font-size: 1.8em; font-weight: bold;" id="headerTotalIncome">$0</div>
                             <div style="font-size: 0.85em; opacity: 0.9;">올해 수입</div>
+                            <div style="font-size: 0.7em; opacity: 0.7; margin-top: 3px;" id="headerIncomeDetail">(헌금 $0 + 이월 $0)</div>
                         </div>
                         <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
                             <div style="font-size: 1.8em; font-weight: bold;" id="headerTotalExpense">$0</div>
@@ -14697,6 +14698,9 @@
         }
         
         // ========== 재정 대시보드 ==========
+        // 2024년 이월금 (작년 잔액)
+        const CARRYOVER_AMOUNT = 79071;
+        
         function updateFinanceDashboard() {
             const now = new Date();
             const currentYear = now.getFullYear();
@@ -14713,11 +14717,14 @@
                 return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
             }).reduce((sum, e) => sum + e.amount, 0);
             
-            // 올해 누적
-            const yearlyIncome = offerings.filter(o => {
+            // 올해 누적 헌금
+            const yearlyOfferings = offerings.filter(o => {
                 const d = new Date(o.date);
                 return d.getFullYear() === currentYear;
             }).reduce((sum, o) => sum + o.amount, 0);
+            
+            // 올해 총 수입 = 이월금 + 올해 헌금
+            const yearlyIncome = CARRYOVER_AMOUNT + yearlyOfferings;
             
             const yearlyExpense = expenses.filter(e => {
                 const d = new Date(e.date);
@@ -14728,9 +14735,13 @@
             const headerIncomeEl = document.getElementById('headerTotalIncome');
             const headerExpenseEl = document.getElementById('headerTotalExpense');
             const headerBalanceEl = document.getElementById('headerBalance');
+            const headerIncomeDetailEl = document.getElementById('headerIncomeDetail');
             
             if (headerIncomeEl) headerIncomeEl.textContent = '$' + yearlyIncome.toLocaleString();
             if (headerExpenseEl) headerExpenseEl.textContent = '$' + yearlyExpense.toLocaleString();
+            if (headerIncomeDetailEl) {
+                headerIncomeDetailEl.textContent = '(헌금 $' + yearlyOfferings.toLocaleString() + ' + 이월 $' + CARRYOVER_AMOUNT.toLocaleString() + ')';
+            }
             if (headerBalanceEl) {
                 const balance = yearlyIncome - yearlyExpense;
                 headerBalanceEl.textContent = (balance >= 0 ? '+$' : '-$') + Math.abs(balance).toLocaleString();
