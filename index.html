@@ -3399,6 +3399,15 @@
                                 </select>
                             </div>
                             <div class="form-group">
+                                <label class="form-label">헌금자 *</label>
+                                <select class="form-control" id="offeringMemberSelect" onchange="handleOfferingMemberSelect()">
+                                    <option value="">선택하세요</option>
+                                    <option value="__VISITOR__" style="background:#fef3c7;color:#92400e;font-weight:600;">👤 방문자</option>
+                                    <option disabled style="font-size:0.8em;color:#999;">────────────────</option>
+                                    <!-- 교인 목록이 동적으로 추가됨 -->
+                                </select>
+                            </div>
+                            <div class="form-group" id="offeringNameGroup">
                                 <label class="form-label">헌금자 이름 *</label>
                                 <input type="text" class="form-control" id="offeringName" required placeholder="이름 입력">
                             </div>
@@ -5192,6 +5201,7 @@
                 if (typeof loadWednesdayYoutube === 'function') loadWednesdayYoutube();
                 if (typeof initSlideshow === 'function') initSlideshow();
                 if (typeof loadGallery === 'function') loadGallery();
+                if (typeof loadOfferingMemberOptions === 'function') loadOfferingMemberOptions();
                 
                 // ===== 실시간 동기화 리스너 설정 =====
                 setupRealtimeListeners();
@@ -8371,6 +8381,11 @@
             `;
 
             container.innerHTML = html;
+            
+            // 헌금자 선택 드롭다운 업데이트
+            if (typeof loadOfferingMemberOptions === 'function') {
+                loadOfferingMemberOptions();
+            }
         }
 
         function showSection(sectionId) {
@@ -12936,6 +12951,58 @@
             }
         }
         
+        // 헌금자 선택 핸들러 (방문자/교인 선택)
+        function handleOfferingMemberSelect() {
+            const select = document.getElementById('offeringMemberSelect');
+            const nameGroup = document.getElementById('offeringNameGroup');
+            const nameInput = document.getElementById('offeringName');
+            
+            if (select.value === '__VISITOR__') {
+                // 방문자 선택 시 - 이름 직접 입력
+                nameGroup.style.display = 'block';
+                nameInput.value = '';
+                nameInput.placeholder = '방문자 이름 입력';
+                nameInput.focus();
+            } else if (select.value === '') {
+                // 선택 안함
+                nameGroup.style.display = 'block';
+                nameInput.value = '';
+                nameInput.placeholder = '이름 입력';
+            } else {
+                // 교인 선택 시 - 이름 자동 입력
+                const selectedOption = select.options[select.selectedIndex];
+                nameInput.value = selectedOption.dataset.name || selectedOption.text.split(' (')[0];
+                nameGroup.style.display = 'none';
+            }
+        }
+        
+        // 헌금자 선택 드롭다운에 교인 목록 로드
+        function loadOfferingMemberOptions() {
+            const select = document.getElementById('offeringMemberSelect');
+            if (!select) return;
+            
+            // 기존 교인 옵션 제거 (방문자와 구분선 유지)
+            const options = Array.from(select.options);
+            options.forEach(opt => {
+                if (opt.value !== '' && opt.value !== '__VISITOR__' && !opt.disabled) {
+                    opt.remove();
+                }
+            });
+            
+            // 교인 목록 추가 (이름순 정렬)
+            const sortedMembers = [...members].sort((a, b) => 
+                (a.nameKr || '').localeCompare(b.nameKr || '', 'ko')
+            );
+            
+            sortedMembers.forEach(member => {
+                const option = document.createElement('option');
+                option.value = member.id;
+                option.textContent = member.nameKr + (member.number ? ` (${member.number})` : '');
+                option.dataset.name = member.nameKr;
+                select.appendChild(option);
+            });
+        }
+        
         // 헌금 등록 폼 제출
         const offeringForm = document.getElementById('offeringForm');
         if (offeringForm) {
@@ -12955,6 +13022,11 @@
                 const lastDate = document.getElementById('offeringDate').value;
                 const lastType = document.getElementById('offeringType').value;
                 
+                // 방문자 여부 확인
+                const memberSelect = document.getElementById('offeringMemberSelect');
+                const isVisitor = memberSelect?.value === '__VISITOR__';
+                const memberId = memberSelect?.value || '';
+                
                 const offeringData = {
                     id: Date.now(),
                     date: lastDate,
@@ -12963,7 +13035,9 @@
                     amount: parseAmount(document.getElementById('offeringAmount').value),
                     payment: payment,
                     checkNumber: payment === 'Check' ? checkNumber : '',
-                    memo: document.getElementById('offeringMemo').value
+                    memo: document.getElementById('offeringMemo').value,
+                    isVisitor: isVisitor,
+                    memberId: memberId
                 };
                 
                 offerings.push(offeringData);
@@ -12981,6 +13055,16 @@
                 document.getElementById('offeringMemo').value = '';
                 document.getElementById('offeringCheckNumber').value = '';
                 document.getElementById('offeringCheckNumber').style.display = 'none';
+                
+                // 헌금자 선택 초기화
+                const memberSelect = document.getElementById('offeringMemberSelect');
+                if (memberSelect) {
+                    memberSelect.value = '';
+                }
+                const nameGroup = document.getElementById('offeringNameGroup');
+                if (nameGroup) {
+                    nameGroup.style.display = 'block';
+                }
                 
                 // 날짜와 종류는 마지막 입력값 유지
                 document.getElementById('offeringDate').value = lastDate;
@@ -13086,10 +13170,17 @@
                 if (offering.payment === 'Check' && offering.checkNumber) {
                     paymentDisplay = `Check #${offering.checkNumber}`;
                 }
+                
+                // 방문자 여부 확인 및 표시
+                const isVisitor = offering.isVisitor || offering.memberId === '__VISITOR__';
+                const nameDisplay = isVisitor 
+                    ? `<span style="color:#d97706;font-weight:500;">👤 ${offering.name} <small>(방문자)</small></span>`
+                    : offering.name;
+                
                 html += `
                     <tr>
                         <td>${offering.date}</td>
-                        <td>${offering.name}</td>
+                        <td>${nameDisplay}</td>
                         <td><span class="badge badge-info">${offering.type}</span></td>
                         <td>${formatMoney(offering.amount)}</td>
                         <td>${paymentDisplay}</td>
