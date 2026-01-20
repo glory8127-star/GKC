@@ -3271,11 +3271,11 @@
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                         <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
                             <div style="font-size: 1.8em; font-weight: bold;" id="headerTotalIncome">$0</div>
-                            <div style="font-size: 0.85em; opacity: 0.9;">이번달 수입</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">올해 수입</div>
                         </div>
                         <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
                             <div style="font-size: 1.8em; font-weight: bold;" id="headerTotalExpense">$0</div>
-                            <div style="font-size: 0.85em; opacity: 0.9;">이번달 지출</div>
+                            <div style="font-size: 0.85em; opacity: 0.9;">올해 지출</div>
                         </div>
                         <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;">
                             <div style="font-size: 1.8em; font-weight: bold;" id="headerBalance">$0</div>
@@ -14724,15 +14724,15 @@
                 return d.getFullYear() === currentYear;
             }).reduce((sum, e) => sum + e.amount, 0);
             
-            // 헤더 카드 업데이트
+            // 헤더 카드 업데이트 (올해 전체)
             const headerIncomeEl = document.getElementById('headerTotalIncome');
             const headerExpenseEl = document.getElementById('headerTotalExpense');
             const headerBalanceEl = document.getElementById('headerBalance');
             
-            if (headerIncomeEl) headerIncomeEl.textContent = '$' + monthlyIncome.toLocaleString();
-            if (headerExpenseEl) headerExpenseEl.textContent = '$' + monthlyExpense.toLocaleString();
+            if (headerIncomeEl) headerIncomeEl.textContent = '$' + yearlyIncome.toLocaleString();
+            if (headerExpenseEl) headerExpenseEl.textContent = '$' + yearlyExpense.toLocaleString();
             if (headerBalanceEl) {
-                const balance = monthlyIncome - monthlyExpense;
+                const balance = yearlyIncome - yearlyExpense;
                 headerBalanceEl.textContent = (balance >= 0 ? '+$' : '-$') + Math.abs(balance).toLocaleString();
             }
             
