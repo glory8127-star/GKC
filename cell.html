@@ -1,11 +1,302 @@
-# cell.html 수정 가이드
-
-## 1. 기도제목 파싱 함수 추가 (약 1540번째 줄 근처, `trackVisitor` 함수 위에 추가)
-
-```javascript
-        // 기도제목 파싱 함수 (성명:내용 형식 분리)
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4f46e5">
+    <title>GKC 구역관리</title>
+    <link rel="manifest" href="manifest-cell.json">
+    <link rel="apple-touch-icon" href="https://sacglory.church/icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif; background: #f5f7fa; min-height: 100vh; color: #333; }
+        .header { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; padding: 15px 20px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .header h1 { font-size: 1.2em; font-weight: 600; }
+        .header-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 20px; font-size: 0.85em; cursor: pointer; }
+        .main-content { padding-top: 70px; padding-bottom: 80px; min-height: 100vh; }
+        .login-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 70px); padding: 20px; }
+        .login-box { background: white; border-radius: 20px; padding: 40px 30px; width: 100%; max-width: 350px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); text-align: center; }
+        .login-logo { font-size: 3em; margin-bottom: 10px; }
+        .login-title { font-size: 1.5em; color: #4f46e5; margin-bottom: 30px; font-weight: 700; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-label { display: block; font-size: 0.85em; color: #666; margin-bottom: 8px; font-weight: 500; }
+        .form-input { width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1em; transition: all 0.3s; }
+        .form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .btn { padding: 14px 30px; border: none; border-radius: 12px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; }
+        .btn-primary { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(79, 70, 229, 0.4); }
+        .btn-secondary { background: #f1f5f9; color: #475569; }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .tab-nav { display: flex; background: white; padding: 10px; gap: 10px; position: fixed; bottom: 0; left: 0; right: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: #f1f5f9; border-radius: 12px; font-size: 0.85em; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #64748b; transition: all 0.3s; }
+        .tab-btn.active { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; }
+        .tab-icon { font-size: 1.3em; }
+        .card { background: white; border-radius: 16px; padding: 20px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card-title { font-size: 1.1em; font-weight: 600; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .cell-selector { padding: 15px; background: white; border-bottom: 1px solid #e2e8f0; }
+        .cell-select { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1em; background: white; }
+        .member-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; gap: 15px; }
+        .member-item:last-child { border-bottom: none; }
+        .member-checkbox { width: 28px; height: 28px; border-radius: 8px; cursor: pointer; accent-color: #4f46e5; }
+        .member-info { flex: 1; }
+        .member-name { font-weight: 600; color: #1e293b; font-size: 1em; }
+        .member-phone { font-size: 0.85em; color: #64748b; margin-top: 3px; }
+        .member-status { padding: 6px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+        .status-present { background: #dcfce7; color: #16a34a; }
+        .status-absent { background: #fee2e2; color: #dc2626; }
+        .reason-btn { background: #fef3c7; color: #d97706; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75em; cursor: pointer; }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: #f8fafc; border-radius: 12px; padding: 15px; text-align: center; }
+        .stat-number { font-size: 1.5em; font-weight: 700; color: #4f46e5; }
+        .stat-label { font-size: 0.75em; color: #64748b; margin-top: 5px; }
+        .report-form { padding: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-textarea { width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1em; resize: vertical; min-height: 100px; font-family: inherit; }
+        .form-textarea:focus { outline: none; border-color: #4f46e5; }
+        .report-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; gap: 15px; }
+        .report-cell { font-weight: 600; color: #1e293b; min-width: 80px; }
+        .report-status { padding: 5px 10px; border-radius: 20px; font-size: 0.75em; font-weight: 600; }
+        .report-submitted { background: #dcfce7; color: #16a34a; }
+        .report-pending { background: #fef3c7; color: #d97706; }
+        .report-view-btn { background: #4f46e5; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
+        .date-selector { display: flex; align-items: center; gap: 10px; padding: 15px; background: #f8fafc; border-radius: 12px; margin: 15px; }
+        .date-input { flex: 1; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1em; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 1.2em; color: #1e293b; }
+        .modal-close { background: none; border: none; font-size: 1.5em; cursor: pointer; color: #64748b; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; justify-content: flex-end; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 30px; font-size: 0.9em; z-index: 300; display: none; animation: fadeIn 0.3s; }
+        .toast.show { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .hidden { display: none !important; }
+        body.offline .header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+        body.offline .header::after { content: '📴 오프라인'; position: absolute; right: 100px; font-size: 0.75em; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 10px; }
+        .overview-card { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border-radius: 16px; padding: 20px; margin: 15px; }
+        .overview-title { font-size: 0.9em; opacity: 0.9; margin-bottom: 10px; }
+        .overview-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .overview-stat { text-align: center; }
+        .overview-number { font-size: 2em; font-weight: 700; }
+        .overview-label { font-size: 0.8em; opacity: 0.8; }
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 4px; transition: width 0.5s; }
+        .prayer-item { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 15px; margin-bottom: 10px; border-radius: 0 8px 8px 0; }
+        .prayer-name { font-weight: 600; color: #92400e; font-size: 0.85em; }
+        .prayer-content { color: #78350f; margin-top: 5px; }
+        .phone-link { color: #4f46e5; text-decoration: none; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .empty-icon { font-size: 3em; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📍 GKC 구역관리</h1>
+        <button class="header-btn" id="logoutBtn" onclick="logout()" style="display: none;">로그아웃</button>
+    </div>
+    
+    <div class="main-content">
+        <div id="loginScreen" class="login-container">
+            <div class="login-box">
+                <div class="login-logo">⛪</div>
+                <div class="login-title">GKC 구역관리</div>
+                <div class="form-group">
+                    <label class="form-label">아이디</label>
+                    <input type="text" class="form-input" id="loginUsername" placeholder="아이디 입력">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">비밀번호</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') login()">
+                </div>
+                <button class="btn btn-primary" onclick="login()">로그인</button>
+            </div>
+        </div>
+        
+        <div id="appScreen" class="hidden">
+            <div class="cell-selector" id="cellSelector">
+                <select class="cell-select" id="cellSelect" onchange="onCellChange()"></select>
+            </div>
+            
+            <div id="tabSunday">
+                <div class="date-selector">
+                    <span>📅 주일예배 날짜</span>
+                    <input type="date" class="date-input" id="sundayAttendanceDate" onchange="onSundayDateChange()">
+                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.85em;">이번주일</button>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>✝️</span><span id="sundayAttendanceTitle">주일예배 출석</span></div>
+                    <div class="stats-row">
+                        <div class="stat-box"><div class="stat-number" id="sundayStatTotal">0</div><div class="stat-label">전체</div></div>
+                        <div class="stat-box"><div class="stat-number" id="sundayStatPresent" style="color: #16a34a;">0</div><div class="stat-label">출석</div></div>
+                        <div class="stat-box"><div class="stat-number" id="sundayStatAbsent" style="color: #dc2626;">0</div><div class="stat-label">결석</div></div>
+                    </div>
+                    <div id="sundayMemberList"></div>
+                </div>
+                <div style="padding: 15px;"><button class="btn btn-success" onclick="saveSundayAttendance()">💾 주일예배 출석 저장</button></div>
+            </div>
+            
+            <div id="tabAttendance" class="hidden">
+                <div class="date-selector">
+                    <span>📅 구역예배 날짜</span>
+                    <input type="date" class="date-input" id="attendanceDate" onchange="onAttendanceDateChange()">
+                    <button class="btn btn-primary" onclick="setToday()" style="width: auto; padding: 8px 12px; font-size: 0.85em;">오늘</button>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>⛪</span><span id="attendanceTitle">구역예배 출석</span></div>
+                    <div class="stats-row">
+                        <div class="stat-box"><div class="stat-number" id="statTotal">0</div><div class="stat-label">전체</div></div>
+                        <div class="stat-box"><div class="stat-number" id="statPresent" style="color: #16a34a;">0</div><div class="stat-label">출석</div></div>
+                        <div class="stat-box"><div class="stat-number" id="statAbsent" style="color: #dc2626;">0</div><div class="stat-label">결석</div></div>
+                    </div>
+                    <div id="memberList"></div>
+                </div>
+                <div style="padding: 15px;"><button class="btn btn-success" onclick="saveAttendance()">💾 구역예배 출석 저장</button></div>
+            </div>
+            
+            <div id="tabReport" class="hidden">
+                <div class="date-selector">
+                    <span>📅</span>
+                    <input type="date" class="date-input" id="reportDate">
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>📝</span><span>구역예배 보고서</span></div>
+                    <div class="report-form">
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">예배 장소</label><input type="text" class="form-input" id="reportPlace" placeholder="예: 김철수 집"></div>
+                            <div class="form-group"><label class="form-label">예배 시간</label><input type="time" class="form-input" id="reportTime" value="14:00"></div>
+                        </div>
+                        <div class="form-group"><label class="form-label">인도자</label><input type="text" class="form-input" id="reportLeader" placeholder="인도자 이름"></div>
+                        <div class="form-group"><label class="form-label">찬양</label><input type="text" class="form-input" id="reportHymn" placeholder="예: 찬송가 94장"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">성경 본문</label><input type="text" class="form-input" id="reportScripture" placeholder="예: 마태복음 5:1-12"></div>
+                            <div class="form-group"><label class="form-label">말씀 제목</label><input type="text" class="form-input" id="reportTitle" placeholder="말씀 제목"></div>
+                        </div>
+                        <div class="form-group"><label class="form-label">구역 헌금 ($)</label><input type="number" class="form-input" id="reportOffering" placeholder="0" min="0"></div>
+                        <div class="form-group">
+                            <label class="form-label">🙏 기도제목 (이름:기도내용 형식)</label>
+                            <textarea class="form-textarea" id="reportPrayer" placeholder="예시:
+홍길동:건강 회복을 위해
+김철수:직장에서의 믿음을 위해"></textarea>
+                        </div>
+                        <div class="form-group"><label class="form-label">특이사항 / 나눔</label><textarea class="form-textarea" id="reportNotes" placeholder="새신자, 감사, 나눔 등"></textarea></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>📋</span><span>구역예배 출석 현황</span><button onclick="refreshReportAttendance()" style="margin-left: auto; background: #e2e8f0; border: none; padding: 5px 12px; border-radius: 15px; font-size: 0.8em; cursor: pointer;">새로고침</button></div>
+                    <div id="reportAttendanceStatus"><div style="text-align: center; padding: 20px; color: #94a3b8;">구역예배 탭에서 먼저 출석을 체크해주세요</div></div>
+                </div>
+                <div style="padding: 15px;"><button class="btn btn-primary" onclick="submitReport()">📤 보고서 제출</button></div>
+            </div>
+            
+            <div id="tabOverview" class="hidden">
+                <div class="date-selector">
+                    <span>📅 현황 날짜</span>
+                    <input type="date" class="date-input" id="overviewDate" onchange="loadOverview()">
+                </div>
+                <div class="overview-card" style="background: linear-gradient(135deg, #7c3aed, #8b5cf6);">
+                    <div class="overview-title" style="font-size: 1em;">✝️ 주일예배 출석 현황</div>
+                    <div class="overview-stats" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="overview-stat"><div class="overview-number" id="sundayOverviewTotal">0</div><div class="overview-label">총원</div></div>
+                        <div class="overview-stat"><div class="overview-number" id="sundayOverviewPresent" style="color: #bbf7d0;">0</div><div class="overview-label">출석</div></div>
+                        <div class="overview-stat"><div class="overview-number" id="sundayOverviewRate">0%</div><div class="overview-label">출석률</div></div>
+                    </div>
+                </div>
+                <div class="overview-card" style="background: linear-gradient(135deg, #0891b2, #06b6d4);">
+                    <div class="overview-title" style="font-size: 1em;">⛪ 구역예배 출석 현황</div>
+                    <div class="overview-stats" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="overview-stat"><div class="overview-number" id="overviewSubmitted">0</div><div class="overview-label">보고서</div></div>
+                        <div class="overview-stat"><div class="overview-number" id="overviewAttendance" style="color: #bbf7d0;">0</div><div class="overview-label">출석</div></div>
+                        <div class="overview-stat"><div class="overview-number" id="overviewAbsent" style="color: #fecaca;">0</div><div class="overview-label">결석</div></div>
+                        <div class="overview-stat"><div class="overview-number" id="overviewOffering">$0</div><div class="overview-label">헌금</div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>📊</span><span>구역별 출석 현황</span></div>
+                    <div style="font-size: 0.75em; color: #64748b; margin-bottom: 10px;"><span style="color: #8b5cf6;">✝️ 주일예배</span> / <span style="color: #0891b2;">⛪ 구역예배</span></div>
+                    <div id="overviewList"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>🙏</span><span>금주 기도제목</span></div>
+                    <div id="prayerList"></div>
+                </div>
+            </div>
+            
+            <div id="tabHistory" class="hidden">
+                <div class="card">
+                    <div class="card-title"><span>📚</span><span>지난 보고서</span></div>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-nav hidden" id="tabNav">
+        <button class="tab-btn active" onclick="showTab('sunday')" id="tabBtnSunday"><span class="tab-icon">✝️</span><span>주일예배</span></button>
+        <button class="tab-btn" onclick="showTab('attendance')" id="tabBtnAttendance"><span class="tab-icon">⛪</span><span>구역예배</span></button>
+        <button class="tab-btn" onclick="showTab('report')" id="tabBtnReport"><span class="tab-icon">📝</span><span>보고서</span></button>
+        <button class="tab-btn hidden" onclick="showTab('overview')" id="tabBtnOverview"><span class="tab-icon">📊</span><span>현황</span></button>
+        <button class="tab-btn" onclick="showTab('history')" id="tabBtnHistory"><span class="tab-icon">📚</span><span>기록</span></button>
+    </div>
+    
+    <div class="modal" id="reasonModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>결석 사유 입력</h3><button class="modal-close" onclick="closeReasonModal()">×</button></div>
+            <div class="modal-body">
+                <input type="hidden" id="reasonMemberId">
+                <div class="form-group"><label class="form-label">결석자: <strong id="reasonMemberName"></strong></label></div>
+                <div class="form-group">
+                    <label class="form-label">결석 사유</label>
+                    <select class="form-input" id="reasonSelect" onchange="onReasonSelect()">
+                        <option value="">-- 선택 --</option>
+                        <option value="출장">출장</option>
+                        <option value="여행">여행</option>
+                        <option value="아픔">아픔/병원</option>
+                        <option value="가족행사">가족 행사</option>
+                        <option value="직장">직장 근무</option>
+                        <option value="기타">기타 (직접입력)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customReasonGroup" style="display: none;"><label class="form-label">사유 입력</label><input type="text" class="form-input" id="customReason" placeholder="결석 사유를 입력하세요"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReasonModal()" style="width: auto;">취소</button>
+                <button class="btn btn-primary" onclick="saveReason()" style="width: auto;">저장</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="reportDetailModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="reportDetailTitle">보고서 상세</h3><button class="modal-close" onclick="closeReportDetail()">×</button></div>
+            <div class="modal-body" id="reportDetailContent"></div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxGpjfG5Rfpc8M5-k_xhmt7eYHhwGeVVU",
+            authDomain: "gkc-web-project-c87c9.firebaseapp.com",
+            projectId: "gkc-web-project-c87c9",
+            storageBucket: "gkc-web-project.firebasestorage.app",
+            messagingSenderId: "842400243498",
+            appId: "1:842400243498:web:2a79694db7a0343e4e3f4c"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        let currentUser = null, members = [], cells = [], cellAttendance = {}, cellSundayAttendance = {}, cellWorshipDates = {}, cellReports = {}, absentReasons = {}, selectedCell = null, attendanceData = {}, sundayAttendanceData = {};
+        
+        // 기도제목 파싱 함수 (성명:내용 형식)
         function formatPrayerContent(prayer) {
-            if (!prayer) return '';
+            if (!prayer) return '-';
             const lines = prayer.split('\n');
             let result = '';
             lines.forEach(line => {
@@ -13,87 +304,511 @@
                 if (!line) return;
                 const match = line.match(/^([^:;]+)[:;](.+)$/);
                 if (match) {
-                    result += `<div style="margin-bottom:8px;"><span style="font-weight:600;color:#b45309;display:inline-block;min-width:60px;">${match[1].trim()}</span><span style="color:#78350f;margin-left:8px;">${match[2].trim()}</span></div>`;
+                    result += '<div style="margin-bottom:8px;"><span style="font-weight:600;color:#b45309;display:inline-block;min-width:50px;">' + match[1].trim() + '</span><span style="color:#78350f;margin-left:8px;">' + match[2].trim() + '</span></div>';
                 } else {
-                    result += `<div style="margin-bottom:8px;color:#78350f;">${line}</div>`;
+                    result += '<div style="margin-bottom:8px;color:#78350f;">' + line + '</div>';
                 }
             });
-            return result;
+            return result || '-';
         }
-```
-
-## 2. 기도제목 입력 placeholder 변경 (약 640번째 줄)
-
-**변경 전:**
-```html
-<textarea class="form-textarea" id="reportPrayer" placeholder="구역원들의 기도제목을 입력하세요"></textarea>
-```
-
-**변경 후:**
-```html
-<textarea class="form-textarea" id="reportPrayer" placeholder="예시:
-홍길동:건강 회복을 위해
-김철수:직장에서의 믿음을 위해
-이영희:가정의 평화를 위해"></textarea>
-```
-
-## 3. 기도제목 표시 부분 변경 (loadOverview 함수 내, 약 2270번째 줄)
-
-**변경 전:**
-```javascript
-            // 기도제목 목록
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            trackVisitor();
+            const savedUser = localStorage.getItem('cellAppUser');
+            if (savedUser) { currentUser = JSON.parse(savedUser); initApp(); }
+        });
+        
+        async function trackVisitor() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const page = 'cell.html';
+                const sessionKey = 'visited_' + today + '_' + page;
+                if (sessionStorage.getItem(sessionKey)) return;
+                sessionStorage.setItem(sessionKey, 'true');
+                const visitorRef = db.collection('visitorStats').doc('main');
+                const doc = await visitorRef.get();
+                let data = doc.exists ? doc.data() : { daily: {}, pages: {}, total: 0 };
+                if (!data.daily) data.daily = {};
+                if (!data.daily[today]) data.daily[today] = 0;
+                data.daily[today]++;
+                if (!data.pages) data.pages = {};
+                if (!data.pages[today]) data.pages[today] = {};
+                if (!data.pages[today][page]) data.pages[today][page] = 0;
+                data.pages[today][page]++;
+                if (!data.total) data.total = 0;
+                data.total++;
+                await visitorRef.set(data);
+            } catch (error) { console.log('방문자 추적 오류:', error); }
+        }
+        
+        function setToday() {
+            const today = new Date().toISOString().split('T')[0];
+            const attendanceDate = document.getElementById('attendanceDate');
+            const reportDate = document.getElementById('reportDate');
+            const overviewDate = document.getElementById('overviewDate');
+            if (attendanceDate) { attendanceDate.value = today; localStorage.setItem('cellApp_attendanceDate', today); }
+            if (reportDate) reportDate.value = today;
+            if (overviewDate) overviewDate.value = today;
+            loadAttendance();
+        }
+        
+        function setThisSunday() {
+            const today = new Date();
+            const sunday = new Date(today);
+            const day = today.getDay();
+            if (day !== 0) sunday.setDate(today.getDate() - day);
+            const dateStr = sunday.toISOString().split('T')[0];
+            const sundayDate = document.getElementById('sundayAttendanceDate');
+            if (sundayDate) { sundayDate.value = dateStr; localStorage.setItem('cellApp_sundayDate', dateStr); }
+            loadSundayAttendance();
+        }
+        
+        function initDates() {
+            const today = new Date();
+            let attDateStr = (selectedCell && cellWorshipDates[selectedCell]) ? cellWorshipDates[selectedCell] : (localStorage.getItem('cellApp_attendanceDate') || today.toISOString().split('T')[0]);
+            const attendanceDate = document.getElementById('attendanceDate');
+            const reportDate = document.getElementById('reportDate');
+            const overviewDate = document.getElementById('overviewDate');
+            if (attendanceDate) attendanceDate.value = attDateStr;
+            if (reportDate) reportDate.value = attDateStr;
+            if (overviewDate) overviewDate.value = attDateStr;
+            const savedSundayDate = localStorage.getItem('cellApp_sundayDate');
+            let sundayDateStr;
+            if (savedSundayDate) { sundayDateStr = savedSundayDate; }
+            else { const sunday = new Date(today); const day = today.getDay(); if (day !== 0) sunday.setDate(today.getDate() - day); sundayDateStr = sunday.toISOString().split('T')[0]; }
+            const sundayDate = document.getElementById('sundayAttendanceDate');
+            if (sundayDate) sundayDate.value = sundayDateStr;
+            loadSundayAttendance();
+            loadAttendance();
+        }
+        
+        function onAttendanceDateChange() {
+            const dateStr = document.getElementById('attendanceDate').value;
+            localStorage.setItem('cellApp_attendanceDate', dateStr);
+            const reportDate = document.getElementById('reportDate');
+            const overviewDate = document.getElementById('overviewDate');
+            if (reportDate) reportDate.value = dateStr;
+            if (overviewDate) overviewDate.value = dateStr;
+            if (selectedCell) {
+                cellWorshipDates[selectedCell] = dateStr;
+                db.collection('cellWorshipDates').doc('main').set({ data: cellWorshipDates }).catch(err => console.error(err));
+            }
+            loadAttendance();
+        }
+        
+        function onSundayDateChange() {
+            const dateStr = document.getElementById('sundayAttendanceDate').value;
+            localStorage.setItem('cellApp_sundayDate', dateStr);
+            loadSundayAttendance();
+        }
+        
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!username || !password) { showToast('아이디와 비밀번호를 입력하세요'); return; }
+            try {
+                const usersDoc = await db.collection('registeredUsers').doc('main').get();
+                if (!usersDoc.exists) { showToast('사용자 정보를 불러올 수 없습니다'); return; }
+                const users = usersDoc.data().list || [];
+                const user = users.find(u => u.username === username && u.password === password);
+                if (!user) { showToast('아이디 또는 비밀번호가 틀립니다'); return; }
+                const hasAccess = user.role === '관리자' || (user.permissions && user.permissions.includes('cell'));
+                if (!hasAccess) { showToast('구역관리 접근 권한이 없습니다'); return; }
+                currentUser = user;
+                localStorage.setItem('cellAppUser', JSON.stringify(user));
+                initApp();
+                showToast('로그인 성공!');
+            } catch (error) { console.error('로그인 오류:', error); showToast('로그인 중 오류가 발생했습니다'); }
+        }
+        
+        async function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('tabNav').classList.remove('hidden');
+            document.getElementById('logoutBtn').style.display = 'block';
+            if (currentUser.role === '관리자') document.getElementById('tabBtnOverview').classList.remove('hidden');
+            await loadData();
+            setupRealtimeListeners();
+            initCellSelector();
+        }
+        
+        async function loadData() {
+            try {
+                const membersDoc = await db.collection('churchMembers').doc('main').get();
+                if (membersDoc.exists) members = membersDoc.data().list || [];
+                const cellsDoc = await db.collection('churchCells').doc('main').get();
+                if (cellsDoc.exists) cells = cellsDoc.data().list || [];
+                const attDoc = await db.collection('cellAttendance').doc('main').get();
+                if (attDoc.exists) cellAttendance = attDoc.data().data || {};
+                const sundayAttDoc = await db.collection('cellSundayAttendance').doc('main').get();
+                if (sundayAttDoc.exists) cellSundayAttendance = sundayAttDoc.data().data || {};
+                const datesDoc = await db.collection('cellWorshipDates').doc('main').get();
+                if (datesDoc.exists) cellWorshipDates = datesDoc.data().data || {};
+                const reportsDoc = await db.collection('cellReports').doc('main').get();
+                if (reportsDoc.exists) cellReports = reportsDoc.data().data || {};
+                const reasonsDoc = await db.collection('absentReasons').doc('main').get();
+                if (reasonsDoc.exists) absentReasons = reasonsDoc.data().data || {};
+            } catch (error) { console.error('데이터 로드 오류:', error); showToast('데이터를 불러오는 중 오류가 발생했습니다'); }
+        }
+        
+        function setupRealtimeListeners() {
+            db.collection('cellAttendance').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { cellAttendance = doc.data().data; loadAttendance(); } });
+            db.collection('cellSundayAttendance').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { cellSundayAttendance = doc.data().data; loadSundayAttendance(); } });
+            db.collection('cellWorshipDates').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { cellWorshipDates = doc.data().data; } });
+            db.collection('cellReports').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { cellReports = doc.data().data; if (currentUser.role === '관리자') loadOverview(); loadHistory(); } });
+            db.collection('absentReasons').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { absentReasons = doc.data().data; loadAttendance(); } });
+            db.collection('churchMembers').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().list) { members = doc.data().list; loadAttendance(); loadSundayAttendance(); } });
+            db.collection('churchCells').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().list) { cells = doc.data().list; initCellSelector(); } });
+        }
+        
+        function initCellSelector() {
+            const select = document.getElementById('cellSelect');
+            select.innerHTML = '';
+            let availableCells = [];
+            if (currentUser.role === '관리자') { availableCells = cells; }
+            else {
+                availableCells = cells.filter(c => c.leaderName === currentUser.name);
+                if (availableCells.length === 0) {
+                    const member = members.find(m => m.nameKr === currentUser.name);
+                    if (member && member.cell) {
+                        const cellName = member.cell.replace('구역', '');
+                        const cell = cells.find(c => c.name === cellName || c.name === member.cell);
+                        if (cell) availableCells = [cell];
+                    }
+                }
+            }
+            if (availableCells.length === 0) { select.innerHTML = '<option value="">접근 가능한 구역이 없습니다</option>'; return; }
+            availableCells.forEach(cell => {
+                const option = document.createElement('option');
+                option.value = cell.name;
+                option.textContent = cell.name + '구역 (구역장: ' + (cell.leaderName || '미지정') + ')';
+                select.appendChild(option);
+            });
+            selectedCell = availableCells[0].name;
+            if (availableCells.length === 1 && currentUser.role !== '관리자') document.getElementById('cellSelector').style.display = 'none';
+            initDates();
+        }
+        
+        function onCellChange() {
+            selectedCell = document.getElementById('cellSelect').value;
+            if (selectedCell && cellWorshipDates[selectedCell]) {
+                const dateInput = document.getElementById('attendanceDate');
+                if (dateInput) dateInput.value = cellWorshipDates[selectedCell];
+            }
+            loadAttendance();
+            loadSundayAttendance();
+        }
+        
+        function loadAttendance() {
+            if (!selectedCell) return;
+            const dateStr = document.getElementById('attendanceDate').value;
+            const cell = cells.find(c => c.name === selectedCell);
+            if (!cell) return;
+            const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === selectedCell || m.cell === selectedCell + '구역'; });
+            if (cell.leaderName) { const leader = members.find(m => m.nameKr === cell.leaderName); if (leader && !cellMembers.find(m => m.nameKr === cell.leaderName)) cellMembers.unshift(leader); }
+            document.getElementById('attendanceTitle').textContent = selectedCell + '구역 구역예배 출석';
+            const key = selectedCell + '_' + dateStr;
+            const savedAttendance = cellAttendance[key] || [];
+            attendanceData = {};
+            cellMembers.forEach(m => { attendanceData[m.nameKr] = savedAttendance.includes(m.nameKr); });
+            const container = document.getElementById('memberList');
+            if (cellMembers.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div>구역원이 없습니다</div></div>'; updateStats(); return; }
+            let html = '';
+            cellMembers.forEach(m => {
+                const isPresent = attendanceData[m.nameKr];
+                const isLeader = m.nameKr === cell.leaderName;
+                const reasonKey = selectedCell + '_' + dateStr + '_' + m.nameKr;
+                const reason = absentReasons[reasonKey] || '';
+                html += '<div class="member-item"><input type="checkbox" class="member-checkbox" ' + (isPresent ? 'checked' : '') + ' onchange="toggleAttendance(\'' + m.nameKr + '\', this.checked)"><div class="member-info"><div class="member-name">' + m.nameKr + (isLeader ? '<span style="color: #4f46e5; font-size: 0.8em;">(구역장)</span>' : '') + '<a href="tel:' + (m.phone || '') + '" class="phone-link" style="color: #64748b; font-size: 0.85em; margin-left: 8px;">' + (m.phone || '') + '</a></div></div>' + (isPresent ? '<span class="member-status status-present">출석</span>' : '<button class="reason-btn" onclick="openReasonModal(\'' + m.nameKr + '\')">' + (reason || '사유입력') + '</button>') + '</div>';
+            });
+            container.innerHTML = html;
+            updateStats();
+        }
+        
+        async function toggleAttendance(name, checked) {
+            attendanceData[name] = checked;
+            const dateStr = document.getElementById('attendanceDate').value;
+            const key = selectedCell + '_' + dateStr;
+            const presentList = Object.keys(attendanceData).filter(n => attendanceData[n]);
+            cellAttendance[key] = presentList;
+            localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
+            try { await db.collection('cellAttendance').doc('main').set({ data: cellAttendance }); } catch (error) { console.error(error); }
+            loadAttendance();
+        }
+        
+        function updateStats() {
+            const total = Object.keys(attendanceData).length;
+            const present = Object.values(attendanceData).filter(v => v).length;
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPresent').textContent = present;
+            document.getElementById('statAbsent').textContent = total - present;
+        }
+        
+        function openReasonModal(name) {
+            const dateStr = document.getElementById('attendanceDate').value;
+            const reasonKey = selectedCell + '_' + dateStr + '_' + name;
+            const savedReason = absentReasons[reasonKey] || '';
+            document.getElementById('reasonMemberId').value = name;
+            document.getElementById('reasonMemberName').textContent = name;
+            document.getElementById('reasonSelect').value = '';
+            document.getElementById('customReason').value = '';
+            document.getElementById('customReasonGroup').style.display = 'none';
+            if (savedReason) {
+                const options = ['출장', '여행', '아픔', '가족행사', '직장'];
+                if (options.includes(savedReason)) document.getElementById('reasonSelect').value = savedReason;
+                else { document.getElementById('reasonSelect').value = '기타'; document.getElementById('customReason').value = savedReason; document.getElementById('customReasonGroup').style.display = 'block'; }
+            }
+            document.getElementById('reasonModal').classList.add('active');
+        }
+        
+        function onReasonSelect() { document.getElementById('customReasonGroup').style.display = document.getElementById('reasonSelect').value === '기타' ? 'block' : 'none'; }
+        
+        function saveReason() {
+            const name = document.getElementById('reasonMemberId').value;
+            const dateStr = document.getElementById('attendanceDate').value;
+            let reason = document.getElementById('reasonSelect').value;
+            if (reason === '기타') reason = document.getElementById('customReason').value.trim();
+            absentReasons[selectedCell + '_' + dateStr + '_' + name] = reason;
+            closeReasonModal();
+            loadAttendance();
+            showToast('결석 사유가 저장되었습니다');
+        }
+        
+        function closeReasonModal() { document.getElementById('reasonModal').classList.remove('active'); }
+        
+        async function saveAttendance() {
+            if (!selectedCell) return;
+            const dateStr = document.getElementById('attendanceDate').value;
+            const key = selectedCell + '_' + dateStr;
+            cellAttendance[key] = Object.keys(attendanceData).filter(name => attendanceData[name]);
+            try {
+                await db.collection('cellAttendance').doc('main').set({ data: cellAttendance });
+                await db.collection('absentReasons').doc('main').set({ data: absentReasons });
+                showToast('✅ 구역예배 출석이 저장되었습니다!');
+            } catch (error) { console.error(error); showToast('저장 중 오류가 발생했습니다'); }
+        }
+        
+        function loadSundayAttendance() {
+            if (!selectedCell) return;
+            const dateStr = document.getElementById('sundayAttendanceDate').value;
+            if (!dateStr) return;
+            const cell = cells.find(c => c.name === selectedCell);
+            if (!cell) return;
+            const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === selectedCell || m.cell === selectedCell + '구역'; });
+            if (cell.leaderName) { const leader = members.find(m => m.nameKr === cell.leaderName); if (leader && !cellMembers.find(m => m.nameKr === cell.leaderName)) cellMembers.unshift(leader); }
+            document.getElementById('sundayAttendanceTitle').textContent = selectedCell + '구역 주일예배 출석';
+            const key = selectedCell + '_' + dateStr;
+            const savedAttendance = cellSundayAttendance[key] || [];
+            sundayAttendanceData = {};
+            cellMembers.forEach(m => { sundayAttendanceData[m.nameKr] = savedAttendance.includes(m.nameKr); });
+            const container = document.getElementById('sundayMemberList');
+            if (cellMembers.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div>구역원이 없습니다</div></div>'; updateSundayStats(); return; }
+            let html = '';
+            cellMembers.forEach(m => {
+                const isPresent = sundayAttendanceData[m.nameKr];
+                const isLeader = m.nameKr === cell.leaderName;
+                html += '<div class="member-item"><input type="checkbox" class="member-checkbox" ' + (isPresent ? 'checked' : '') + ' onchange="toggleSundayAttendance(\'' + m.nameKr + '\', this.checked)"><div class="member-info"><div class="member-name">' + m.nameKr + (isLeader ? '<span style="color: #4f46e5; font-size: 0.8em;">(구역장)</span>' : '') + '<a href="tel:' + (m.phone || '') + '" class="phone-link" style="color: #64748b; font-size: 0.85em; margin-left: 8px;">' + (m.phone || '') + '</a></div></div><span class="member-status ' + (isPresent ? 'status-present' : 'status-absent') + '">' + (isPresent ? '출석' : '결석') + '</span></div>';
+            });
+            container.innerHTML = html;
+            updateSundayStats();
+        }
+        
+        async function toggleSundayAttendance(name, checked) {
+            sundayAttendanceData[name] = checked;
+            const dateStr = document.getElementById('sundayAttendanceDate').value;
+            const key = selectedCell + '_' + dateStr;
+            cellSundayAttendance[key] = Object.keys(sundayAttendanceData).filter(n => sundayAttendanceData[n]);
+            try { await db.collection('cellSundayAttendance').doc('main').set({ data: cellSundayAttendance }); } catch (error) { console.error(error); }
+            updateSundayStats();
+            loadSundayAttendance();
+        }
+        
+        function updateSundayStats() {
+            const total = Object.keys(sundayAttendanceData).length;
+            const present = Object.values(sundayAttendanceData).filter(v => v).length;
+            document.getElementById('sundayStatTotal').textContent = total;
+            document.getElementById('sundayStatPresent').textContent = present;
+            document.getElementById('sundayStatAbsent').textContent = total - present;
+        }
+        
+        async function saveSundayAttendance() {
+            if (!selectedCell) return;
+            const dateStr = document.getElementById('sundayAttendanceDate').value;
+            cellSundayAttendance[selectedCell + '_' + dateStr] = Object.keys(sundayAttendanceData).filter(name => sundayAttendanceData[name]);
+            try { await db.collection('cellSundayAttendance').doc('main').set({ data: cellSundayAttendance }); showToast('✅ 주일예배 출석이 저장되었습니다!'); }
+            catch (error) { console.error(error); showToast('저장 중 오류가 발생했습니다'); }
+        }
+        
+        function refreshReportAttendance() {
+            if (!selectedCell) { document.getElementById('reportAttendanceStatus').innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">구역을 먼저 선택해주세요</div>'; return; }
+            const dateStr = document.getElementById('reportDate').value;
+            const key = selectedCell + '_' + dateStr;
+            const presentList = cellAttendance[key] || [];
+            const cell = cells.find(c => c.name === selectedCell);
+            if (!cell) return;
+            const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === selectedCell || m.cell === selectedCell + '구역'; });
+            const allMembers = [];
+            if (cell.leaderName) allMembers.push({ nameKr: cell.leaderName, isLeader: true });
+            cellMembers.forEach(m => { if (m.nameKr !== cell.leaderName) allMembers.push({ nameKr: m.nameKr, isLeader: false }); });
+            const absentList = allMembers.filter(m => !presentList.includes(m.nameKr));
+            let html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div style="background: #dcfce7; border-radius: 12px; padding: 15px;"><div style="font-weight: 600; color: #16a34a; margin-bottom: 10px;">✅ 출석 (' + presentList.length + '명)</div>';
+            if (presentList.length > 0) presentList.forEach(name => { const m = allMembers.find(x => x.nameKr === name); html += '<div style="font-size: 0.9em; padding: 3px 0; color: #166534;">' + name + (m && m.isLeader ? ' (구역장)' : '') + '</div>'; });
+            else html += '<div style="font-size: 0.85em; color: #94a3b8;">없음</div>';
+            html += '</div><div style="background: #fee2e2; border-radius: 12px; padding: 15px;"><div style="font-weight: 600; color: #dc2626; margin-bottom: 10px;">❌ 결석 (' + absentList.length + '명)</div>';
+            if (absentList.length > 0) absentList.forEach(m => { const rk = selectedCell + '_' + dateStr + '_' + m.nameKr; const r = absentReasons[rk] || ''; html += '<div style="font-size: 0.9em; padding: 3px 0; color: #991b1b;">' + m.nameKr + (m.isLeader ? ' (구역장)' : '') + (r ? ' <span style="font-size: 0.8em; color: #dc2626;">- ' + r + '</span>' : '') + '</div>'; });
+            else html += '<div style="font-size: 0.85em; color: #94a3b8;">없음</div>';
+            html += '</div></div><div style="text-align: center; margin-top: 15px; padding: 10px; background: #f1f5f9; border-radius: 10px;"><span style="font-weight: 600;">출석률: </span><span style="color: ' + ((presentList.length / allMembers.length * 100) >= 70 ? '#16a34a' : '#dc2626') + '; font-weight: 700;">' + (allMembers.length > 0 ? Math.round(presentList.length / allMembers.length * 100) : 0) + '%</span><span style="color: #64748b; font-size: 0.9em;"> (' + presentList.length + '/' + allMembers.length + '명)</span></div>';
+            document.getElementById('reportAttendanceStatus').innerHTML = html;
+        }
+        
+        async function submitReport() {
+            if (!selectedCell) return;
+            const dateStr = document.getElementById('reportDate').value;
+            const key = selectedCell + '_' + dateStr;
+            const cell = cells.find(c => c.name === selectedCell);
+            const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === selectedCell || m.cell === selectedCell + '구역'; });
+            const allMembers = [];
+            if (cell && cell.leaderName) allMembers.push(cell.leaderName);
+            cellMembers.forEach(m => { if (m.nameKr && m.nameKr !== cell?.leaderName) allMembers.push(m.nameKr); });
+            const presentList = cellAttendance[key] || [];
+            const absentList = allMembers.filter(name => !presentList.includes(name));
+            const absentWithReasons = absentList.map(name => ({ name: name, reason: absentReasons[selectedCell + '_' + dateStr + '_' + name] || '' }));
+            const report = {
+                cell: selectedCell, date: dateStr,
+                place: document.getElementById('reportPlace').value,
+                time: document.getElementById('reportTime').value,
+                leader: document.getElementById('reportLeader').value,
+                hymn: document.getElementById('reportHymn').value,
+                scripture: document.getElementById('reportScripture').value,
+                title: document.getElementById('reportTitle').value,
+                offering: parseInt(document.getElementById('reportOffering').value) || 0,
+                prayer: document.getElementById('reportPrayer').value,
+                notes: document.getElementById('reportNotes').value,
+                attendance: presentList, absent: absentWithReasons,
+                totalMembers: allMembers.length,
+                attendanceRate: allMembers.length > 0 ? Math.round(presentList.length / allMembers.length * 100) : 0,
+                submittedAt: new Date().toISOString(), submittedBy: currentUser.name
+            };
+            if (!report.place || !report.leader) { showToast('예배 장소와 인도자를 입력해주세요'); return; }
+            cellReports[key] = report;
+            try {
+                await db.collection('cellReports').doc('main').set({ data: cellReports });
+                showToast('📤 보고서가 제출되었습니다!');
+                ['reportPlace', 'reportLeader', 'reportHymn', 'reportScripture', 'reportTitle', 'reportOffering', 'reportPrayer', 'reportNotes'].forEach(id => document.getElementById(id).value = '');
+            } catch (error) { console.error(error); showToast('제출 중 오류가 발생했습니다'); }
+        }
+        
+        async function loadOverview() {
+            const dateStr = document.getElementById('overviewDate').value;
+            let submitted = 0, cellTotalAttendance = 0, cellTotalAbsent = 0, sundayTotalAttendance = 0, totalMembers = 0, totalOffering = 0, prayers = [];
+            let listHtml = '';
+            cells.forEach(cell => {
+                const key = cell.name + '_' + dateStr;
+                const report = cellReports[key];
+                const cellAtt = cellAttendance[key] || [];
+                const sundayAtt = cellSundayAttendance[key] || [];
+                const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === cell.name || m.cell === cell.name + '구역'; });
+                const cellTotal = cellMembers.length + (cell.leaderName ? 1 : 0);
+                totalMembers += cellTotal;
+                const cellAbsentCount = cellTotal - cellAtt.length;
+                const cellRate = cellTotal > 0 ? Math.round((cellAtt.length / cellTotal) * 100) : 0;
+                const sundayRate = cellTotal > 0 ? Math.round((sundayAtt.length / cellTotal) * 100) : 0;
+                if (report) { submitted++; totalOffering += report.offering || 0; if (report.prayer) prayers.push({ cell: cell.name, prayer: report.prayer, leader: cell.leaderName }); }
+                cellTotalAttendance += cellAtt.length;
+                cellTotalAbsent += cellAbsentCount;
+                sundayTotalAttendance += sundayAtt.length;
+                listHtml += '<div class="report-item" style="flex-direction: column; align-items: stretch; gap: 8px;"><div style="display: flex; justify-content: space-between; align-items: center;"><div class="report-cell">' + cell.name + '구역</div><div><span class="report-status ' + (report ? 'report-submitted' : 'report-pending') + '">' + (report ? '✅ 보고서' : '⏳ 미제출') + '</span>' + (report ? '<button class="report-view-btn" onclick="viewReport(\'' + cell.name + '\', \'' + dateStr + '\')">보기</button>' : '') + '</div></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"><div style="background: #ede9fe; padding: 8px; border-radius: 6px; text-align: center;"><div style="font-size: 0.7em; color: #7c3aed;">✝️ 주일예배</div><div style="font-weight: 600; color: #5b21b6;">' + sundayAtt.length + '/' + cellTotal + ' <span style="font-size: 0.8em; font-weight: normal;">(' + sundayRate + '%)</span></div></div><div style="background: #e0f2fe; padding: 8px; border-radius: 6px; text-align: center;"><div style="font-size: 0.7em; color: #0891b2;">⛪ 구역예배</div><div style="font-weight: 600; color: #0e7490;">' + cellAtt.length + '/' + cellTotal + ' <span style="font-size: 0.8em; font-weight: normal;">(' + cellRate + '%)</span></div></div></div></div>';
+            });
+            const sundayRate = totalMembers > 0 ? Math.round((sundayTotalAttendance / totalMembers) * 100) : 0;
+            document.getElementById('sundayOverviewTotal').textContent = totalMembers;
+            document.getElementById('sundayOverviewPresent').textContent = sundayTotalAttendance;
+            document.getElementById('sundayOverviewRate').textContent = sundayRate + '%';
+            document.getElementById('overviewSubmitted').textContent = submitted + '/' + cells.length;
+            document.getElementById('overviewAttendance').textContent = cellTotalAttendance;
+            document.getElementById('overviewAbsent').textContent = cellTotalAbsent;
+            document.getElementById('overviewOffering').textContent = '$' + totalOffering;
+            document.getElementById('overviewList').innerHTML = listHtml || '<div class="empty-state">구역 데이터가 없습니다</div>';
+            
+            // 기도제목 - 성명:기도내용 형식으로 개선
             let prayerHtml = '';
             prayers.forEach(p => {
-                prayerHtml += `
-                    <div class="prayer-item">
-                        <div class="prayer-name">${p.cell}구역</div>
-                        <div class="prayer-content">${p.prayer}</div>
-                    </div>
-                `;
+                prayerHtml += '<div class="prayer-item"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;"><span class="prayer-name" style="font-size: 1em;">' + p.cell + '구역</span><span style="font-size: 0.8em; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 10px;">' + (p.leader || '') + '</span></div><div class="prayer-content">' + formatPrayerContent(p.prayer) + '</div></div>';
             });
-```
-
-**변경 후:**
-```javascript
-            // 기도제목 목록 - 성명:기도내용 형식으로 개선
-            let prayerHtml = '';
-            prayers.forEach(p => {
-                prayerHtml += `
-                    <div class="prayer-item">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;">
-                            <span class="prayer-name" style="font-size: 1em;">${p.cell}구역</span>
-                            <span style="font-size: 0.8em; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 10px;">${p.leader || ''}</span>
-                        </div>
-                        <div class="prayer-content">${formatPrayerContent(p.prayer)}</div>
-                    </div>
-                `;
+            document.getElementById('prayerList').innerHTML = prayerHtml || '<div class="empty-state">기도제목이 없습니다</div>';
+        }
+        
+        function viewReport(cellName, dateStr) {
+            const key = cellName + '_' + dateStr;
+            const report = cellReports[key];
+            if (!report) return;
+            const date = new Date(dateStr);
+            const dateLabel = (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
+            const presentList = report.attendance || [];
+            const absentList = report.absent || [];
+            const totalMembers = report.totalMembers || (presentList.length + absentList.length);
+            const attendanceRate = report.attendanceRate || (totalMembers > 0 ? Math.round(presentList.length / totalMembers * 100) : 0);
+            document.getElementById('reportDetailTitle').textContent = cellName + '구역 보고서 (' + dateLabel + ')';
+            let absentHtml = '';
+            if (absentList.length > 0) absentList.forEach(item => { const name = typeof item === 'string' ? item : item.name; const reason = typeof item === 'object' ? item.reason : ''; absentHtml += '<div style="font-size: 0.9em; color: #991b1b; padding: 2px 0;">' + name + (reason ? ' <span style="font-size: 0.8em; color: #b91c1c;">(' + reason + ')</span>' : '') + '</div>'; });
+            else absentHtml = '<div style="color: #94a3b8; font-size: 0.85em;">없음</div>';
+            let presentHtml = '';
+            if (presentList.length > 0) presentList.forEach(name => { presentHtml += '<div style="font-size: 0.9em; color: #166534; padding: 2px 0;">' + name + '</div>'; });
+            else presentHtml = '<div style="color: #94a3b8; font-size: 0.85em;">없음</div>';
+            document.getElementById('reportDetailContent').innerHTML = '<div style="display: grid; gap: 15px;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div><strong>예배 장소:</strong> ' + (report.place || '-') + '</div><div><strong>예배 시간:</strong> ' + (report.time || '-') + '</div></div><div><strong>인도자:</strong> ' + (report.leader || '-') + '</div><div><strong>찬양:</strong> ' + (report.hymn || '-') + '</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div><strong>본문:</strong> ' + (report.scripture || '-') + '</div><div><strong>제목:</strong> ' + (report.title || '-') + '</div></div><div style="background: #f1f5f9; padding: 15px; border-radius: 10px; text-align: center;"><div style="font-size: 1.5em; font-weight: 700; color: ' + (attendanceRate >= 70 ? '#16a34a' : '#dc2626') + ';">출석률 ' + attendanceRate + '%</div><div style="color: #64748b; margin-top: 5px;">' + presentList.length + '명 출석 / ' + absentList.length + '명 결석 (전체 ' + totalMembers + '명)</div></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div style="background: #dcfce7; padding: 15px; border-radius: 10px;"><div style="font-weight: 600; color: #16a34a; margin-bottom: 10px;">✅ 출석 (' + presentList.length + '명)</div>' + presentHtml + '</div><div style="background: #fee2e2; padding: 15px; border-radius: 10px;"><div style="font-weight: 600; color: #dc2626; margin-bottom: 10px;">❌ 결석 (' + absentList.length + '명)</div>' + absentHtml + '</div></div><div><strong>구역헌금:</strong> $' + (report.offering || 0) + '</div><div style="background: #fef3c7; padding: 15px; border-radius: 10px;"><strong>🙏 기도제목</strong><div style="margin-top: 10px;">' + formatPrayerContent(report.prayer) + '</div></div><div style="background: #f1f5f9; padding: 15px; border-radius: 10px;"><strong>📝 특이사항</strong><div style="margin-top: 10px; white-space: pre-wrap;">' + (report.notes || '-') + '</div></div><div style="font-size: 0.8em; color: #94a3b8; text-align: right;">제출: ' + (report.submittedBy || '-') + ' (' + new Date(report.submittedAt).toLocaleString('ko-KR') + ')</div></div>';
+            document.getElementById('reportDetailModal').classList.add('active');
+        }
+        
+        function closeReportDetail() { document.getElementById('reportDetailModal').classList.remove('active'); }
+        
+        function loadHistory() {
+            const container = document.getElementById('historyList');
+            let reports = [];
+            Object.keys(cellReports).forEach(key => { const report = cellReports[key]; if (currentUser.role === '관리자' || report.cell === selectedCell) reports.push({ key, ...report }); });
+            reports.sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (reports.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><div>작성한 보고서가 없습니다</div></div>'; return; }
+            let html = '';
+            reports.slice(0, 20).forEach(report => {
+                const date = new Date(report.date);
+                const dateLabel = (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
+                html += '<div class="report-item" onclick="viewReport(\'' + report.cell + '\', \'' + report.date + '\')"><div class="report-cell">' + report.cell + '구역</div><div style="flex: 1;"><div style="font-weight: 500;">' + dateLabel + '</div><div style="font-size: 0.8em; color: #64748b;">참석 ' + (report.attendance?.length || 0) + '명 | 헌금 $' + (report.offering || 0) + '</div></div><span style="color: #4f46e5;">→</span></div>';
             });
-```
-
-## 4. 보고서 상세보기 기도제목 부분 변경 (viewReport 함수 내, 약 2310번째 줄)
-
-**변경 전:**
-```javascript
-<div style="background: #fef3c7; padding: 15px; border-radius: 10px;">
-    <strong>🙏 기도제목</strong>
-    <div style="margin-top: 10px; white-space: pre-wrap;">${report.prayer || '-'}</div>
-</div>
-```
-
-**변경 후:**
-```javascript
-<div style="background: #fef3c7; padding: 15px; border-radius: 10px;">
-    <strong>🙏 기도제목</strong>
-    <div style="margin-top: 10px;">${formatPrayerContent(report.prayer) || '-'}</div>
-</div>
-```
-
----
-
-## 요약
-1. `formatPrayerContent()` 함수 추가
-2. 기도제목 입력 placeholder에 예시 추가
-3. 현황 탭 기도제목 표시 개선
-4. 보고서 상세보기 기도제목 표시 개선
-
-이 수정을 적용하면 기도제목이 **성명: 기도내용** 형식으로 깔끔하게 표시됩니다.
+            container.innerHTML = html;
+        }
+        
+        function showTab(tab) {
+            ['Attendance', 'Sunday', 'Report', 'Overview', 'History'].forEach(t => document.getElementById('tab' + t).classList.add('hidden'));
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            if (tab === 'overview') loadOverview();
+            else if (tab === 'history') loadHistory();
+            else if (tab === 'report') setTimeout(() => refreshReportAttendance(), 100);
+            else if (tab === 'sunday' && selectedCell) loadSundayAttendance();
+        }
+        
+        function logout() {
+            localStorage.removeItem('cellAppUser');
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById('tabNav').classList.add('hidden');
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            showToast('로그아웃되었습니다');
+        }
+        
+        function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3000); }
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker-cell.js').then(reg => { reg.addEventListener('updatefound', () => { const nw = reg.installing; nw.addEventListener('statechange', () => { if (nw.state === 'installed' && navigator.serviceWorker.controller) { showToast('🔄 앱 업데이트 중...'); nw.postMessage('skipWaiting'); } }); }); }).catch(err => console.error(err));
+            navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+            setInterval(() => { navigator.serviceWorker.getRegistration().then(reg => { if (reg) reg.update(); }); }, 60000);
+        }
+        function updateOnlineStatus() { if (navigator.onLine) document.body.classList.remove('offline'); else { document.body.classList.add('offline'); showToast('📴 오프라인 모드'); } }
+        window.addEventListener('online', () => { updateOnlineStatus(); showToast('✅ 온라인 복귀'); if (currentUser) loadData().then(() => { loadAttendance(); loadSundayAttendance(); }); });
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+    </script>
+</body>
+</html>
