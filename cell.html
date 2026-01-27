@@ -91,6 +91,7 @@
         .phone-link { color: #4f46e5; text-decoration: none; }
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
         .empty-icon { font-size: 3em; margin-bottom: 15px; }
+        .current-cell-badge { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 1em; display: inline-block; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -158,13 +159,17 @@
             </div>
             
             <div id="tabReport" class="hidden">
-                <div class="date-selector">
-                    <span>📅</span>
-                    <input type="date" class="date-input" id="reportDate">
-                </div>
                 <div class="card">
                     <div class="card-title"><span>📝</span><span>구역예배 보고서</span></div>
+                    <!-- 현재 구역 표시 -->
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <span class="current-cell-badge" id="reportCurrentCell">구역 선택</span>
+                    </div>
                     <div class="report-form">
+                        <div class="form-group">
+                            <label class="form-label">📅 구역예배 날짜</label>
+                            <input type="date" class="form-input" id="reportDate">
+                        </div>
                         <div class="form-row">
                             <div class="form-group"><label class="form-label">예배 장소</label><input type="text" class="form-input" id="reportPlace" placeholder="예: 김철수 집"></div>
                             <div class="form-group"><label class="form-label">예배 시간</label><input type="time" class="form-input" id="reportTime" value="14:00"></div>
@@ -186,37 +191,23 @@
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-title"><span>📋</span><span>구역예배 출석 현황</span><button onclick="refreshReportAttendance()" style="margin-left: auto; background: #e2e8f0; border: none; padding: 5px 12px; border-radius: 15px; font-size: 0.8em; cursor: pointer;">새로고침</button></div>
+                    <div class="card-title"><span>📋</span><span id="reportAttendanceTitle">구역예배 출석 현황</span><button onclick="refreshReportAttendance()" style="margin-left: auto; background: #e2e8f0; border: none; padding: 5px 12px; border-radius: 15px; font-size: 0.8em; cursor: pointer;">새로고침</button></div>
                     <div id="reportAttendanceStatus"><div style="text-align: center; padding: 20px; color: #94a3b8;">구역예배 탭에서 먼저 출석을 체크해주세요</div></div>
                 </div>
                 <div style="padding: 15px;"><button class="btn btn-primary" onclick="submitReport()">📤 보고서 제출</button></div>
             </div>
             
             <div id="tabOverview" class="hidden">
-                <div class="date-selector">
-                    <span>📅 현황 날짜</span>
-                    <input type="date" class="date-input" id="overviewDate" onchange="loadOverview()">
-                </div>
                 <div class="overview-card" style="background: linear-gradient(135deg, #7c3aed, #8b5cf6);">
-                    <div class="overview-title" style="font-size: 1em;">✝️ 주일예배 출석 현황</div>
-                    <div class="overview-stats" style="grid-template-columns: repeat(3, 1fr);">
-                        <div class="overview-stat"><div class="overview-number" id="sundayOverviewTotal">0</div><div class="overview-label">총원</div></div>
-                        <div class="overview-stat"><div class="overview-number" id="sundayOverviewPresent" style="color: #bbf7d0;">0</div><div class="overview-label">출석</div></div>
-                        <div class="overview-stat"><div class="overview-number" id="sundayOverviewRate">0%</div><div class="overview-label">출석률</div></div>
-                    </div>
-                </div>
-                <div class="overview-card" style="background: linear-gradient(135deg, #0891b2, #06b6d4);">
-                    <div class="overview-title" style="font-size: 1em;">⛪ 구역예배 출석 현황</div>
-                    <div class="overview-stats" style="grid-template-columns: repeat(4, 1fr);">
-                        <div class="overview-stat"><div class="overview-number" id="overviewSubmitted">0</div><div class="overview-label">보고서</div></div>
-                        <div class="overview-stat"><div class="overview-number" id="overviewAttendance" style="color: #bbf7d0;">0</div><div class="overview-label">출석</div></div>
-                        <div class="overview-stat"><div class="overview-number" id="overviewAbsent" style="color: #fecaca;">0</div><div class="overview-label">결석</div></div>
-                        <div class="overview-stat"><div class="overview-number" id="overviewOffering">$0</div><div class="overview-label">헌금</div></div>
+                    <div class="overview-title" style="font-size: 1em;">✝️ 주일예배 / 🏠 구역예배</div>
+                    <div class="overview-stats" style="grid-template-columns: repeat(2, 1fr);">
+                        <div class="overview-stat"><div class="overview-number" id="sundayOverviewPresent">0</div><div class="overview-label">주일 출석</div></div>
+                        <div class="overview-stat"><div class="overview-number" id="cellOverviewPresent">0</div><div class="overview-label">구역 출석</div></div>
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-title"><span>📊</span><span>구역별 출석 현황</span></div>
-                    <div style="font-size: 0.75em; color: #64748b; margin-bottom: 10px;"><span style="color: #8b5cf6;">✝️ 주일예배</span> / <span style="color: #0891b2;">⛪ 구역예배</span></div>
+                    <div style="font-size: 0.75em; color: #64748b; margin-bottom: 10px;"><span style="color: #8b5cf6;">✝️ 주일예배</span> / <span style="color: #0891b2;">🏠 구역예배</span></div>
                     <div id="overviewList"></div>
                 </div>
                 <div class="card">
@@ -236,7 +227,7 @@
     
     <div class="tab-nav hidden" id="tabNav">
         <button class="tab-btn active" onclick="showTab('sunday')" id="tabBtnSunday"><span class="tab-icon">✝️</span><span>주일예배</span></button>
-        <button class="tab-btn" onclick="showTab('attendance')" id="tabBtnAttendance"><span class="tab-icon">⛪</span><span>구역예배</span></button>
+        <button class="tab-btn" onclick="showTab('attendance')" id="tabBtnAttendance"><span class="tab-icon">🏠</span><span>구역예배</span></button>
         <button class="tab-btn" onclick="showTab('report')" id="tabBtnReport"><span class="tab-icon">📝</span><span>보고서</span></button>
         <button class="tab-btn hidden" onclick="showTab('overview')" id="tabBtnOverview"><span class="tab-icon">📊</span><span>현황</span></button>
         <button class="tab-btn" onclick="showTab('history')" id="tabBtnHistory"><span class="tab-icon">📚</span><span>기록</span></button>
@@ -345,10 +336,8 @@
             const today = new Date().toISOString().split('T')[0];
             const attendanceDate = document.getElementById('attendanceDate');
             const reportDate = document.getElementById('reportDate');
-            const overviewDate = document.getElementById('overviewDate');
             if (attendanceDate) { attendanceDate.value = today; localStorage.setItem('cellApp_attendanceDate', today); }
             if (reportDate) reportDate.value = today;
-            if (overviewDate) overviewDate.value = today;
             loadAttendance();
         }
         
@@ -368,10 +357,8 @@
             let attDateStr = (selectedCell && cellWorshipDates[selectedCell]) ? cellWorshipDates[selectedCell] : (localStorage.getItem('cellApp_attendanceDate') || today.toISOString().split('T')[0]);
             const attendanceDate = document.getElementById('attendanceDate');
             const reportDate = document.getElementById('reportDate');
-            const overviewDate = document.getElementById('overviewDate');
             if (attendanceDate) attendanceDate.value = attDateStr;
             if (reportDate) reportDate.value = attDateStr;
-            if (overviewDate) overviewDate.value = attDateStr;
             const savedSundayDate = localStorage.getItem('cellApp_sundayDate');
             let sundayDateStr;
             if (savedSundayDate) { sundayDateStr = savedSundayDate; }
@@ -386,9 +373,7 @@
             const dateStr = document.getElementById('attendanceDate').value;
             localStorage.setItem('cellApp_attendanceDate', dateStr);
             const reportDate = document.getElementById('reportDate');
-            const overviewDate = document.getElementById('overviewDate');
             if (reportDate) reportDate.value = dateStr;
-            if (overviewDate) overviewDate.value = dateStr;
             if (selectedCell) {
                 cellWorshipDates[selectedCell] = dateStr;
                 db.collection('cellWorshipDates').doc('main').set({ data: cellWorshipDates }).catch(err => console.error(err));
@@ -486,7 +471,19 @@
             });
             selectedCell = availableCells[0].name;
             if (availableCells.length === 1 && currentUser.role !== '관리자') document.getElementById('cellSelector').style.display = 'none';
+            updateCurrentCellDisplay();
             initDates();
+        }
+        
+        function updateCurrentCellDisplay() {
+            const badge = document.getElementById('reportCurrentCell');
+            const titleEl = document.getElementById('reportAttendanceTitle');
+            if (badge && selectedCell) {
+                badge.textContent = '🏠 ' + selectedCell + '구역';
+            }
+            if (titleEl && selectedCell) {
+                titleEl.textContent = selectedCell + '구역 출석 현황';
+            }
         }
         
         function onCellChange() {
@@ -495,8 +492,10 @@
                 const dateInput = document.getElementById('attendanceDate');
                 if (dateInput) dateInput.value = cellWorshipDates[selectedCell];
             }
+            updateCurrentCellDisplay();
             loadAttendance();
             loadSundayAttendance();
+            refreshReportAttendance();
         }
         
         function loadAttendance() {
@@ -646,6 +645,10 @@
             const presentList = cellAttendance[key] || [];
             const cell = cells.find(c => c.name === selectedCell);
             if (!cell) return;
+            
+            // 현재 구역 표시 업데이트
+            updateCurrentCellDisplay();
+            
             const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === selectedCell || m.cell === selectedCell + '구역'; });
             const allMembers = [];
             if (cell.leaderName) allMembers.push({ nameKr: cell.leaderName, isLeader: true });
@@ -662,8 +665,9 @@
         }
         
         async function submitReport() {
-            if (!selectedCell) return;
+            if (!selectedCell) { showToast('구역을 선택해주세요'); return; }
             const dateStr = document.getElementById('reportDate').value;
+            if (!dateStr) { showToast('날짜를 선택해주세요'); return; }
             const key = selectedCell + '_' + dateStr;
             const cell = cells.find(c => c.name === selectedCell);
             const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === selectedCell || m.cell === selectedCell + '구역'; });
@@ -674,7 +678,9 @@
             const absentList = allMembers.filter(name => !presentList.includes(name));
             const absentWithReasons = absentList.map(name => ({ name: name, reason: absentReasons[selectedCell + '_' + dateStr + '_' + name] || '' }));
             const report = {
-                cell: selectedCell, date: dateStr,
+                cell: selectedCell,
+                cellName: selectedCell,
+                date: dateStr,
                 place: document.getElementById('reportPlace').value,
                 time: document.getElementById('reportTime').value,
                 leader: document.getElementById('reportLeader').value,
@@ -699,42 +705,83 @@
         }
         
         async function loadOverview() {
-            const dateStr = document.getElementById('overviewDate').value;
-            let submitted = 0, cellTotalAttendance = 0, cellTotalAbsent = 0, sundayTotalAttendance = 0, totalMembers = 0, totalOffering = 0, prayers = [];
+            let sundayTotalAttendance = 0, cellTotalAttendance = 0, totalMembers = 0, prayers = [];
             let listHtml = '';
+            const lastSunday = getLastSunday();
+            
             cells.forEach(cell => {
-                const key = cell.name + '_' + dateStr;
-                const report = cellReports[key];
-                const cellAtt = cellAttendance[key] || [];
-                const sundayAtt = cellSundayAttendance[key] || [];
+                // 주일예배: 지난 주일 기준
+                const sundayKey = cell.name + '_' + lastSunday;
+                const sundayAtt = cellSundayAttendance[sundayKey] || [];
+                
+                // 구역예배: 해당 구역의 최신 날짜 기준
+                const cellDate = cellWorshipDates[cell.name] || getLatestCellDate(cell.name);
+                const cellKey = cell.name + '_' + cellDate;
+                const cellAtt = cellAttendance[cellKey] || [];
+                const report = cellReports[cellKey];
+                
                 const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === cell.name || m.cell === cell.name + '구역'; });
                 const cellTotal = cellMembers.length + (cell.leaderName ? 1 : 0);
                 totalMembers += cellTotal;
-                const cellAbsentCount = cellTotal - cellAtt.length;
-                const cellRate = cellTotal > 0 ? Math.round((cellAtt.length / cellTotal) * 100) : 0;
+                
                 const sundayRate = cellTotal > 0 ? Math.round((sundayAtt.length / cellTotal) * 100) : 0;
-                if (report) { submitted++; totalOffering += report.offering || 0; if (report.prayer) prayers.push({ cell: cell.name, prayer: report.prayer, leader: cell.leaderName }); }
-                cellTotalAttendance += cellAtt.length;
-                cellTotalAbsent += cellAbsentCount;
+                const cellRate = cellTotal > 0 ? Math.round((cellAtt.length / cellTotal) * 100) : 0;
+                
+                if (report && report.prayer) prayers.push({ cell: cell.name, prayer: report.prayer, leader: cell.leaderName });
+                
                 sundayTotalAttendance += sundayAtt.length;
-                listHtml += '<div class="report-item" style="flex-direction: column; align-items: stretch; gap: 8px;"><div style="display: flex; justify-content: space-between; align-items: center;"><div class="report-cell">' + cell.name + '구역</div><div><span class="report-status ' + (report ? 'report-submitted' : 'report-pending') + '">' + (report ? '✅ 보고서' : '⏳ 미제출') + '</span>' + (report ? '<button class="report-view-btn" onclick="viewReport(\'' + cell.name + '\', \'' + dateStr + '\')">보기</button>' : '') + '</div></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"><div style="background: #ede9fe; padding: 8px; border-radius: 6px; text-align: center;"><div style="font-size: 0.7em; color: #7c3aed;">✝️ 주일예배</div><div style="font-weight: 600; color: #5b21b6;">' + sundayAtt.length + '/' + cellTotal + ' <span style="font-size: 0.8em; font-weight: normal;">(' + sundayRate + '%)</span></div></div><div style="background: #e0f2fe; padding: 8px; border-radius: 6px; text-align: center;"><div style="font-size: 0.7em; color: #0891b2;">⛪ 구역예배</div><div style="font-weight: 600; color: #0e7490;">' + cellAtt.length + '/' + cellTotal + ' <span style="font-size: 0.8em; font-weight: normal;">(' + cellRate + '%)</span></div></div></div></div>';
+                cellTotalAttendance += cellAtt.length;
+                
+                listHtml += `
+                    <div class="report-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="report-cell">${cell.name}구역</div>
+                            <div><span class="report-status ${report ? 'report-submitted' : 'report-pending'}">${report ? '✅ 보고서' : '⏳ 미제출'}</span>
+                            ${report ? `<button class="report-view-btn" onclick="viewReport('${cell.name}', '${cellDate}')">보기</button>` : ''}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div style="background: #ede9fe; padding: 8px; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 0.7em; color: #7c3aed;">✝️ 주일예배</div>
+                                <div style="font-weight: 600; color: #5b21b6;">${sundayAtt.length}/${cellTotal} <span style="font-size: 0.8em; font-weight: normal;">(${sundayRate}%)</span></div>
+                            </div>
+                            <div style="background: #e0f2fe; padding: 8px; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 0.7em; color: #0891b2;">🏠 구역예배 ${cellDate ? '(' + cellDate.substring(5) + ')' : ''}</div>
+                                <div style="font-weight: 600; color: #0e7490;">${cellAtt.length}/${cellTotal} <span style="font-size: 0.8em; font-weight: normal;">(${cellRate}%)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
-            const sundayRate = totalMembers > 0 ? Math.round((sundayTotalAttendance / totalMembers) * 100) : 0;
-            document.getElementById('sundayOverviewTotal').textContent = totalMembers;
+            
             document.getElementById('sundayOverviewPresent').textContent = sundayTotalAttendance;
-            document.getElementById('sundayOverviewRate').textContent = sundayRate + '%';
-            document.getElementById('overviewSubmitted').textContent = submitted + '/' + cells.length;
-            document.getElementById('overviewAttendance').textContent = cellTotalAttendance;
-            document.getElementById('overviewAbsent').textContent = cellTotalAbsent;
-            document.getElementById('overviewOffering').textContent = '$' + totalOffering;
+            document.getElementById('cellOverviewPresent').textContent = cellTotalAttendance;
             document.getElementById('overviewList').innerHTML = listHtml || '<div class="empty-state">구역 데이터가 없습니다</div>';
             
-            // 기도제목 - 성명:기도내용 형식으로 개선
             let prayerHtml = '';
             prayers.forEach(p => {
                 prayerHtml += '<div class="prayer-item"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;"><span class="prayer-name" style="font-size: 1em;">' + p.cell + '구역</span><span style="font-size: 0.8em; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 10px;">' + (p.leader || '') + '</span></div><div class="prayer-content">' + formatPrayerContent(p.prayer) + '</div></div>';
             });
             document.getElementById('prayerList').innerHTML = prayerHtml || '<div class="empty-state">기도제목이 없습니다</div>';
+        }
+        
+        function getLastSunday() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = day === 0 ? 0 : day;
+            const sunday = new Date(today);
+            sunday.setDate(today.getDate() - diff);
+            return sunday.toISOString().split('T')[0];
+        }
+        
+        function getLatestCellDate(cellName) {
+            let latestDate = null;
+            Object.keys(cellAttendance).forEach(key => {
+                if (key.startsWith(cellName + '_')) {
+                    const date = key.split('_')[1];
+                    if (!latestDate || date > latestDate) latestDate = date;
+                }
+            });
+            return latestDate || getLastSunday();
         }
         
         function viewReport(cellName, dateStr) {
@@ -763,14 +810,24 @@
         function loadHistory() {
             const container = document.getElementById('historyList');
             let reports = [];
-            Object.keys(cellReports).forEach(key => { const report = cellReports[key]; if (currentUser.role === '관리자' || report.cell === selectedCell) reports.push({ key, ...report }); });
-            reports.sort((a, b) => new Date(b.date) - new Date(a.date));
+            Object.keys(cellReports).forEach(key => {
+                const report = cellReports[key];
+                if (!report) return;
+                // 구역명 확인 - key에서 추출 또는 report에서 가져오기
+                const cellName = report.cell || report.cellName || key.split('_')[0];
+                if (!cellName || cellName === 'undefined') return; // undefined 제외
+                if (currentUser.role === '관리자' || cellName === selectedCell) {
+                    reports.push({ key, cellName, ...report });
+                }
+            });
+            reports.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
             if (reports.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><div>작성한 보고서가 없습니다</div></div>'; return; }
             let html = '';
             reports.slice(0, 20).forEach(report => {
                 const date = new Date(report.date);
                 const dateLabel = (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
-                html += '<div class="report-item" onclick="viewReport(\'' + report.cell + '\', \'' + report.date + '\')"><div class="report-cell">' + report.cell + '구역</div><div style="flex: 1;"><div style="font-weight: 500;">' + dateLabel + '</div><div style="font-size: 0.8em; color: #64748b;">참석 ' + (report.attendance?.length || 0) + '명 | 헌금 $' + (report.offering || 0) + '</div></div><span style="color: #4f46e5;">→</span></div>';
+                const cellName = report.cellName || report.cell || '미지정';
+                html += `<div class="report-item" onclick="viewReport('${cellName}', '${report.date}')"><div class="report-cell">${cellName}구역</div><div style="flex: 1;"><div style="font-weight: 500;">${dateLabel}</div><div style="font-size: 0.8em; color: #64748b;">참석 ${(report.attendance?.length || 0)}명 | 헌금 $${(report.offering || 0)}</div></div><span style="color: #4f46e5;">→</span></div>`;
             });
             container.innerHTML = html;
         }
@@ -782,7 +839,7 @@
             document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
             if (tab === 'overview') loadOverview();
             else if (tab === 'history') loadHistory();
-            else if (tab === 'report') setTimeout(() => refreshReportAttendance(), 100);
+            else if (tab === 'report') { updateCurrentCellDisplay(); setTimeout(() => refreshReportAttendance(), 100); }
             else if (tab === 'sunday' && selectedCell) loadSundayAttendance();
         }
         
