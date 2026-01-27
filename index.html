@@ -2757,6 +2757,41 @@
                 <div id="cellList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
                     <!-- 구역 카드가 여기에 표시됩니다 -->
                 </div>
+                
+                <!-- 구역별 헌금 통계 시트 (구역예배 출석 아래) -->
+                <div id="cellOfferingStatsSection" class="card" style="margin-top: 30px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0; color: #059669;">💰 구역별 헌금 통계</h3>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label style="font-weight: 600; color: #4a5568;">연도:</label>
+                            <select id="cellOfferingYear" class="form-control" style="width: auto; min-width: 100px;" onchange="loadCellOfferingStats()">
+                                <!-- 연도 옵션 동적 생성 -->
+                            </select>
+                            <button class="btn btn-secondary" onclick="loadCellOfferingStats()" style="padding: 8px 15px;">🔄 새로고침</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="cellOfferingTable" style="font-size: 0.9em; width: 100%;">
+                            <thead>
+                                <tr style="background: linear-gradient(135deg, #059669, #10b981); color: white;">
+                                    <th style="padding: 12px; text-align: center;">월</th>
+                                    <!-- 구역명 헤더 동적 생성 -->
+                                    <th style="padding: 12px; text-align: center; background: linear-gradient(135deg, #d97706, #f59e0b);">월 합계</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cellOfferingTableBody">
+                                <!-- 월별 데이터 동적 생성 -->
+                            </tbody>
+                            <tfoot>
+                                <tr style="background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; font-weight: bold;">
+                                    <td style="padding: 12px; text-align: center;">연 합계</td>
+                                    <!-- 구역별 연합계 동적 생성 -->
+                                    <td id="cellOfferingGrandTotal" style="padding: 12px; text-align: center; font-size: 1.1em;">$0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
             </div>
             
             <!-- 구역예배 보고서 탭 -->
@@ -15930,6 +15965,7 @@
             const cellBtn = document.getElementById('cellSubTabCell');
             const sundayDateSelector = document.getElementById('sundayDateSelector');
             const cellWorshipDateSelector = document.getElementById('cellWorshipDateSelector');
+            const cellOfferingSection = document.getElementById('cellOfferingStatsSection');
             
             if (tab === 'sunday') {
                 sundayBtn.style.background = 'linear-gradient(135deg, #7c3aed, #8b5cf6)';
@@ -15942,6 +15978,9 @@
                 // 날짜 선택 UI 전환
                 if (sundayDateSelector) sundayDateSelector.style.display = 'flex';
                 if (cellWorshipDateSelector) cellWorshipDateSelector.style.display = 'none';
+                
+                // 헌금 통계 숨기기 (주일예배 탭)
+                if (cellOfferingSection) cellOfferingSection.style.display = 'none';
             } else {
                 cellBtn.style.background = 'linear-gradient(135deg, #0891b2, #06b6d4)';
                 cellBtn.style.color = 'white';
@@ -15953,6 +15992,9 @@
                 // 날짜 선택 UI 전환 - 구역예배는 각 카드에서 개별 선택
                 if (sundayDateSelector) sundayDateSelector.style.display = 'none';
                 if (cellWorshipDateSelector) cellWorshipDateSelector.style.display = 'flex';
+                
+                // 헌금 통계 표시 및 로드 (구역예배 탭)
+                loadCellOfferingStats();
             }
             
             // 목록 새로고침
@@ -16200,6 +16242,130 @@
                 `;
             });
             document.getElementById('cellTestimonyList').innerHTML = testimonyHtml || '<p style="text-align: center; color: #94a3b8; padding: 20px;">제출된 간증/나눔이 없습니다.</p>';
+        }
+        
+        // ========== 구역별 헌금 통계 ==========
+        function loadCellOfferingStats() {
+            const section = document.getElementById('cellOfferingStatsSection');
+            const yearSelect = document.getElementById('cellOfferingYear');
+            const tableBody = document.getElementById('cellOfferingTableBody');
+            const table = document.getElementById('cellOfferingTable');
+            
+            if (!section || !tableBody) return;
+            
+            // 연도 선택 옵션 생성
+            const currentYear = new Date().getFullYear();
+            if (yearSelect && yearSelect.options.length === 0) {
+                for (let y = currentYear; y >= currentYear - 3; y--) {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y + '년';
+                    yearSelect.appendChild(opt);
+                }
+            }
+            
+            const selectedYear = parseInt(yearSelect?.value || currentYear);
+            
+            // 구역 목록 가져오기
+            const cellsData = JSON.parse(localStorage.getItem('churchCells') || '[]');
+            if (cellsData.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            
+            // 보고서에서 헌금 데이터 가져오기
+            const cellReports = JSON.parse(localStorage.getItem('cellReports') || '{}');
+            
+            // 구역별, 월별 헌금 집계
+            const monthlyData = {}; // { 1: { 구역명: 금액, ... }, 2: {...}, ... }
+            const cellYearTotals = {}; // { 구역명: 연간합계 }
+            
+            // 초기화
+            for (let m = 1; m <= 12; m++) {
+                monthlyData[m] = {};
+                cellsData.forEach(cell => {
+                    monthlyData[m][cell.name] = 0;
+                });
+            }
+            cellsData.forEach(cell => {
+                cellYearTotals[cell.name] = 0;
+            });
+            
+            // 보고서 데이터에서 헌금 추출
+            Object.keys(cellReports).forEach(key => {
+                const report = cellReports[key];
+                if (!report || !report.date || !report.offering) return;
+                
+                const reportDate = new Date(report.date);
+                if (reportDate.getFullYear() !== selectedYear) return;
+                
+                const month = reportDate.getMonth() + 1;
+                const cellName = report.cellName || key.split('_')[0];
+                
+                if (monthlyData[month] && monthlyData[month][cellName] !== undefined) {
+                    monthlyData[month][cellName] += report.offering;
+                    cellYearTotals[cellName] += report.offering;
+                }
+            });
+            
+            // 테이블 헤더 생성
+            const thead = table.querySelector('thead tr');
+            thead.innerHTML = `
+                <th style="padding: 12px; text-align: center; min-width: 60px;">월</th>
+                ${cellsData.map(cell => `<th style="padding: 12px; text-align: center; min-width: 80px;">${cell.name}구역</th>`).join('')}
+                <th style="padding: 12px; text-align: center; background: linear-gradient(135deg, #d97706, #f59e0b); min-width: 100px;">월 합계</th>
+            `;
+            
+            // 테이블 바디 생성
+            let bodyHtml = '';
+            let grandTotal = 0;
+            const currentMonth = new Date().getMonth() + 1;
+            
+            for (let m = 1; m <= 12; m++) {
+                let monthTotal = 0;
+                const isCurrentMonth = (selectedYear === currentYear && m === currentMonth);
+                const isFutureMonth = (selectedYear === currentYear && m > currentMonth) || (selectedYear > currentYear);
+                
+                let rowStyle = '';
+                if (isCurrentMonth) {
+                    rowStyle = 'background: #ecfdf5;'; // 이번달 하이라이트
+                } else if (isFutureMonth) {
+                    rowStyle = 'background: #f8fafc; color: #94a3b8;'; // 미래 월 흐리게
+                }
+                
+                bodyHtml += `<tr style="${rowStyle}">`;
+                bodyHtml += `<td style="padding: 10px; text-align: center; font-weight: 600;">${m}월</td>`;
+                
+                cellsData.forEach(cell => {
+                    const amount = monthlyData[m][cell.name] || 0;
+                    monthTotal += amount;
+                    const displayAmount = amount > 0 ? '$' + amount.toLocaleString() : '-';
+                    const amountStyle = amount > 0 ? 'color: #059669; font-weight: 500;' : 'color: #cbd5e1;';
+                    bodyHtml += `<td style="padding: 10px; text-align: center; ${amountStyle}">${displayAmount}</td>`;
+                });
+                
+                grandTotal += monthTotal;
+                const monthTotalDisplay = monthTotal > 0 ? '$' + monthTotal.toLocaleString() : '-';
+                const monthTotalStyle = monthTotal > 0 ? 'font-weight: 600; color: #d97706;' : 'color: #cbd5e1;';
+                bodyHtml += `<td style="padding: 10px; text-align: center; ${monthTotalStyle}">${monthTotalDisplay}</td>`;
+                bodyHtml += '</tr>';
+            }
+            
+            tableBody.innerHTML = bodyHtml;
+            
+            // 테이블 푸터 (연합계) 생성
+            const tfoot = table.querySelector('tfoot tr');
+            tfoot.innerHTML = `
+                <td style="padding: 12px; text-align: center;">연 합계</td>
+                ${cellsData.map(cell => {
+                    const yearTotal = cellYearTotals[cell.name] || 0;
+                    const display = yearTotal > 0 ? '$' + yearTotal.toLocaleString() : '-';
+                    return `<td style="padding: 12px; text-align: center;">${display}</td>`;
+                }).join('')}
+                <td style="padding: 12px; text-align: center; font-size: 1.1em; background: linear-gradient(135deg, #dc2626, #ef4444);">📊 $${grandTotal.toLocaleString()}</td>
+            `;
         }
         
         // 구역 보고서 상세 보기
