@@ -16313,13 +16313,19 @@
             // 보고서 데이터에서 헌금 추출
             Object.keys(cellReports).forEach(key => {
                 const report = cellReports[key];
-                if (!report || !report.date || !report.offering) return;
+                if (!report || !report.offering) return;
                 
-                const reportDate = new Date(report.date);
+                // 키에서 날짜 추출 (구역명_날짜 형식)
+                const keyParts = key.split('_');
+                const cellName = keyParts[0];
+                const dateStr = keyParts[1] || report.date;
+                
+                if (!dateStr) return;
+                
+                const reportDate = new Date(dateStr);
                 if (reportDate.getFullYear() !== selectedYear) return;
                 
                 const month = reportDate.getMonth() + 1;
-                const cellName = report.cellName || key.split('_')[0];
                 
                 if (monthlyData[month] && monthlyData[month][cellName] !== undefined) {
                     monthlyData[month][cellName] += report.offering;
