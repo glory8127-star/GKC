@@ -13381,6 +13381,21 @@
             // 헌금 종류 목록
             const offeringTypes = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
             
+            // 헌금 종류별 색상 정의
+            const offeringColors = {
+                '십일조': { bg: '#dcfce7', text: '#166534', header: '#22c55e' },      // 초록
+                '감사헌금': { bg: '#fef9c3', text: '#854d0e', header: '#eab308' },    // 노랑
+                '주일헌금': { bg: '#dbeafe', text: '#1e40af', header: '#3b82f6' },    // 파랑
+                '절기헌금': { bg: '#f3e8ff', text: '#6b21a8', header: '#a855f7' },    // 보라
+                '지정헌금': { bg: '#fce7f3', text: '#9d174d', header: '#ec4899' },    // 핑크
+                '건축헌금': { bg: '#ffedd5', text: '#c2410c', header: '#f97316' },    // 주황
+                '선교헌금': { bg: '#cffafe', text: '#0e7490', header: '#06b6d4' },    // 청록
+                '구제헌금': { bg: '#fef2f2', text: '#991b1b', header: '#ef4444' },    // 빨강
+                '특별헌금': { bg: '#f0fdf4', text: '#15803d', header: '#22c55e' },    // 연두
+                '작정헌금': { bg: '#ede9fe', text: '#5b21b6', header: '#8b5cf6' },    // 연보라
+                '기타': { bg: '#f1f5f9', text: '#475569', header: '#64748b' }         // 회색
+            };
+            
             // 세대주 기준 가족 그룹 생성
             const familyGroupMap = {}; // { 세대주이름: [가족구성원들] }
             
@@ -13449,7 +13464,10 @@
                                 <th>교인번호</th>
                                 <th>성명</th>
                                 <th>성별</th>
-                                ${offeringTypes.map(type => `<th>${type}</th>`).join('')}
+                                ${offeringTypes.map(type => {
+                                    const color = offeringColors[type] || offeringColors['기타'];
+                                    return `<th style="background: ${color.header}; color: white;">${type}</th>`;
+                                }).join('')}
                                 <th style="background: linear-gradient(135deg, #667eea, #9f7aea); color: white;">총 헌금</th>
                             </tr>
                         </thead>
@@ -13466,7 +13484,15 @@
                         <td>${family.memberNumber}</td>
                         <td>${displayName}</td>
                         <td>${family.gender}</td>
-                        ${offeringTypes.map(type => `<td>$${(family.offerings[type] || 0).toFixed(0)}</td>`).join('')}
+                        ${offeringTypes.map(type => {
+                            const amount = family.offerings[type] || 0;
+                            const color = offeringColors[type] || offeringColors['기타'];
+                            if (amount > 0) {
+                                return `<td style="background: ${color.bg}; color: ${color.text}; font-weight: 600;">$${amount.toFixed(0)}</td>`;
+                            } else {
+                                return `<td style="color: #ccc;">-</td>`;
+                            }
+                        }).join('')}
                         <td style="font-weight: bold; color: #667eea;">$${family.total.toFixed(0)}</td>
                     </tr>
                 `;
@@ -13483,7 +13509,11 @@
                         <tfoot>
                             <tr style="background: linear-gradient(135deg, #f7fafc, #edf2f7); font-weight: bold;">
                                 <td colspan="4">합계</td>
-                                ${typeGrandTotals.map(total => `<td>$${total.toFixed(0)}</td>`).join('')}
+                                ${offeringTypes.map((type, i) => {
+                                    const color = offeringColors[type] || offeringColors['기타'];
+                                    const total = typeGrandTotals[i];
+                                    return `<td style="background: ${color.bg}; color: ${color.text};">$${total.toFixed(0)}</td>`;
+                                }).join('')}
                                 <td style="color: #e53e3e;">$${grandTotal.toFixed(0)}</td>
                             </tr>
                         </tfoot>
