@@ -321,20 +321,24 @@
             width: 100%;
             border-collapse: collapse;
             background: white;
+            min-width: max-content;
         }
         
         th {
             background: linear-gradient(135deg, #f7fafc, #edf2f7);
-            padding: 15px;
+            padding: 12px 8px;
             text-align: left;
             font-weight: 600;
             color: #4a5568;
             border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+            font-size: 0.85em;
         }
         
         td {
-            padding: 15px;
+            padding: 12px 8px;
             border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
         }
         
         tr:hover {
@@ -13462,20 +13466,36 @@
             const sortedFamilies = Object.values(familyOfferingMap).sort((a, b) => b.total - a.total);
             
             // 테이블 생성
+            // 헌금 종류 축약명
+            const shortNames = {
+                '십일조': '십일조',
+                '감사헌금': '감사',
+                '주일헌금': '주일',
+                '절기헌금': '절기',
+                '지정헌금': '지정',
+                '건축헌금': '건축',
+                '선교헌금': '선교',
+                '구제헌금': '구제',
+                '특별헌금': '특별',
+                '작정헌금': '작정',
+                '기타': '기타'
+            };
+            
             let html = `
                 <div class="table-container">
-                    <table style="font-size: 0.85em;">
+                    <table style="font-size: 0.85em; min-width: 900px;">
                         <thead>
                             <tr>
-                                <th>순위</th>
-                                <th>교인번호</th>
-                                <th>성명</th>
-                                <th>성별</th>
+                                <th style="text-align: center; min-width: 45px;">순위</th>
+                                <th style="min-width: 60px;">교인번호</th>
+                                <th style="min-width: 120px;">성명</th>
+                                <th style="text-align: center; min-width: 40px;">성별</th>
                                 ${offeringTypes.map(type => {
                                     const color = offeringColors[type] || offeringColors['기타'];
-                                    return `<th style="background: ${color.header}; color: white;">${type}</th>`;
+                                    const shortName = shortNames[type] || type;
+                                    return `<th style="background: ${color.header}; color: white; text-align: right; min-width: 55px; padding: 10px 6px;">${shortName}</th>`;
                                 }).join('')}
-                                <th style="background: linear-gradient(135deg, #667eea, #9f7aea); color: white;">총 헌금</th>
+                                <th style="background: linear-gradient(135deg, #667eea, #9f7aea); color: white; text-align: right; min-width: 70px;">총헌금</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -13489,18 +13509,18 @@
                     <tr>
                         <td style="font-weight: bold; text-align: center;">${index + 1}</td>
                         <td>${family.memberNumber}</td>
-                        <td>${displayName}</td>
-                        <td>${family.gender}</td>
+                        <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${displayName}</td>
+                        <td style="text-align: center;">${family.gender}</td>
                         ${offeringTypes.map(type => {
                             const amount = family.offerings[type] || 0;
                             const color = offeringColors[type] || offeringColors['기타'];
                             if (amount > 0) {
-                                return `<td style="background: ${color.bg}; color: ${color.text}; font-weight: 600;">$${amount.toFixed(0)}</td>`;
+                                return `<td style="background: ${color.bg}; color: ${color.text}; font-weight: 600; text-align: right; padding: 10px 6px;">$${amount.toFixed(0)}</td>`;
                             } else {
-                                return `<td style="color: #ccc;">-</td>`;
+                                return `<td style="color: #ccc; text-align: right; padding: 10px 6px;">-</td>`;
                             }
                         }).join('')}
-                        <td style="font-weight: bold; color: #667eea;">$${family.total.toFixed(0)}</td>
+                        <td style="font-weight: bold; color: #667eea; text-align: right;">$${family.total.toFixed(0)}</td>
                     </tr>
                 `;
             });
@@ -13515,13 +13535,13 @@
                         </tbody>
                         <tfoot>
                             <tr style="background: linear-gradient(135deg, #f7fafc, #edf2f7); font-weight: bold;">
-                                <td colspan="4">합계</td>
+                                <td colspan="4" style="text-align: center;">합계</td>
                                 ${offeringTypes.map((type, i) => {
                                     const color = offeringColors[type] || offeringColors['기타'];
                                     const total = typeGrandTotals[i];
-                                    return `<td style="background: ${color.bg}; color: ${color.text};">$${total.toFixed(0)}</td>`;
+                                    return `<td style="background: ${color.bg}; color: ${color.text}; text-align: right; padding: 10px 6px;">$${total.toFixed(0)}</td>`;
                                 }).join('')}
-                                <td style="color: #e53e3e;">$${grandTotal.toFixed(0)}</td>
+                                <td style="color: #e53e3e; text-align: right;">$${grandTotal.toFixed(0)}</td>
                             </tr>
                         </tfoot>
                     </table>
