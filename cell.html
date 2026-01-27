@@ -211,7 +211,7 @@
                     <div id="overviewList"></div>
                 </div>
                 <div class="card">
-                    <div class="card-title"><span>🙏</span><span>금주 기도제목</span></div>
+                    <div class="card-title"><span>🙏</span><span>기도제목</span></div>
                     <div id="prayerList"></div>
                 </div>
             </div>
@@ -705,7 +705,7 @@
         }
         
         async function loadOverview() {
-            let sundayTotalAttendance = 0, cellTotalAttendance = 0, totalMembers = 0, prayers = [];
+            let sundayTotalAttendance = 0, cellTotalAttendance = 0, totalMembers = 0;
             let listHtml = '';
             const lastSunday = getLastSunday();
             
@@ -726,8 +726,6 @@
                 
                 const sundayRate = cellTotal > 0 ? Math.round((sundayAtt.length / cellTotal) * 100) : 0;
                 const cellRate = cellTotal > 0 ? Math.round((cellAtt.length / cellTotal) * 100) : 0;
-                
-                if (report && report.prayer) prayers.push({ cell: cell.name, prayer: report.prayer, leader: cell.leaderName });
                 
                 sundayTotalAttendance += sundayAtt.length;
                 cellTotalAttendance += cellAtt.length;
@@ -757,11 +755,43 @@
             document.getElementById('cellOverviewPresent').textContent = cellTotalAttendance;
             document.getElementById('overviewList').innerHTML = listHtml || '<div class="empty-state">구역 데이터가 없습니다</div>';
             
+            // 각 구역별 최신 보고서에서 기도제목 가져오기
             let prayerHtml = '';
-            prayers.forEach(p => {
-                prayerHtml += '<div class="prayer-item"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;"><span class="prayer-name" style="font-size: 1em;">' + p.cell + '구역</span><span style="font-size: 0.8em; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 10px;">' + (p.leader || '') + '</span></div><div class="prayer-content">' + formatPrayerContent(p.prayer) + '</div></div>';
+            cells.forEach(cell => {
+                // 해당 구역의 가장 최근 보고서 찾기
+                let latestReport = null;
+                let latestDate = null;
+                
+                Object.keys(cellReports).forEach(key => {
+                    if (key.startsWith(cell.name + '_')) {
+                        const report = cellReports[key];
+                        const reportDate = key.split('_')[1];
+                        
+                        if (report && report.prayer) {
+                            if (!latestDate || reportDate > latestDate) {
+                                latestDate = reportDate;
+                                latestReport = report;
+                            }
+                        }
+                    }
+                });
+                
+                if (latestReport && latestReport.prayer) {
+                    const dateObj = new Date(latestDate);
+                    const dateLabel = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
+                    prayerHtml += `
+                        <div class="prayer-item">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;">
+                                <span class="prayer-name" style="font-size: 1em;">🏠 ${cell.name}구역</span>
+                                <span style="font-size: 0.75em; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 10px;">${dateLabel} · ${cell.leaderName || ''}</span>
+                            </div>
+                            <div class="prayer-content">${formatPrayerContent(latestReport.prayer)}</div>
+                        </div>
+                    `;
+                }
             });
-            document.getElementById('prayerList').innerHTML = prayerHtml || '<div class="empty-state">기도제목이 없습니다</div>';
+            
+            document.getElementById('prayerList').innerHTML = prayerHtml || '<div class="empty-state"><div style="font-size: 2em; margin-bottom: 10px;">🙏</div>기도제목이 없습니다</div>';
         }
         
         function getLastSunday() {
