@@ -697,12 +697,6 @@
         
         <!-- 성도 기도제목 (구역보고서 연동) -->
         <div id="tabMemberPrayer" class="tab-content">
-            <div class="date-selector">
-                <span>📅</span>
-                <input type="date" class="date-input" id="memberPrayerDate" onchange="loadMemberPrayers()">
-                <button class="btn btn-primary" onclick="setLastSundayForPrayer()" style="width: auto; padding: 8px 15px; font-size: 0.85em;">이번주일</button>
-            </div>
-            
             <div id="memberPrayerList">
                 <!-- 동적 생성 -->
             </div>
@@ -1219,46 +1213,55 @@
         
         // ========== 성도 기도제목 (구역보고서 연동) ==========
         function initMemberPrayerTab() {
-            const dateInput = document.getElementById('memberPrayerDate');
-            if (!dateInput.value) {
-                dateInput.value = getLastSunday();
-            }
-            loadMemberPrayers();
-        }
-        
-        function setLastSundayForPrayer() {
-            document.getElementById('memberPrayerDate').value = getLastSunday();
             loadMemberPrayers();
         }
         
         function loadMemberPrayers() {
-            const selectedDate = document.getElementById('memberPrayerDate').value;
             const container = document.getElementById('memberPrayerList');
             
-            // 해당 날짜의 구역 보고서에서 기도제목 추출
+            // 각 구역의 가장 최근 보고서에서 기도제목 추출
             let prayersFromReports = [];
             
             cells.forEach(cell => {
-                const key = `${cell.name}_${selectedDate}`;
-                const report = cellReports[key];
+                // 해당 구역의 모든 보고서 키 찾기
+                let latestReport = null;
+                let latestDate = null;
                 
-                if (report && report.prayer) {
+                Object.keys(cellReports).forEach(key => {
+                    if (key.startsWith(cell.name + '_')) {
+                        const report = cellReports[key];
+                        const reportDate = key.split('_')[1];
+                        
+                        // 기도제목이 있는 보고서만 확인
+                        if (report && report.prayer) {
+                            if (!latestDate || reportDate > latestDate) {
+                                latestDate = reportDate;
+                                latestReport = report;
+                            }
+                        }
+                    }
+                });
+                
+                if (latestReport && latestReport.prayer) {
                     prayersFromReports.push({
                         cell: cell.name,
-                        leader: cell.leaderName || report.leader || '',
-                        prayer: report.prayer,
-                        date: selectedDate,
-                        submittedAt: report.submittedAt
+                        leader: cell.leaderName || latestReport.leader || '',
+                        prayer: latestReport.prayer,
+                        date: latestDate,
+                        submittedAt: latestReport.submittedAt
                     });
                 }
             });
+            
+            // 최신순 정렬
+            prayersFromReports.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             if (prayersFromReports.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
                         <div style="font-size: 4em; margin-bottom: 15px;">🙏</div>
                         <div style="font-size: 1.1em; margin-bottom: 10px;">제출된 기도제목이 없습니다</div>
-                        <div style="font-size: 0.9em;">선택한 날짜: ${selectedDate}</div>
+                        <div style="font-size: 0.9em;">구역 보고서가 제출되면 자동으로 표시됩니다</div>
                     </div>
                 `;
                 return;
@@ -1267,20 +1270,21 @@
             // 기도제목 카드 생성
             let html = `
                 <div style="margin-bottom: 16px; padding: 12px 16px; background: linear-gradient(135deg, #1e3a5f, #2d5a87); color: white; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 0.85em; opacity: 0.9;">📅 ${selectedDate}</div>
-                    <div style="font-size: 1.2em; font-weight: 700; margin-top: 5px;">🙏 성도 기도제목</div>
-                    <div style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">${prayersFromReports.length}개 구역 제출</div>
+                    <div style="font-size: 1.3em; font-weight: 700;">🙏 성도 기도제목</div>
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">${prayersFromReports.length}개 구역</div>
                 </div>
             `;
             
             prayersFromReports.forEach(item => {
                 const prayerItems = parsePrayerContent(item.prayer);
+                const dateObj = new Date(item.date);
+                const dateLabel = `${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`;
                 
                 html += `
                     <div class="member-prayer-card">
                         <div class="member-prayer-header">
                             <span class="member-prayer-cell">🏠 ${item.cell}구역</span>
-                            <span class="member-prayer-leader">${item.leader}</span>
+                            <span class="member-prayer-leader">${dateLabel} · ${item.leader}</span>
                         </div>
                         <div class="member-prayer-body">
                             ${prayerItems.map(p => `
