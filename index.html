@@ -11122,80 +11122,90 @@
         }
         
         // 교인 등록 폼 제출 처리
-        document.getElementById('memberForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // 교인번호 중복 체크
-            const memberNumber = document.getElementById('memberNumber').value;
-            if (!checkDuplicateMemberNumber(memberNumber)) {
-                alert('이미 사용 중인 교인번호입니다. 다른 번호를 입력해주세요.');
-                document.getElementById('memberNumber').focus();
-                return;
-            }
-            
-            // 폼 데이터 수집
-            const memberData = {
-                id: Date.now(),
-                number: document.getElementById('memberNumber').value,
-                nameKr: document.getElementById('memberNameKr').value,
-                nameEn: document.getElementById('memberNameEn').value,
-                gender: document.getElementById('memberGender').value,
-                birth: document.getElementById('memberBirth').value,
-                phone: document.getElementById('memberPhone').value,
-                email: document.getElementById('memberEmail').value,
-                position: document.getElementById('memberPosition').value,
-                job: document.getElementById('memberJob').value,
-                address: document.getElementById('memberAddress').value,
-                city: document.getElementById('memberCity').value,
-                zip: document.getElementById('memberZip').value,
-                cell: document.getElementById('memberCellData').value || '', // 기존 구역 값 유지
-                familyRole: document.getElementById('memberFamilyRole').value,
-                familyHead: document.getElementById('familyHead').value,
-                referrer: document.getElementById('memberReferrer').value,
-                regDate: document.getElementById('memberRegDate').value,
-                photo: document.getElementById('memberPhotoData').value,
-                education: {
-                    newFamily: document.getElementById('eduNewFamily').value === 'completed',
-                    leadership: document.getElementById('eduLeadership').value === 'completed',
-                    coffeeBreak: document.getElementById('eduCoffeeBreak').value === 'completed'
-                },
-                mentoring: {
-                    role: document.getElementById('mentoringRole').value,
-                    menteeNames: document.getElementById('menteeNames').value,
-                    mentorName: document.getElementById('mentorName').value
-                }
-            };
-            
-            // 데이터 저장
-            members.push(memberData);
-            localStorage.setItem('churchMembers', JSON.stringify(members));
-            saveMembersToFirebase(); // Firebase 동기화
-            
-            // 방문자 등록일 자동 업데이트
-            const visitorIdx = this.dataset.visitorIdx;
-            if (visitorIdx !== undefined && visitorIdx !== '') {
-                const visitors = JSON.parse(localStorage.getItem('churchVisitors') || '[]');
-                if (visitors[visitorIdx]) {
-                    visitors[visitorIdx].regDate = memberData.regDate || new Date().toISOString().split('T')[0];
-                    localStorage.setItem('churchVisitors', JSON.stringify(visitors));
-                    if (typeof saveToFirestore === 'function') {
-                        saveToFirestore('churchVisitors', { list: visitors });
+        const memberFormEl = document.getElementById('memberForm');
+        if (memberFormEl) {
+            memberFormEl.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                try {
+                    // 교인번호 중복 체크
+                    const memberNumber = document.getElementById('memberNumber').value;
+                    if (!checkDuplicateMemberNumber(memberNumber)) {
+                        alert('이미 사용 중인 교인번호입니다. 다른 번호를 입력해주세요.');
+                        document.getElementById('memberNumber').focus();
+                        return;
                     }
+                    
+                    // 폼 데이터 수집
+                    const memberData = {
+                        id: Date.now(),
+                        number: document.getElementById('memberNumber').value,
+                        nameKr: document.getElementById('memberNameKr').value,
+                        nameEn: document.getElementById('memberNameEn').value,
+                        gender: document.getElementById('memberGender').value,
+                        birth: document.getElementById('memberBirth').value,
+                        phone: document.getElementById('memberPhone').value,
+                        email: document.getElementById('memberEmail').value,
+                        position: document.getElementById('memberPosition').value,
+                        job: document.getElementById('memberJob').value,
+                        address: document.getElementById('memberAddress').value,
+                        city: document.getElementById('memberCity').value,
+                        zip: document.getElementById('memberZip').value,
+                        cell: document.getElementById('memberCellData').value || '',
+                        familyRole: document.getElementById('memberFamilyRole').value,
+                        familyHead: document.getElementById('familyHead').value,
+                        referrer: document.getElementById('memberReferrer').value,
+                        regDate: document.getElementById('memberRegDate').value,
+                        photo: document.getElementById('memberPhotoData').value,
+                        education: {
+                            newFamily: document.getElementById('eduNewFamily').value === 'completed',
+                            leadership: document.getElementById('eduLeadership').value === 'completed',
+                            coffeeBreak: document.getElementById('eduCoffeeBreak').value === 'completed'
+                        },
+                        mentoring: {
+                            role: document.getElementById('mentoringRole').value,
+                            menteeNames: document.getElementById('menteeNames').value,
+                            mentorName: document.getElementById('mentorName').value
+                        }
+                    };
+                    
+                    // 데이터 저장
+                    members.push(memberData);
+                    localStorage.setItem('churchMembers', JSON.stringify(members));
+                    saveMembersToFirebase();
+                    
+                    // 방문자 등록일 자동 업데이트
+                    const visitorIdx = this.dataset.visitorIdx;
+                    if (visitorIdx !== undefined && visitorIdx !== '') {
+                        const visitors = JSON.parse(localStorage.getItem('churchVisitors') || '[]');
+                        if (visitors[visitorIdx]) {
+                            visitors[visitorIdx].regDate = memberData.regDate || new Date().toISOString().split('T')[0];
+                            localStorage.setItem('churchVisitors', JSON.stringify(visitors));
+                            if (typeof saveToFirestore === 'function') {
+                                saveToFirestore('churchVisitors', { list: visitors });
+                            }
+                        }
+                        delete this.dataset.visitorIdx;
+                    }
+                    
+                    // 성공 메시지
+                    alert(`교인이 성공적으로 등록되었습니다!\n교인번호: ${memberData.number}\n이름: ${memberData.nameKr}`);
+                    
+                    // 폼 초기화 및 목록 새로고침
+                    resetMemberForm();
+                    loadMembersList();
+                    loadMentoringData();
+                    
+                    // 대시보드 통계 업데이트
+                    document.getElementById('totalMembers').textContent = members.length;
+                } catch (error) {
+                    console.error('교인 등록 오류:', error);
+                    alert('교인 등록 중 오류가 발생했습니다: ' + error.message);
                 }
-                delete this.dataset.visitorIdx; // 초기화
-            }
-            
-            // 성공 메시지
-            alert(`교인이 성공적으로 등록되었습니다!\n교인번호: ${memberData.number}\n이름: ${memberData.nameKr}`);
-            
-            // 폼 초기화 및 목록 새로고침
-            resetMemberForm();
-            loadMembersList();
-            loadMentoringData();
-            
-            // 대시보드 통계 업데이트
-            document.getElementById('totalMembers').textContent = members.length;
-        });
+            });
+        } else {
+            console.error('memberForm 요소를 찾을 수 없습니다');
+        }
         
         // 교육 이수 현황 토글 (관리자 전용)
         function toggleEducation(index, eduType) {
