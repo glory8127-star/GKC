@@ -13284,7 +13284,7 @@
             loadOfferingRanking();
         }
         
-        // 헌금 순위 로드 (교적관리 연동)
+        // 헌금 순위 로드 (교적관리 연동 - 가족 합산)
         function loadOfferingRanking() {
             const container = document.getElementById('offeringRankingList');
             if (!container) return;
@@ -13317,31 +13317,63 @@
             // 헌금 종류 목록
             const offeringTypes = ['십일조', '감사헌금', '주일헌금', '절기헌금', '지정헌금', '건축헌금', '선교헌금', '구제헌금', '특별헌금', '작정헌금', '기타'];
             
-            // 교인별 헌금 집계 (교적관리 연동)
-            const memberOfferingMap = {};
+            // 세대주 기준 가족 그룹 생성
+            const familyGroupMap = {}; // { 세대주이름: [가족구성원들] }
+            
+            members.forEach(m => {
+                const headName = m.familyHead && m.familyHead.trim() !== '' ? m.familyHead.trim() : m.nameKr;
+                if (!familyGroupMap[headName]) {
+                    familyGroupMap[headName] = [];
+                }
+                if (!familyGroupMap[headName].includes(m.nameKr)) {
+                    familyGroupMap[headName].push(m.nameKr);
+                }
+            });
+            
+            // 이름으로 세대주 찾기 함수
+            function getFamilyHead(name) {
+                const member = members.find(m => m.nameKr === name);
+                if (member && member.familyHead && member.familyHead.trim() !== '') {
+                    return member.familyHead.trim();
+                }
+                return name; // 세대주 정보 없으면 본인이 세대주
+            }
+            
+            // 가족별 헌금 집계
+            const familyOfferingMap = {};
             
             filteredOfferings.forEach(o => {
                 const name = o.name;
-                if (!memberOfferingMap[name]) {
-                    // 교적관리에서 교인 정보 찾기
-                    const member = members.find(m => m.nameKr === name);
-                    memberOfferingMap[name] = {
-                        memberNumber: member ? member.number : '-',
-                        name: name,
-                        gender: member ? member.gender : '-',
+                const headName = getFamilyHead(name);
+                
+                if (!familyOfferingMap[headName]) {
+                    // 가족 구성원 이름 목록 생성
+                    const familyMembers = familyGroupMap[headName] || [name];
+                    const headMember = members.find(m => m.nameKr === headName);
+                    
+                    familyOfferingMap[headName] = {
+                        memberNumber: headMember ? headMember.number : '-',
+                        familyNames: [...new Set(familyMembers)], // 중복 제거
+                        gender: headMember ? headMember.gender : '-',
                         offerings: {},
                         total: 0
                     };
                     offeringTypes.forEach(type => {
-                        memberOfferingMap[name].offerings[type] = 0;
+                        familyOfferingMap[headName].offerings[type] = 0;
                     });
                 }
-                memberOfferingMap[name].offerings[o.type] = (memberOfferingMap[name].offerings[o.type] || 0) + o.amount;
-                memberOfferingMap[name].total += o.amount;
+                
+                // 헌금한 사람 이름을 가족 목록에 추가 (아직 없으면)
+                if (!familyOfferingMap[headName].familyNames.includes(name)) {
+                    familyOfferingMap[headName].familyNames.push(name);
+                }
+                
+                familyOfferingMap[headName].offerings[o.type] = (familyOfferingMap[headName].offerings[o.type] || 0) + o.amount;
+                familyOfferingMap[headName].total += o.amount;
             });
             
             // 총 헌금액 기준 정렬 (내림차순)
-            const sortedMembers = Object.values(memberOfferingMap).sort((a, b) => b.total - a.total);
+            const sortedFamilies = Object.values(familyOfferingMap).sort((a, b) => b.total - a.total);
             
             // 테이블 생성
             let html = `
@@ -13360,23 +13392,26 @@
                         <tbody>
             `;
             
-            sortedMembers.forEach((member, index) => {
+            sortedFamilies.forEach((family, index) => {
+                // 가족 이름 표시 (세대주, 배우자 순서로)
+                const displayName = family.familyNames.join(', ');
+                
                 html += `
                     <tr>
                         <td style="font-weight: bold; text-align: center;">${index + 1}</td>
-                        <td>${member.memberNumber}</td>
-                        <td>${member.name}</td>
-                        <td>${member.gender}</td>
-                        ${offeringTypes.map(type => `<td>$${(member.offerings[type] || 0).toFixed(0)}</td>`).join('')}
-                        <td style="font-weight: bold; color: #667eea;">$${member.total.toFixed(0)}</td>
+                        <td>${family.memberNumber}</td>
+                        <td>${displayName}</td>
+                        <td>${family.gender}</td>
+                        ${offeringTypes.map(type => `<td>$${(family.offerings[type] || 0).toFixed(0)}</td>`).join('')}
+                        <td style="font-weight: bold; color: #667eea;">$${family.total.toFixed(0)}</td>
                     </tr>
                 `;
             });
             
             // 전체 합계
-            const grandTotal = sortedMembers.reduce((sum, m) => sum + m.total, 0);
+            const grandTotal = sortedFamilies.reduce((sum, f) => sum + f.total, 0);
             const typeGrandTotals = offeringTypes.map(type => 
-                sortedMembers.reduce((sum, m) => sum + (m.offerings[type] || 0), 0)
+                sortedFamilies.reduce((sum, f) => sum + (f.offerings[type] || 0), 0)
             );
             
             html += `
