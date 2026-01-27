@@ -5095,6 +5095,13 @@
                     await saveToFirestore('cellSundayAttendance', { data: localCellSundayAtt });
                 }
                 
+                // 구역 보고서 데이터 로드
+                const cellReportsData = await loadFromFirestore('cellReports');
+                if (cellReportsData && cellReportsData.data) {
+                    localStorage.setItem('cellReports', JSON.stringify(cellReportsData.data));
+                    console.log('Firebase에서 구역 보고서 로드:', Object.keys(cellReportsData.data).length + '건');
+                }
+                
                 // 다음세대부 데이터 로드
                 const sundaySchoolData = await loadFromFirestore('sundaySchool');
                 if (sundaySchoolData) {
@@ -5426,8 +5433,13 @@
             db.collection('cellReports').doc('main').onSnapshot(doc => {
                 if (doc.exists && doc.data().data) {
                     console.log('🔄 구역 보고서 실시간 업데이트');
+                    localStorage.setItem('cellReports', JSON.stringify(doc.data().data));
                     if (document.getElementById('cellReportsTab')?.style.display !== 'none') {
                         loadCellReportsView();
+                    }
+                    // 헌금 통계도 업데이트
+                    if (typeof loadCellOfferingStats === 'function') {
+                        loadCellOfferingStats();
                     }
                 }
             });
