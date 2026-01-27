@@ -158,10 +158,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 8px 16px;
+            padding: 8px 12px;
             color: #94a3b8;
             text-decoration: none;
-            font-size: 0.75em;
+            font-size: 0.7em;
             cursor: pointer;
             transition: all 0.3s;
             border: none;
@@ -173,7 +173,7 @@
         }
         
         .nav-item .nav-icon {
-            font-size: 1.8em;
+            font-size: 1.6em;
             margin-bottom: 4px;
         }
         
@@ -524,6 +524,88 @@
             width: 80px;
             text-align: center;
         }
+        
+        /* 성도 기도제목 카드 */
+        .member-prayer-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+        }
+        
+        .member-prayer-header {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .member-prayer-cell {
+            font-weight: 700;
+            font-size: 1em;
+        }
+        
+        .member-prayer-leader {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+        
+        .member-prayer-body {
+            padding: 16px;
+        }
+        
+        .member-prayer-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #fcd34d;
+        }
+        
+        .member-prayer-item:last-child {
+            border-bottom: none;
+        }
+        
+        .member-prayer-name {
+            font-weight: 700;
+            color: #92400e;
+            min-width: 60px;
+            flex-shrink: 0;
+        }
+        
+        .member-prayer-content {
+            color: #78350f;
+            flex: 1;
+            line-height: 1.5;
+        }
+        
+        .member-prayer-date {
+            font-size: 0.8em;
+            color: #b45309;
+            margin-top: 10px;
+            text-align: right;
+        }
+        
+        /* 날짜 선택 */
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .date-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
     </style>
 </head>
 <body>
@@ -579,7 +661,7 @@
             </div>
             
             <div class="card">
-                <div class="card-title">🙏 긴급 기도제목</div>
+                <div class="card-title">🙏 긴급 기도요청</div>
                 <div id="urgentPrayers">
                     <!-- 동적 생성 -->
                 </div>
@@ -604,11 +686,24 @@
             <div class="filter-tabs">
                 <button class="filter-tab active" onclick="filterPrayers('all')">전체</button>
                 <button class="filter-tab" onclick="filterPrayers('urgent')">🔴 긴급</button>
-                <button class="filter-tab" onclick="filterPrayers('cell')">구역별</button>
+                <button class="filter-tab" onclick="filterPrayers('member')">🙏 성도</button>
                 <button class="filter-tab" onclick="filterPrayers('answered')">✅ 응답</button>
             </div>
             
             <div id="prayerList">
+                <!-- 동적 생성 -->
+            </div>
+        </div>
+        
+        <!-- 성도 기도제목 (구역보고서 연동) -->
+        <div id="tabMemberPrayer" class="tab-content">
+            <div class="date-selector">
+                <span>📅</span>
+                <input type="date" class="date-input" id="memberPrayerDate" onchange="loadMemberPrayers()">
+                <button class="btn btn-primary" onclick="setLastSundayForPrayer()" style="width: auto; padding: 8px 15px; font-size: 0.85em;">이번주일</button>
+            </div>
+            
+            <div id="memberPrayerList">
                 <!-- 동적 생성 -->
             </div>
         </div>
@@ -653,12 +748,16 @@
                 <span>홈</span>
             </button>
             <button class="nav-item" onclick="showTab('Visit')">
-                <span class="nav-icon">🏠</span>
+                <span class="nav-icon">🚗</span>
                 <span>심방</span>
             </button>
             <button class="nav-item" onclick="showTab('Prayer')">
                 <span class="nav-icon">🙏</span>
                 <span>기도</span>
+            </button>
+            <button class="nav-item" onclick="showTab('MemberPrayer')">
+                <span class="nav-icon">💒</span>
+                <span>성도</span>
             </button>
             <button class="nav-item" onclick="showTab('Member')">
                 <span class="nav-icon">👥</span>
@@ -819,7 +918,7 @@
         
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
-            trackVisitor(); // 방문자 추적
+            trackVisitor();
             const savedUser = localStorage.getItem('pastorAppUser');
             if (savedUser) {
                 try {
@@ -887,7 +986,6 @@
                     return;
                 }
                 
-                // 권한 확인 (목회자 권한 또는 관리자)
                 const hasAccess = user.role === '관리자' || 
                                   (user.permissions && user.permissions.includes('pastor'));
                 
@@ -933,67 +1031,36 @@
         // 데이터 로드
         async function loadData() {
             try {
-                // 교인 데이터
                 const membersDoc = await db.collection('churchMembers').doc('main').get();
-                if (membersDoc.exists) {
-                    members = membersDoc.data().list || [];
-                }
+                if (membersDoc.exists) members = membersDoc.data().list || [];
                 
-                // 구역 데이터
                 const cellsDoc = await db.collection('churchCells').doc('main').get();
-                if (cellsDoc.exists) {
-                    cells = cellsDoc.data().list || [];
-                }
+                if (cellsDoc.exists) cells = cellsDoc.data().list || [];
                 
-                // 부서 데이터
                 const deptsDoc = await db.collection('churchDepartments').doc('main').get();
-                if (deptsDoc.exists) {
-                    departments = deptsDoc.data().list || [];
-                }
+                if (deptsDoc.exists) departments = deptsDoc.data().list || [];
                 
-                // 심방 데이터
                 const visitsDoc = await db.collection('pastorVisits').doc('main').get();
-                if (visitsDoc.exists) {
-                    pastorVisits = visitsDoc.data().list || [];
-                }
+                if (visitsDoc.exists) pastorVisits = visitsDoc.data().list || [];
                 
-                // 기도제목 데이터
                 const prayersDoc = await db.collection('prayerRequests').doc('main').get();
-                if (prayersDoc.exists) {
-                    prayerRequests = prayersDoc.data().list || [];
-                }
+                if (prayersDoc.exists) prayerRequests = prayersDoc.data().list || [];
                 
-                // 구역예배 출석
                 const cellAttDoc = await db.collection('cellAttendance').doc('main').get();
-                if (cellAttDoc.exists) {
-                    cellAttendance = cellAttDoc.data().data || {};
-                }
+                if (cellAttDoc.exists) cellAttendance = cellAttDoc.data().data || {};
                 
-                // 구역예배 날짜
                 const cellDatesDoc = await db.collection('cellWorshipDates').doc('main').get();
-                if (cellDatesDoc.exists) {
-                    cellWorshipDates = cellDatesDoc.data().dates || {};
-                }
+                if (cellDatesDoc.exists) cellWorshipDates = cellDatesDoc.data().data || {};
                 
-                // 주일예배 출석 (구역)
                 const sundayAttDoc = await db.collection('cellSundayAttendance').doc('main').get();
-                if (sundayAttDoc.exists) {
-                    cellSundayAttendance = sundayAttDoc.data().data || {};
-                }
+                if (sundayAttDoc.exists) cellSundayAttendance = sundayAttDoc.data().data || {};
                 
-                // 구역 보고서
                 const reportsDoc = await db.collection('cellReports').doc('main').get();
-                if (reportsDoc.exists) {
-                    cellReports = reportsDoc.data().data || {};
-                }
+                if (reportsDoc.exists) cellReports = reportsDoc.data().data || {};
                 
-                // 출석 데이터
                 const attDoc = await db.collection('churchAttendance').doc('main').get();
-                if (attDoc.exists) {
-                    churchAttendance = attDoc.data().dates || {};
-                }
+                if (attDoc.exists) churchAttendance = attDoc.data().dates || {};
                 
-                // 기도제목 모달의 구역 선택 업데이트
                 updatePrayerCellSelect();
                 
             } catch (error) {
@@ -1004,7 +1071,6 @@
         
         // 실시간 리스너
         function setupRealtimeListeners() {
-            // 심방 데이터
             db.collection('pastorVisits').doc('main').onSnapshot(doc => {
                 if (doc.exists) {
                     pastorVisits = doc.data().list || [];
@@ -1013,7 +1079,6 @@
                 }
             });
             
-            // 기도제목
             db.collection('prayerRequests').doc('main').onSnapshot(doc => {
                 if (doc.exists) {
                     prayerRequests = doc.data().list || [];
@@ -1022,7 +1087,6 @@
                 }
             });
             
-            // 교인 데이터
             db.collection('churchMembers').doc('main').onSnapshot(doc => {
                 if (doc.exists) {
                     members = doc.data().list || [];
@@ -1031,11 +1095,11 @@
                 }
             });
             
-            // 구역 보고서
             db.collection('cellReports').doc('main').onSnapshot(doc => {
                 if (doc.exists) {
                     cellReports = doc.data().data || {};
                     if (currentTab === 'Status') loadStatusTab();
+                    if (currentTab === 'MemberPrayer') loadMemberPrayers();
                 }
             });
         }
@@ -1044,15 +1108,13 @@
         function showTab(tab) {
             currentTab = tab;
             
-            // 모든 탭 숨기기
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            // 선택된 탭 표시
             document.getElementById('tab' + tab).classList.add('active');
-            document.querySelectorAll('.nav-item')[['Home', 'Visit', 'Prayer', 'Member', 'Status'].indexOf(tab)].classList.add('active');
+            const tabIndex = ['Home', 'Visit', 'Prayer', 'MemberPrayer', 'Member', 'Status'].indexOf(tab);
+            if (tabIndex >= 0) document.querySelectorAll('.nav-item')[tabIndex].classList.add('active');
             
-            // FAB 버튼
             const fab = document.getElementById('fabBtn');
             if (tab === 'Visit' || tab === 'Prayer') {
                 fab.classList.add('show');
@@ -1060,11 +1122,11 @@
                 fab.classList.remove('show');
             }
             
-            // 탭별 데이터 로드
             switch (tab) {
                 case 'Home': loadDashboard(); break;
                 case 'Visit': loadVisitList(); break;
                 case 'Prayer': loadPrayerList(); break;
+                case 'MemberPrayer': initMemberPrayerTab(); break;
                 case 'Member': loadMemberList(); break;
                 case 'Status': loadStatusTab(); break;
             }
@@ -1072,12 +1134,10 @@
         
         // 대시보드 로드
         function loadDashboard() {
-            // 통계
             const totalMembers = members.length;
             const today = new Date().toISOString().split('T')[0];
             const lastSunday = getLastSunday();
             
-            // 주일 출석
             let sundayAttendance = 0;
             Object.keys(cellSundayAttendance).forEach(key => {
                 if (key.endsWith('_' + lastSunday)) {
@@ -1085,7 +1145,6 @@
                 }
             });
             
-            // 새신자 (최근 3개월)
             const threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
             const newMembers = members.filter(m => m.regDate && new Date(m.regDate) >= threeMonthsAgo);
@@ -1105,25 +1164,20 @@
                 </div>
             `;
             
-            // 알림
             const alerts = [];
-            
-            // 장기 결석자
             const absentees = getLongAbsentees();
             if (absentees.length > 0) {
                 alerts.push({ icon: '⚠️', text: `장기 결석자: ${absentees.length}명` });
             }
             
-            // 미제출 구역보고서
             const missingReports = getMissingReports();
             if (missingReports.length > 0) {
                 alerts.push({ icon: '📋', text: `미제출 보고서: ${missingReports.length}개` });
             }
             
-            // 긴급 기도제목
             const urgentPrayers = prayerRequests.filter(p => p.urgency === 'urgent' && !p.answered);
             if (urgentPrayers.length > 0) {
-                alerts.push({ icon: '🙏', text: `긴급 기도제목: ${urgentPrayers.length}건` });
+                alerts.push({ icon: '🙏', text: `긴급 기도요청: ${urgentPrayers.length}건` });
             }
             
             const alertCard = document.getElementById('alertCard');
@@ -1139,7 +1193,6 @@
                 alertCard.style.display = 'none';
             }
             
-            // 오늘 심방
             const todayVisits = pastorVisits.filter(v => v.date === today && v.status !== 'completed');
             document.getElementById('todayVisits').innerHTML = todayVisits.length > 0 ? 
                 todayVisits.map(v => `
@@ -1152,7 +1205,6 @@
                     </div>
                 `).join('') : '<p style="color: #94a3b8; text-align: center; padding: 20px;">오늘 예정된 심방이 없습니다</p>';
             
-            // 긴급 기도제목
             document.getElementById('urgentPrayers').innerHTML = urgentPrayers.length > 0 ?
                 urgentPrayers.slice(0, 3).map(p => `
                     <div class="list-item">
@@ -1162,7 +1214,117 @@
                         </div>
                         <span class="badge badge-red">긴급</span>
                     </div>
-                `).join('') : '<p style="color: #94a3b8; text-align: center; padding: 20px;">긴급 기도제목이 없습니다</p>';
+                `).join('') : '<p style="color: #94a3b8; text-align: center; padding: 20px;">긴급 기도요청이 없습니다</p>';
+        }
+        
+        // ========== 성도 기도제목 (구역보고서 연동) ==========
+        function initMemberPrayerTab() {
+            const dateInput = document.getElementById('memberPrayerDate');
+            if (!dateInput.value) {
+                dateInput.value = getLastSunday();
+            }
+            loadMemberPrayers();
+        }
+        
+        function setLastSundayForPrayer() {
+            document.getElementById('memberPrayerDate').value = getLastSunday();
+            loadMemberPrayers();
+        }
+        
+        function loadMemberPrayers() {
+            const selectedDate = document.getElementById('memberPrayerDate').value;
+            const container = document.getElementById('memberPrayerList');
+            
+            // 해당 날짜의 구역 보고서에서 기도제목 추출
+            let prayersFromReports = [];
+            
+            cells.forEach(cell => {
+                const key = `${cell.name}_${selectedDate}`;
+                const report = cellReports[key];
+                
+                if (report && report.prayer) {
+                    prayersFromReports.push({
+                        cell: cell.name,
+                        leader: cell.leaderName || report.leader || '',
+                        prayer: report.prayer,
+                        date: selectedDate,
+                        submittedAt: report.submittedAt
+                    });
+                }
+            });
+            
+            if (prayersFromReports.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                        <div style="font-size: 4em; margin-bottom: 15px;">🙏</div>
+                        <div style="font-size: 1.1em; margin-bottom: 10px;">제출된 기도제목이 없습니다</div>
+                        <div style="font-size: 0.9em;">선택한 날짜: ${selectedDate}</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 기도제목 카드 생성
+            let html = `
+                <div style="margin-bottom: 16px; padding: 12px 16px; background: linear-gradient(135deg, #1e3a5f, #2d5a87); color: white; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.85em; opacity: 0.9;">📅 ${selectedDate}</div>
+                    <div style="font-size: 1.2em; font-weight: 700; margin-top: 5px;">🙏 성도 기도제목</div>
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">${prayersFromReports.length}개 구역 제출</div>
+                </div>
+            `;
+            
+            prayersFromReports.forEach(item => {
+                const prayerItems = parsePrayerContent(item.prayer);
+                
+                html += `
+                    <div class="member-prayer-card">
+                        <div class="member-prayer-header">
+                            <span class="member-prayer-cell">🏠 ${item.cell}구역</span>
+                            <span class="member-prayer-leader">${item.leader}</span>
+                        </div>
+                        <div class="member-prayer-body">
+                            ${prayerItems.map(p => `
+                                <div class="member-prayer-item">
+                                    <span class="member-prayer-name">${p.name}</span>
+                                    <span class="member-prayer-content">${p.content}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 기도제목 파싱 (이름:내용 형식)
+        function parsePrayerContent(prayer) {
+            if (!prayer) return [{ name: '', content: '-' }];
+            
+            const lines = prayer.split('\n');
+            const result = [];
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                
+                // "이름:내용" 또는 "이름;내용" 형태 찾기
+                const match = line.match(/^([^:;]+)[:;](.+)$/);
+                if (match) {
+                    result.push({
+                        name: match[1].trim(),
+                        content: match[2].trim()
+                    });
+                } else {
+                    // 형식이 맞지 않으면 전체를 내용으로
+                    result.push({
+                        name: '',
+                        content: line
+                    });
+                }
+            });
+            
+            return result.length > 0 ? result : [{ name: '', content: prayer }];
         }
         
         // 심방 목록
@@ -1181,7 +1343,6 @@
                 filtered.map((v, idx) => {
                     const originalIdx = pastorVisits.indexOf(v);
                     const isCompleted = v.status === 'completed';
-                    const isPast = new Date(v.date) < new Date().setHours(0, 0, 0, 0);
                     
                     return `
                         <div class="list-item" style="${isCompleted ? 'opacity: 0.7;' : ''}">
@@ -1208,16 +1369,18 @@
                 }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 40px;">심방 일정이 없습니다</p>';
         }
         
-        // 기도제목 목록
+        // 기도제목 목록 (기도 탭)
         function loadPrayerList() {
             let filtered = [...prayerRequests];
             
             if (currentPrayerFilter === 'urgent') {
                 filtered = filtered.filter(p => p.urgency === 'urgent' && !p.answered);
+            } else if (currentPrayerFilter === 'member') {
+                // 성도 기도제목 탭으로 이동
+                showTab('MemberPrayer');
+                return;
             } else if (currentPrayerFilter === 'answered') {
                 filtered = filtered.filter(p => p.answered);
-            } else if (currentPrayerFilter === 'cell') {
-                filtered = filtered.filter(p => p.cell);
             } else {
                 filtered = filtered.filter(p => !p.answered);
             }
@@ -1259,7 +1422,6 @@
             const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
             let filtered = [...members];
             
-            // 검색 필터
             if (searchTerm) {
                 filtered = filtered.filter(m => 
                     (m.nameKr || '').toLowerCase().includes(searchTerm) ||
@@ -1267,7 +1429,6 @@
                 );
             }
             
-            // 카테고리 필터
             if (currentMemberFilter === 'absent') {
                 filtered = getLongAbsentees();
             } else if (currentMemberFilter === 'new') {
@@ -1282,7 +1443,6 @@
                     const absentWeeks = getAbsentWeeks(m.nameKr);
                     const isNewMember = m.regDate && new Date(m.regDate) >= new Date(new Date().setMonth(new Date().getMonth() - 3));
                     
-                    // 전화번호 포맷
                     const phoneDisplay = m.phone ? `
                         <a href="tel:${m.phone.replace(/[^0-9+]/g, '')}" 
                            style="display: inline-flex; align-items: center; gap: 5px; background: #10b981; color: white; padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 0.85em; margin-top: 8px;">
@@ -1313,36 +1473,30 @@
         function loadStatusTab() {
             const lastSunday = getLastSunday();
             
-            // 구역 현황
             let cellHtml = '';
             cells.forEach(cell => {
-                // 구역원 목록 가져오기
                 const cellMembers = members.filter(m => {
                     const memberCell = (m.cell || '').replace('구역', '');
                     return memberCell === cell.name || m.cell === cell.name + '구역';
                 });
                 
-                // 구역장 포함한 전체 명단
                 let allMembers = [...cellMembers.map(m => m.nameKr)];
                 if (cell.leaderName && !allMembers.includes(cell.leaderName)) {
                     allMembers.unshift(cell.leaderName);
                 }
                 const total = allMembers.length;
                 
-                // 주일예배 출석
                 const sundayKey = `${cell.name}_${lastSunday}`;
                 const sundayAtt = cellSundayAttendance[sundayKey] || [];
                 const sundayRate = total > 0 ? Math.round((sundayAtt.length / total) * 100) : 0;
                 const sundayAbsent = allMembers.filter(name => !sundayAtt.includes(name));
                 
-                // 구역모임 출석 (구역별 날짜 사용)
                 const cellDate = cellWorshipDates[cell.name] || lastSunday;
                 const cellKey = `${cell.name}_${cellDate}`;
                 const cellAtt = cellAttendance[cellKey] || [];
                 const cellRate = total > 0 ? Math.round((cellAtt.length / total) * 100) : 0;
                 const cellAbsent = allMembers.filter(name => !cellAtt.includes(name));
                 
-                // 보고서 제출 여부
                 const hasReport = cellReports[sundayKey];
                 
                 cellHtml += `
@@ -1352,7 +1506,6 @@
                             ${hasReport ? '<span class="badge badge-green">✅ 보고서</span>' : '<span class="badge badge-yellow">⏳ 미제출</span>'}
                         </div>
                         
-                        <!-- 주일예배 -->
                         <div style="margin-bottom: 12px; padding: 12px; background: #eff6ff; border-radius: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="font-weight: 600; color: #1e40af;">⛪ 주일예배 (${lastSunday})</span>
@@ -1370,7 +1523,6 @@
                             ` : '<div style="font-size: 0.85em; color: #10b981;">✓ 전원 출석</div>'}
                         </div>
                         
-                        <!-- 구역모임 -->
                         <div style="padding: 12px; background: #fef3c7; border-radius: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="font-weight: 600; color: #92400e;">🏠 구역모임 (${cellDate})</span>
@@ -1393,7 +1545,6 @@
             
             document.getElementById('cellStatusList').innerHTML = cellHtml || '<p style="color: #94a3b8; text-align: center;">구역 정보가 없습니다</p>';
             
-            // 부서 현황
             let deptHtml = '';
             departments.forEach(dept => {
                 const eventCount = dept.eventPlan ? dept.eventPlan.length : 0;
@@ -1428,7 +1579,12 @@
             currentPrayerFilter = filter;
             document.querySelectorAll('#tabPrayer .filter-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            loadPrayerList();
+            
+            if (filter === 'member') {
+                showTab('MemberPrayer');
+            } else {
+                loadPrayerList();
+            }
         }
         
         function filterMembers(filter) {
@@ -1473,7 +1629,6 @@
             document.getElementById('visitModal').classList.add('active');
         }
         
-        // 심방 저장
         document.getElementById('visitForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1503,7 +1658,6 @@
             loadVisitList();
         });
         
-        // 심방 완료 모달
         function showCompleteVisitModal(idx) {
             document.getElementById('completeVisitId').value = idx;
             document.getElementById('visitRecord').value = '';
@@ -1526,7 +1680,6 @@
             loadVisitList();
         });
         
-        // 심방 삭제
         async function deleteVisit(idx) {
             if (confirm('이 심방 일정을 삭제하시겠습니까?')) {
                 pastorVisits.splice(idx, 1);
@@ -1536,7 +1689,6 @@
             }
         }
         
-        // 심방 저장
         async function saveVisits() {
             try {
                 await db.collection('pastorVisits').doc('main').set({ list: pastorVisits });
@@ -1565,7 +1717,6 @@
             document.getElementById('prayerModal').classList.add('active');
         }
         
-        // 기도제목 저장
         document.getElementById('prayerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1592,7 +1743,6 @@
             loadPrayerList();
         });
         
-        // 기도 응답
         async function markPrayerAnswered(idx) {
             if (confirm('이 기도제목을 응답됨으로 표시하시겠습니까?')) {
                 prayerRequests[idx].answered = true;
@@ -1603,7 +1753,6 @@
             }
         }
         
-        // 기도제목 삭제
         async function deletePrayer(idx) {
             if (confirm('이 기도제목을 삭제하시겠습니까?')) {
                 prayerRequests.splice(idx, 1);
@@ -1613,7 +1762,6 @@
             }
         }
         
-        // 기도제목 저장
         async function savePrayers() {
             try {
                 await db.collection('prayerRequests').doc('main').set({ list: prayerRequests });
@@ -1623,7 +1771,6 @@
             }
         }
         
-        // 기도제목 구역 선택 업데이트
         function updatePrayerCellSelect() {
             const select = document.getElementById('prayerCell');
             select.innerHTML = '<option value="">선택안함</option>';
@@ -1645,7 +1792,6 @@
         function getLongAbsentees() {
             return members.filter(m => {
                 const weeks = getAbsentWeeks(m.nameKr);
-                // 2026년도 출석 기록이 있고 4주 이상 결석한 사람만
                 return weeks >= 4;
             });
         }
@@ -1654,7 +1800,6 @@
             let lastAttended = null;
             const year2026Start = '2026-01-01';
             
-            // 주일 출석 기록 확인 (2026년도 이후만)
             Object.keys(cellSundayAttendance).forEach(key => {
                 const date = key.split('_')[1];
                 if (date >= year2026Start && cellSundayAttendance[key].includes(memberName)) {
@@ -1664,7 +1809,6 @@
                 }
             });
             
-            // 2026년도 출석 기록이 없으면 -1 반환 (표시 안함)
             if (!lastAttended) return -1;
             
             const lastDate = new Date(lastAttended);
@@ -1681,12 +1825,10 @@
             });
         }
         
-        // 모달 닫기
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
         }
         
-        // 토스트
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -1694,7 +1836,6 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
         
-        // 모달 외부 클릭 시 닫기
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
