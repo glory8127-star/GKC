@@ -2728,10 +2728,10 @@
                 <!-- 서브탭 선택: 주일예배/구역예배 -->
                 <div style="display: flex; gap: 8px; margin-bottom: 15px;">
                     <button id="cellSubTabSunday" onclick="showCellSubTab('sunday')" style="flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: white; font-size: 1em;">
-                        ✝️ 주일예배 출석
+                        ✝️ 주일예배
                     </button>
                     <button id="cellSubTabCell" onclick="showCellSubTab('cell')" style="flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: white; color: #64748b; border: 2px solid #e2e8f0; font-size: 1em;">
-                        ⛪ 구역예배 출석
+                        ⛪ 구역예배
                     </button>
                 </div>
                 
@@ -5076,6 +5076,19 @@
                     localStorage.setItem('cellAttendance', JSON.stringify(cellAttendanceData.data));
                 } else if (localCellAttCount > 0) {
                     await saveToFirestore('cellAttendance', { data: localCellAtt });
+                }
+                
+                // 주일예배 출석 데이터 로드 (구역장 앱에서 체크한 것)
+                const cellSundayAttData = await loadFromFirestore('cellSundayAttendance');
+                const localCellSundayAtt = JSON.parse(localStorage.getItem('cellSundayAttendance') || '{}');
+                const fbCellSundayAttCount = cellSundayAttData?.data ? Object.keys(cellSundayAttData.data).length : 0;
+                const localCellSundayAttCount = Object.keys(localCellSundayAtt).length;
+                
+                if (fbCellSundayAttCount >= localCellSundayAttCount && fbCellSundayAttCount > 0) {
+                    localStorage.setItem('cellSundayAttendance', JSON.stringify(cellSundayAttData.data));
+                    console.log('Firebase에서 주일예배 출석(구역) 로드:', fbCellSundayAttCount + '건');
+                } else if (localCellSundayAttCount > 0) {
+                    await saveToFirestore('cellSundayAttendance', { data: localCellSundayAtt });
                 }
                 
                 // 다음세대부 데이터 로드
