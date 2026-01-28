@@ -1901,11 +1901,24 @@
         }
         
         function getAbsentWeeks(memberName) {
-            // 최근 4주 주일 날짜 계산
+            // 해당 교인의 구역 찾기
+            var member = members.find(function(m) { return m.nameKr === memberName; });
+            var memberCell = member ? member.cell : null;
+            
+            // 구역이 없으면 장기결석 대상 아님 (미배정)
+            if (!memberCell) {
+                return 0;
+            }
+            
+            // 지난 주일부터 4주 계산
             var sundays = [];
             var today = new Date();
-            var d = new Date(today);
-            d.setDate(d.getDate() - d.getDay()); // 이번주 일요일
+            var d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            
+            // 지난 일요일 찾기 (오늘이 일요일이면 오늘, 아니면 지난 일요일)
+            while (d.getDay() !== 0) {
+                d.setDate(d.getDate() - 1);
+            }
             
             for (var i = 0; i < 4; i++) {
                 var y = d.getFullYear();
@@ -1919,23 +1932,13 @@
             var consecutiveAbsent = 0;
             for (var i = 0; i < sundays.length; i++) {
                 var sundayDate = sundays[i];
-                var attended = false;
+                var key = memberCell + '_' + sundayDate;
+                var attendees = cellSundayAttendance[key] || [];
                 
-                // 해당 날짜에 출석했는지 확인
-                Object.keys(cellSundayAttendance).forEach(function(key) {
-                    var keyDate = key.split('_')[1];
-                    if (keyDate === sundayDate) {
-                        var attendees = cellSundayAttendance[key] || [];
-                        if (attendees.includes(memberName)) {
-                            attended = true;
-                        }
-                    }
-                });
-                
-                if (!attended) {
-                    consecutiveAbsent++;
-                } else {
+                if (attendees.includes(memberName)) {
                     break; // 출석한 주가 나오면 중단
+                } else {
+                    consecutiveAbsent++;
                 }
             }
             
