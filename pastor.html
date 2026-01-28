@@ -1587,8 +1587,7 @@
             
             let html = '<div style="margin-bottom: 15px; padding: 12px; background: #fef3c7; border-radius: 10px; font-size: 0.85em; color: #92400e;">💡 구역 보고서에서 수집된 성도 기도제목입니다</div>';
             
-            // cellReports에서 기도제목 가져오기
-            const cellReports = JSON.parse(localStorage.getItem('cellReports') || '{}');
+            // 전역변수 cellReports 사용 (Firebase에서 로드됨)
             let allPrayers = [];
             
             Object.keys(cellReports).forEach(key => {
