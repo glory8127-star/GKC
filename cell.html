@@ -29,10 +29,10 @@
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(79, 70, 229, 0.4); }
         .btn-secondary { background: #f1f5f9; color: #475569; }
         .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-        .tab-nav { display: flex; background: white; padding: 10px; gap: 10px; position: fixed; bottom: 0; left: 0; right: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: #f1f5f9; border-radius: 12px; font-size: 0.85em; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #64748b; transition: all 0.3s; }
+        .tab-nav { display: flex; background: white; padding: 8px; gap: 6px; position: fixed; bottom: 0; left: 0; right: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
+        .tab-btn { flex: 1; padding: 8px 4px; border: none; background: #f1f5f9; border-radius: 10px; font-size: 0.7em; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #64748b; transition: all 0.3s; min-width: 0; }
         .tab-btn.active { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; }
-        .tab-icon { font-size: 1.3em; }
+        .tab-icon { font-size: 1.2em; }
         .card { background: white; border-radius: 16px; padding: 15px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
         .card-title { font-size: 1.1em; font-weight: 600; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
         .cell-selector { padding: 15px; background: white; border-bottom: 1px solid #e2e8f0; }
@@ -61,8 +61,8 @@
         .report-submitted { background: #dcfce7; color: #16a34a; }
         .report-pending { background: #fef3c7; color: #d97706; }
         .report-view-btn { background: #4f46e5; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
-        .date-selector { display: flex; align-items: center; gap: 10px; padding: 15px; background: #f8fafc; border-radius: 12px; margin: 15px; }
-        .date-input { flex: 1; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1em; }
+        .date-selector { display: flex; align-items: center; gap: 8px; padding: 12px 15px; background: #f8fafc; border-radius: 12px; margin: 15px; flex-wrap: wrap; }
+        .date-input { flex: 1; min-width: 120px; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9em; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
@@ -124,9 +124,9 @@
             
             <div id="tabSunday">
                 <div class="date-selector">
-                    <span>📅 주일예배 날짜</span>
+                    <span style="font-size: 0.85em; white-space: nowrap;">📅 주일예배<br>날짜</span>
                     <input type="date" class="date-input" id="sundayAttendanceDate" onchange="onSundayDateChange()">
-                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.85em;">이번주일</button>
+                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.8em; white-space: nowrap;">이번<br>주일</button>
                 </div>
                 <div class="card">
                     <div class="card-title"><span>✝️</span><span id="sundayAttendanceTitle">주일예배 출석</span></div>
@@ -142,9 +142,9 @@
             
             <div id="tabAttendance" class="hidden">
                 <div class="date-selector">
-                    <span>📅 구역예배 날짜</span>
+                    <span style="font-size: 0.85em; white-space: nowrap;">📅 구역예배<br>날짜</span>
                     <input type="date" class="date-input" id="attendanceDate" onchange="onAttendanceDateChange()">
-                    <button class="btn btn-primary" onclick="setToday()" style="width: auto; padding: 8px 12px; font-size: 0.85em;">오늘</button>
+                    <button class="btn btn-primary" onclick="setToday()" style="width: auto; padding: 8px 12px; font-size: 0.8em;">오늘</button>
                 </div>
                 <div class="card">
                     <div class="card-title"><span>⛪</span><span id="attendanceTitle">구역예배 출석</span></div>
@@ -226,8 +226,8 @@
     </div>
     
     <div class="tab-nav hidden" id="tabNav">
-        <button class="tab-btn active" onclick="showTab('sunday')" id="tabBtnSunday"><span class="tab-icon">✝️</span><span>주일예배</span></button>
-        <button class="tab-btn" onclick="showTab('attendance')" id="tabBtnAttendance"><span class="tab-icon">🏠</span><span>구역예배</span></button>
+        <button class="tab-btn active" onclick="showTab('sunday')" id="tabBtnSunday"><span class="tab-icon">✝️</span><span>주일예<br>배</span></button>
+        <button class="tab-btn" onclick="showTab('attendance')" id="tabBtnAttendance"><span class="tab-icon">🏠</span><span>구역예<br>배</span></button>
         <button class="tab-btn" onclick="showTab('report')" id="tabBtnReport"><span class="tab-icon">📝</span><span>보고서</span></button>
         <button class="tab-btn hidden" onclick="showTab('overview')" id="tabBtnOverview"><span class="tab-icon">📊</span><span>현황</span></button>
         <button class="tab-btn" onclick="showTab('history')" id="tabBtnHistory"><span class="tab-icon">📚</span><span>기록</span></button>
