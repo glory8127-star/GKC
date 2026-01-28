@@ -8263,7 +8263,22 @@
         // 통계 차트 렌더링
         function renderStatsChart(container, stats, colors, type) {
             const total = Object.values(stats).reduce((a, b) => a + b, 0);
-            const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+            
+            // 등록연도별은 연도순 정렬, 그 외는 인원수 내림차순
+            let sortedStats;
+            if (type === 'year') {
+                sortedStats = Object.entries(stats).sort((a, b) => {
+                    // '미등록'은 맨 뒤로
+                    if (a[0] === '미등록') return 1;
+                    if (b[0] === '미등록') return -1;
+                    // 연도 추출해서 오름차순 정렬
+                    const yearA = parseInt(a[0].replace('년', '')) || 0;
+                    const yearB = parseInt(b[0].replace('년', '')) || 0;
+                    return yearA - yearB;
+                });
+            } else {
+                sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+            }
             
             const typeNames = {
                 'age': '연령별',
