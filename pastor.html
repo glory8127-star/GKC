@@ -695,17 +695,6 @@
             </div>
         </div>
         
-        <!-- 성도 기도제목 (구역보고서 연동) -->
-        <div id="tabMemberPrayer" class="tab-content">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <button onclick="showTab('Prayer')" style="background: #f1f5f9; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1em;">← 뒤로</button>
-                <span style="font-weight: 600; color: #1e3a5f;">🙏 성도 기도제목</span>
-            </div>
-            <div id="memberPrayerList">
-                <!-- 동적 생성 -->
-            </div>
-        </div>
-        
         <!-- 교인 현황 -->
         <div id="tabMember" class="tab-content">
             <div class="search-box">
@@ -752,10 +741,6 @@
             <button class="nav-item" onclick="showTab('Prayer')">
                 <span class="nav-icon">🙏</span>
                 <span>기도</span>
-            </button>
-            <button class="nav-item" onclick="showTab('MemberPrayer')">
-                <span class="nav-icon">💒</span>
-                <span>성도</span>
             </button>
             <button class="nav-item" onclick="showTab('Member')">
                 <span class="nav-icon">👥</span>
@@ -1110,7 +1095,7 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
             document.getElementById('tab' + tab).classList.add('active');
-            const tabIndex = ['Home', 'Visit', 'Prayer', 'MemberPrayer', 'Member', 'Status'].indexOf(tab);
+            const tabIndex = ['Home', 'Visit', 'Prayer', 'Member', 'Status'].indexOf(tab);
             if (tabIndex >= 0) document.querySelectorAll('.nav-item')[tabIndex].classList.add('active');
             
             const fab = document.getElementById('fabBtn');
@@ -1124,7 +1109,6 @@
                 case 'Home': loadDashboard(); break;
                 case 'Visit': loadVisitList(); break;
                 case 'Prayer': loadPrayerList(); break;
-                case 'MemberPrayer': initMemberPrayerTab(); break;
                 case 'Member': loadMemberList(); break;
                 case 'Status': loadStatusTab(); break;
             }
@@ -1589,10 +1573,60 @@
             event.target.classList.add('active');
             
             if (filter === 'member') {
-                showTab('MemberPrayer');
+                // 구역 보고서의 기도제목 표시
+                loadMemberPrayersInTab();
             } else {
                 loadPrayerList();
             }
+        }
+        
+        // 구역 보고서 기도제목을 기도 탭 내에서 표시
+        function loadMemberPrayersInTab() {
+            const container = document.getElementById('prayerList');
+            if (!container) return;
+            
+            let html = '<div style="margin-bottom: 15px; padding: 12px; background: #fef3c7; border-radius: 10px; font-size: 0.85em; color: #92400e;">💡 구역 보고서에서 수집된 성도 기도제목입니다</div>';
+            
+            // cellReports에서 기도제목 가져오기
+            const cellReports = JSON.parse(localStorage.getItem('cellReports') || '{}');
+            let allPrayers = [];
+            
+            Object.keys(cellReports).forEach(key => {
+                const report = cellReports[key];
+                if (!report || !report.prayer || !report.prayer.trim()) return;
+                
+                const cellName = report.cell || report.cellName || key.split('_')[0];
+                allPrayers.push({
+                    cell: cellName,
+                    date: report.date || key.split('_')[1],
+                    prayer: report.prayer,
+                    leader: report.leader || ''
+                });
+            });
+            
+            // 날짜 최신순 정렬
+            allPrayers.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (allPrayers.length === 0) {
+                html += '<p style="text-align: center; color: #94a3b8; padding: 40px;">등록된 성도 기도제목이 없습니다</p>';
+            } else {
+                allPrayers.forEach(p => {
+                    const date = new Date(p.date);
+                    const dateStr = (date.getMonth() + 1) + '/' + date.getDate();
+                    
+                    html += `
+                        <div class="prayer-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: 600; color: #92400e;">${p.cell}구역</span>
+                                <span style="font-size: 0.8em; color: #b45309;">${dateStr}</span>
+                            </div>
+                            <div style="color: #78350f; font-size: 0.95em; white-space: pre-wrap;">${p.prayer}</div>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = html;
         }
         
         function filterMembers(filter) {
