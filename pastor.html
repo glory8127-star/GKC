@@ -1619,13 +1619,40 @@
                     const date = new Date(p.date);
                     const dateStr = (date.getMonth() + 1) + '/' + date.getDate();
                     
+                    // 기도제목 파싱 (이름: 내용 또는 이름; 내용 형태)
+                    let formattedPrayer = '';
+                    const lines = p.prayer.split('\n');
+                    lines.forEach(line => {
+                        line = line.trim();
+                        if (!line) return;
+                        
+                        // "이름: 내용" 또는 "이름; 내용" 또는 "이름,내용" 형태 찾기
+                        const colonMatch = line.match(/^([^:;,]+)[:;,](.+)$/);
+                        if (colonMatch) {
+                            const name = colonMatch[1].trim();
+                            const content = colonMatch[2].trim();
+                            formattedPrayer += `
+                                <div style="background: white; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #f59e0b;">
+                                    <div style="font-weight: 600; color: #b45309; font-size: 0.9em; margin-bottom: 4px;">🙏 ${name}</div>
+                                    <div style="color: #78350f; font-size: 0.85em; line-height: 1.4;">${content}</div>
+                                </div>
+                            `;
+                        } else {
+                            formattedPrayer += `
+                                <div style="background: white; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
+                                    <div style="color: #78350f; font-size: 0.85em; line-height: 1.4;">${line}</div>
+                                </div>
+                            `;
+                        }
+                    });
+                    
                     html += `
-                        <div class="prayer-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-weight: 600; color: #92400e;">${p.cell}구역</span>
-                                <span style="font-size: 0.8em; color: #b45309;">${dateStr}</span>
+                        <div class="prayer-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #f59e0b;">
+                                <span style="font-weight: 700; color: #92400e; font-size: 1.05em;">${p.cell}구역</span>
+                                <span style="font-size: 0.8em; color: #b45309; background: rgba(255,255,255,0.5); padding: 3px 8px; border-radius: 10px;">${dateStr}</span>
                             </div>
-                            <div style="color: #78350f; font-size: 0.95em; white-space: pre-wrap;">${p.prayer}</div>
+                            <div>${formattedPrayer}</div>
                         </div>
                     `;
                 });
