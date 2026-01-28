@@ -1127,14 +1127,20 @@
             const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
             const lastSunday = getLastSunday();
             
-            console.log('lastSunday:', lastSunday);
-            console.log('mainAttendance keys:', Object.keys(mainAttendance));
+            console.log('=== 목회자 어플 디버깅 ===');
+            console.log('오늘:', todayStr);
+            console.log('지난 주일:', lastSunday);
+            console.log('mainAttendance 전체 키:', Object.keys(mainAttendance));
+            console.log('mainAttendance[' + lastSunday + ']:', mainAttendance[lastSunday]);
             
             // 주일예배 출석 (mainAttendance 사용)
             var sundayAttendees = mainAttendance[lastSunday] || [];
             var sundayAttendance = sundayAttendees.length;
             
-            console.log('sundayAttendance:', sundayAttendance, '명');
+            console.log('출석자 수:', sundayAttendance, '명');
+            if (sundayAttendees.length > 0) {
+                console.log('출석자 예시:', sundayAttendees.slice(0, 5));
+            }
             
             var threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
