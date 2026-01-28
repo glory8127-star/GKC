@@ -697,6 +697,10 @@
         
         <!-- 성도 기도제목 (구역보고서 연동) -->
         <div id="tabMemberPrayer" class="tab-content">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <button onclick="showTab('Prayer')" style="background: #f1f5f9; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1em;">← 뒤로</button>
+                <span style="font-weight: 600; color: #1e3a5f;">🙏 성도 기도제목</span>
+            </div>
             <div id="memberPrayerList">
                 <!-- 동적 생성 -->
             </div>
@@ -1511,37 +1515,37 @@
                         </div>
                         
                         <div style="margin-bottom: 12px; padding: 12px; background: #eff6ff; border-radius: 10px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600; color: #1e40af;">⛪ 주일예배 (${lastSunday})</span>
-                                <span style="font-weight: 700; color: ${sundayRate >= 80 ? '#10b981' : sundayRate >= 50 ? '#f59e0b' : '#ef4444'};">
+                            <div style="margin-bottom: 8px;">
+                                <div style="font-weight: 600; color: #1e40af; font-size: 0.9em;">⛪ 주일예배 (${lastSunday})</div>
+                                <div style="font-weight: 700; font-size: 1.1em; color: ${sundayRate >= 80 ? '#10b981' : sundayRate >= 50 ? '#f59e0b' : '#ef4444'}; margin-top: 4px;">
                                     ${sundayAtt.length}/${total}명 (${sundayRate}%)
-                                </span>
+                                </div>
                             </div>
                             <div class="progress-bar" style="margin-bottom: 8px;">
                                 <div class="progress-fill" style="width: ${sundayRate}%; background: #3b82f6;"></div>
                             </div>
                             ${sundayAbsent.length > 0 ? `
-                                <div style="font-size: 0.85em; color: #dc2626;">
+                                <div style="font-size: 0.8em; color: #dc2626;">
                                     <span style="font-weight: 600;">결석:</span> ${sundayAbsent.join(', ')}
                                 </div>
-                            ` : '<div style="font-size: 0.85em; color: #10b981;">✓ 전원 출석</div>'}
+                            ` : '<div style="font-size: 0.8em; color: #10b981;">✓ 전원 출석</div>'}
                         </div>
                         
                         <div style="padding: 12px; background: #fef3c7; border-radius: 10px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600; color: #92400e;">🏠 구역모임 (${cellDate})</span>
-                                <span style="font-weight: 700; color: ${cellRate >= 80 ? '#10b981' : cellRate >= 50 ? '#f59e0b' : '#ef4444'};">
+                            <div style="margin-bottom: 8px;">
+                                <div style="font-weight: 600; color: #92400e; font-size: 0.9em;">🏠 구역모임 (${cellDate})</div>
+                                <div style="font-weight: 700; font-size: 1.1em; color: ${cellRate >= 80 ? '#10b981' : cellRate >= 50 ? '#f59e0b' : '#ef4444'}; margin-top: 4px;">
                                     ${cellAtt.length}/${total}명 (${cellRate}%)
-                                </span>
+                                </div>
                             </div>
                             <div class="progress-bar" style="margin-bottom: 8px;">
                                 <div class="progress-fill" style="width: ${cellRate}%; background: #f59e0b;"></div>
                             </div>
                             ${cellAbsent.length > 0 ? `
-                                <div style="font-size: 0.85em; color: #dc2626;">
+                                <div style="font-size: 0.8em; color: #dc2626;">
                                     <span style="font-weight: 600;">결석:</span> ${cellAbsent.join(', ')}
                                 </div>
-                            ` : '<div style="font-size: 0.85em; color: #10b981;">✓ 전원 출석</div>'}
+                            ` : '<div style="font-size: 0.8em; color: #10b981;">✓ 전원 출석</div>'}
                         </div>
                     </div>
                 `;
