@@ -11277,7 +11277,8 @@
                     loadMentoringData();
                     
                     // 대시보드 통계 업데이트
-                    document.getElementById('totalMembers').textContent = members.length;
+                    const totalMembersEl = document.getElementById('totalMembers');
+                    if (totalMembersEl) totalMembersEl.textContent = members.length;
                 } catch (error) {
                     console.error('교인 등록 오류:', error);
                     alert('교인 등록 중 오류가 발생했습니다: ' + error.message);
