@@ -311,7 +311,8 @@
         
         async function trackVisitor() {
             try {
-                const today = new Date().toISOString().split('T')[0];
+                const now = new Date();
+                const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
                 const page = 'cell.html';
                 const sessionKey = 'visited_' + today + '_' + page;
                 if (sessionStorage.getItem(sessionKey)) return;
@@ -333,7 +334,8 @@
         }
         
         function setToday() {
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
             const attendanceDate = document.getElementById('attendanceDate');
             const reportDate = document.getElementById('reportDate');
             if (attendanceDate) { attendanceDate.value = today; localStorage.setItem('cellApp_attendanceDate', today); }
