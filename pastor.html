@@ -893,6 +893,7 @@
         let cellWorshipDates = {};
         let cellReports = {};
         let churchAttendance = {};
+        let mainAttendance = {}; // 주일예배 출석 데이터
         
         let currentTab = 'Home';
         let currentVisitFilter = 'all';
@@ -1044,6 +1045,11 @@
                 const attDoc = await db.collection('churchAttendance').doc('main').get();
                 if (attDoc.exists) churchAttendance = attDoc.data().dates || {};
                 
+                // 주일예배 출석 데이터 로드
+                const mainAttDoc = await db.collection('mainAttendance').doc('main').get();
+                if (mainAttDoc.exists) mainAttendance = mainAttDoc.data().data || {};
+                console.log('mainAttendance loaded:', Object.keys(mainAttendance));
+                
                 updatePrayerCellSelect();
                 
             } catch (error) {
@@ -1118,20 +1124,17 @@
         function loadDashboard() {
             const totalMembers = members.length;
             const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
             const lastSunday = getLastSunday();
             
-            console.log('lastSunday:', lastSunday); // 디버깅용
-            console.log('cellSundayAttendance keys:', Object.keys(cellSundayAttendance)); // 디버깅용
+            console.log('lastSunday:', lastSunday);
+            console.log('mainAttendance keys:', Object.keys(mainAttendance));
             
-            let sundayAttendance = 0;
-            Object.keys(cellSundayAttendance).forEach(key => {
-                if (key.endsWith('_' + lastSunday)) {
-                    sundayAttendance += cellSundayAttendance[key].length;
-                }
-            });
+            // 주일예배 출석 (mainAttendance 사용)
+            var sundayAttendees = mainAttendance[lastSunday] || [];
+            var sundayAttendance = sundayAttendees.length;
             
-            console.log('sundayAttendance:', sundayAttendance); // 디버깅용
+            console.log('sundayAttendance:', sundayAttendance, '명');
             
             var threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -1901,21 +1904,12 @@
         }
         
         function getAbsentWeeks(memberName) {
-            // 해당 교인의 구역 찾기
-            var member = members.find(function(m) { return m.nameKr === memberName; });
-            var memberCell = member ? member.cell : null;
-            
-            // 구역이 없으면 장기결석 대상 아님 (미배정)
-            if (!memberCell) {
-                return 0;
-            }
-            
             // 지난 주일부터 4주 계산
             var sundays = [];
             var today = new Date();
             var d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             
-            // 지난 일요일 찾기 (오늘이 일요일이면 오늘, 아니면 지난 일요일)
+            // 지난 일요일 찾기
             while (d.getDay() !== 0) {
                 d.setDate(d.getDate() - 1);
             }
@@ -1928,12 +1922,11 @@
                 d.setDate(d.getDate() - 7);
             }
             
-            // 연속 결석 주 계산 (최근부터)
+            // 연속 결석 주 계산 (mainAttendance 사용)
             var consecutiveAbsent = 0;
             for (var i = 0; i < sundays.length; i++) {
                 var sundayDate = sundays[i];
-                var key = memberCell + '_' + sundayDate;
-                var attendees = cellSundayAttendance[key] || [];
+                var attendees = mainAttendance[sundayDate] || [];
                 
                 if (attendees.includes(memberName)) {
                     break; // 출석한 주가 나오면 중단
