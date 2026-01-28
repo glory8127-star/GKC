@@ -391,13 +391,16 @@
         }
         
         async function login() {
+            alert('로그인 시도 중...');
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) { showToast('아이디와 비밀번호를 입력하세요'); return; }
             try {
+                alert('Firebase 연결 중...');
                 const usersDoc = await db.collection('registeredUsers').doc('main').get();
                 if (!usersDoc.exists) { showToast('사용자 정보를 불러올 수 없습니다'); return; }
                 const users = usersDoc.data().list || [];
+                alert('사용자 수: ' + users.length);
                 const user = users.find(u => u.username === username && u.password === password);
                 if (!user) { showToast('아이디 또는 비밀번호가 틀립니다'); return; }
                 const hasAccess = user.role === '관리자' || (user.permissions && user.permissions.includes('cell'));
@@ -406,7 +409,7 @@
                 localStorage.setItem('cellAppUser', JSON.stringify(user));
                 initApp();
                 showToast('로그인 성공!');
-            } catch (error) { console.error('로그인 오류:', error); showToast('로그인 중 오류가 발생했습니다'); }
+            } catch (error) { console.error('로그인 오류:', error); alert('오류: ' + error.message); showToast('로그인 중 오류가 발생했습니다'); }
         }
         
         async function initApp() {
