@@ -1133,9 +1133,13 @@
             
             console.log('sundayAttendance:', sundayAttendance); // 디버깅용
             
-            const threeMonthsAgo = new Date();
+            var threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            const newMembers = members.filter(m => m.regDate && new Date(m.regDate) >= threeMonthsAgo);
+            var newMembers = members.filter(function(m) {
+                var regDateStr = m.regDate || m.registrationDate || m.joinDate || '';
+                if (!regDateStr) return false;
+                return new Date(regDateStr) >= threeMonthsAgo;
+            });
             
             document.getElementById('dashboardStats').innerHTML = `
                 <div class="stat-card">
@@ -1424,10 +1428,24 @@
             if (currentMemberFilter === 'absent') {
                 filtered = getLongAbsentees();
             } else if (currentMemberFilter === 'new') {
-                const threeMonthsAgo = new Date();
+                var threeMonthsAgo = new Date();
                 threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-                filtered = filtered.filter(m => m.regDate && new Date(m.regDate) >= threeMonthsAgo);
-                filtered.sort((a, b) => new Date(b.regDate) - new Date(a.regDate));
+                console.log('새신자 필터 - 3개월 전:', threeMonthsAgo.toISOString().split('T')[0]);
+                console.log('전체 교인 수:', filtered.length);
+                
+                // regDate 또는 registrationDate 필드 확인
+                filtered = filtered.filter(function(m) {
+                    var regDateStr = m.regDate || m.registrationDate || m.joinDate || '';
+                    if (!regDateStr) return false;
+                    var regDate = new Date(regDateStr);
+                    return regDate >= threeMonthsAgo;
+                });
+                filtered.sort(function(a, b) { 
+                    var dateA = new Date(a.regDate || a.registrationDate || a.joinDate || 0);
+                    var dateB = new Date(b.regDate || b.registrationDate || b.joinDate || 0);
+                    return dateB - dateA; 
+                });
+                console.log('새신자 수:', filtered.length);
             }
             
             // 검색어 적용
@@ -1441,7 +1459,10 @@
             document.getElementById('memberList').innerHTML = filtered.length > 0 ?
                 filtered.map(m => {
                     const absentWeeks = getAbsentWeeks(m.nameKr);
-                    const isNewMember = m.regDate && new Date(m.regDate) >= new Date(new Date().setMonth(new Date().getMonth() - 3));
+                    const regDateStr = m.regDate || m.registrationDate || m.joinDate || '';
+                    const threeMonthsAgoDate = new Date();
+                    threeMonthsAgoDate.setMonth(threeMonthsAgoDate.getMonth() - 3);
+                    const isNewMember = regDateStr && new Date(regDateStr) >= threeMonthsAgoDate;
                     
                     const phoneDisplay = m.phone ? `
                         <a href="tel:${m.phone.replace(/[^0-9+]/g, '')}" 
@@ -1880,24 +1901,45 @@
         }
         
         function getAbsentWeeks(memberName) {
-            let lastAttended = null;
-            const year2026Start = '2026-01-01';
+            // 최근 4주 주일 날짜 계산
+            var sundays = [];
+            var today = new Date();
+            var d = new Date(today);
+            d.setDate(d.getDate() - d.getDay()); // 이번주 일요일
             
-            Object.keys(cellSundayAttendance).forEach(key => {
-                const date = key.split('_')[1];
-                if (date >= year2026Start && cellSundayAttendance[key].includes(memberName)) {
-                    if (!lastAttended || date > lastAttended) {
-                        lastAttended = date;
+            for (var i = 0; i < 4; i++) {
+                var y = d.getFullYear();
+                var m = String(d.getMonth() + 1).padStart(2, '0');
+                var day = String(d.getDate()).padStart(2, '0');
+                sundays.push(y + '-' + m + '-' + day);
+                d.setDate(d.getDate() - 7);
+            }
+            
+            // 연속 결석 주 계산 (최근부터)
+            var consecutiveAbsent = 0;
+            for (var i = 0; i < sundays.length; i++) {
+                var sundayDate = sundays[i];
+                var attended = false;
+                
+                // 해당 날짜에 출석했는지 확인
+                Object.keys(cellSundayAttendance).forEach(function(key) {
+                    var keyDate = key.split('_')[1];
+                    if (keyDate === sundayDate) {
+                        var attendees = cellSundayAttendance[key] || [];
+                        if (attendees.includes(memberName)) {
+                            attended = true;
+                        }
                     }
+                });
+                
+                if (!attended) {
+                    consecutiveAbsent++;
+                } else {
+                    break; // 출석한 주가 나오면 중단
                 }
-            });
+            }
             
-            if (!lastAttended) return -1;
-            
-            const lastDate = new Date(lastAttended);
-            const today = new Date();
-            const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
-            return Math.floor(diffDays / 7);
+            return consecutiveAbsent;
         }
         
         function getMissingReports() {
