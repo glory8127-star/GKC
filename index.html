@@ -8017,8 +8017,11 @@
             });
             document.getElementById('dashCellStats').innerHTML = cellHtml || '<p style="color: #999;">데이터 없음</p>';
             
-            // 최근 등록 교인 (최근 5명)
-            const recentMembers = [...members].slice(-5).reverse();
+            // 최근 등록 교인 (등록일 기준 최근 5명)
+            const recentMembers = [...members]
+                .filter(m => m.regDate) // 등록일이 있는 교인만
+                .sort((a, b) => (b.regDate || '').localeCompare(a.regDate || '')) // 등록일 내림차순
+                .slice(0, 5);
             let recentHtml = '';
             if (recentMembers.length > 0) {
                 recentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
