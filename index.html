@@ -3642,7 +3642,7 @@
                 </div>
                 
                 <!-- 좌우 레이아웃: 지출 입력(좌) / 지출 내역(우) -->
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; margin-top: 20px;">
                     <!-- 왼쪽: 지출 입력 (수정 권한 필요) -->
                     <div class="card perm-offeringEdit" style="display: none;">
                         <h2>💸 지출 입력</h2>
@@ -3677,12 +3677,17 @@
                             <div class="form-group">
                                 <label class="form-label">결제 방법</label>
                                 <select class="form-control" id="expensePayment" onchange="handleExpensePaymentChange()">
-                                    <option value="현금">현금</option>
-                                    <option value="Check">Check</option>
-                                    <option value="체크카드">체크카드</option>
-                                    <option value="신용카드">신용카드</option>
-                                    <option value="계좌이체">계좌이체</option>
-                                    <option value="자동이체">자동이체</option>
+                                    <optgroup label="── 개인 지출 (환급 필요) ──">
+                                        <option value="개인현금">개인현금</option>
+                                        <option value="개인카드">개인카드</option>
+                                    </optgroup>
+                                    <optgroup label="── 교회 지출 ──">
+                                        <option value="현금">교회현금</option>
+                                        <option value="Check">Check</option>
+                                        <option value="교회카드">교회카드</option>
+                                        <option value="계좌이체">계좌이체</option>
+                                        <option value="자동이체">자동이체</option>
+                                    </optgroup>
                                 </select>
                                 <input type="text" class="form-control" id="expenseCheckNumber" placeholder="Check # 입력" style="display: none; margin-top: 10px;">
                             </div>
