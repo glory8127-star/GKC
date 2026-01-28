@@ -312,7 +312,7 @@
         async function trackVisitor() {
             try {
                 const now = new Date();
-                const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+                const today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
                 const page = 'cell.html';
                 const sessionKey = 'visited_' + today + '_' + page;
                 if (sessionStorage.getItem(sessionKey)) return;
@@ -335,7 +335,7 @@
         
         function setToday() {
             const now = new Date();
-            const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
             const attendanceDate = document.getElementById('attendanceDate');
             const reportDate = document.getElementById('reportDate');
             if (attendanceDate) { attendanceDate.value = today; localStorage.setItem('cellApp_attendanceDate', today); }
@@ -348,7 +348,7 @@
             const sunday = new Date(today);
             const day = today.getDay();
             if (day !== 0) sunday.setDate(today.getDate() - day);
-            const dateStr = `${sunday.getFullYear()}-${String(sunday.getMonth()+1).padStart(2,'0')}-${String(sunday.getDate()).padStart(2,'0')}`;
+            const dateStr = sunday.getFullYear() + '-' + String(sunday.getMonth()+1).padStart(2,'0') + '-' + String(sunday.getDate()).padStart(2,'0');
             const sundayDate = document.getElementById('sundayAttendanceDate');
             if (sundayDate) { sundayDate.value = dateStr; localStorage.setItem('cellApp_sundayDate', dateStr); }
             loadSundayAttendance();
@@ -356,7 +356,7 @@
         
         function initDates() {
             const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
             let attDateStr = (selectedCell && cellWorshipDates[selectedCell]) ? cellWorshipDates[selectedCell] : (localStorage.getItem('cellApp_attendanceDate') || todayStr);
             const attendanceDate = document.getElementById('attendanceDate');
             const reportDate = document.getElementById('reportDate');
@@ -365,7 +365,7 @@
             const savedSundayDate = localStorage.getItem('cellApp_sundayDate');
             let sundayDateStr;
             if (savedSundayDate) { sundayDateStr = savedSundayDate; }
-            else { const sunday = new Date(today); const day = today.getDay(); if (day !== 0) sunday.setDate(today.getDate() - day); sundayDateStr = `${sunday.getFullYear()}-${String(sunday.getMonth()+1).padStart(2,'0')}-${String(sunday.getDate()).padStart(2,'0')}`; }
+            else { const sunday = new Date(today); const day = today.getDay(); if (day !== 0) sunday.setDate(today.getDate() - day); sundayDateStr = sunday.getFullYear() + '-' + String(sunday.getMonth()+1).padStart(2,'0') + '-' + String(sunday.getDate()).padStart(2,'0'); }
             const sundayDate = document.getElementById('sundayAttendanceDate');
             if (sundayDate) sundayDate.value = sundayDateStr;
             loadSundayAttendance();
@@ -391,16 +391,13 @@
         }
         
         async function login() {
-            alert('로그인 시도 중...');
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) { showToast('아이디와 비밀번호를 입력하세요'); return; }
             try {
-                alert('Firebase 연결 중...');
                 const usersDoc = await db.collection('registeredUsers').doc('main').get();
                 if (!usersDoc.exists) { showToast('사용자 정보를 불러올 수 없습니다'); return; }
                 const users = usersDoc.data().list || [];
-                alert('사용자 수: ' + users.length);
                 const user = users.find(u => u.username === username && u.password === password);
                 if (!user) { showToast('아이디 또는 비밀번호가 틀립니다'); return; }
                 const hasAccess = user.role === '관리자' || (user.permissions && user.permissions.includes('cell'));
@@ -409,7 +406,7 @@
                 localStorage.setItem('cellAppUser', JSON.stringify(user));
                 initApp();
                 showToast('로그인 성공!');
-            } catch (error) { console.error('로그인 오류:', error); alert('오류: ' + error.message); showToast('로그인 중 오류가 발생했습니다'); }
+            } catch (error) { console.error('로그인 오류:', error); showToast('로그인 중 오류가 발생했습니다'); }
         }
         
         async function initApp() {
@@ -736,25 +733,23 @@
                 sundayTotalAttendance += sundayAtt.length;
                 cellTotalAttendance += cellAtt.length;
                 
-                listHtml += `
-                    <div class="report-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="report-cell">${cell.name}구역</div>
-                            <div><span class="report-status ${report ? 'report-submitted' : 'report-pending'}">${report ? '✅ 보고서' : '⏳ 미제출'}</span>
-                            ${report ? `<button class="report-view-btn" onclick="viewReport('${cell.name}', '${cellDate}')">보기</button>` : ''}</div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <div style="background: #ede9fe; padding: 8px; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 0.7em; color: #7c3aed;">✝️ 주일예배</div>
-                                <div style="font-weight: 600; color: #5b21b6;">${sundayAtt.length}/${cellTotal} <span style="font-size: 0.8em; font-weight: normal;">(${sundayRate}%)</span></div>
-                            </div>
-                            <div style="background: #e0f2fe; padding: 8px; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 0.7em; color: #0891b2;">🏠 구역예배 ${cellDate ? '(' + cellDate.substring(5) + ')' : ''}</div>
-                                <div style="font-weight: 600; color: #0e7490;">${cellAtt.length}/${cellTotal} <span style="font-size: 0.8em; font-weight: normal;">(${cellRate}%)</span></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                listHtml += '<div class="report-item" style="flex-direction: column; align-items: stretch; gap: 8px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                        '<div class="report-cell">' + cell.name + '구역</div>' +
+                        '<div><span class="report-status ' + (report ? 'report-submitted' : 'report-pending') + '">' + (report ? '✅ 보고서' : '⏳ 미제출') + '</span>' +
+                        (report ? '<button class="report-view-btn" onclick="viewReport(\'' + cell.name + '\', \'' + cellDate + '\')">보기</button>' : '') + '</div>' +
+                    '</div>' +
+                    '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">' +
+                        '<div style="background: #ede9fe; padding: 8px; border-radius: 6px; text-align: center;">' +
+                            '<div style="font-size: 0.7em; color: #7c3aed;">✝️ 주일예배</div>' +
+                            '<div style="font-weight: 600; color: #5b21b6;">' + sundayAtt.length + '/' + cellTotal + ' <span style="font-size: 0.8em; font-weight: normal;">(' + sundayRate + '%)</span></div>' +
+                        '</div>' +
+                        '<div style="background: #e0f2fe; padding: 8px; border-radius: 6px; text-align: center;">' +
+                            '<div style="font-size: 0.7em; color: #0891b2;">🏠 구역예배 ' + (cellDate ? '(' + cellDate.substring(5) + ')' : '') + '</div>' +
+                            '<div style="font-weight: 600; color: #0e7490;">' + cellAtt.length + '/' + cellTotal + ' <span style="font-size: 0.8em; font-weight: normal;">(' + cellRate + '%)</span></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
             });
             
             document.getElementById('sundayOverviewPresent').textContent = sundayTotalAttendance;
@@ -796,15 +791,13 @@
             Object.values(latestPrayers).forEach(p => {
                 const dateObj = new Date(p.date);
                 const dateLabel = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-                prayerHtml += `
-                    <div class="prayer-item">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;">
-                            <span class="prayer-name" style="font-size: 1em;">🏠 ${p.cellName}구역</span>
-                            <span style="font-size: 0.75em; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 10px;">${dateLabel} · ${p.leader}</span>
-                        </div>
-                        <div class="prayer-content">${formatPrayerContent(p.prayer)}</div>
-                    </div>
-                `;
+                prayerHtml += '<div class="prayer-item">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #fcd34d;">' +
+                        '<span class="prayer-name" style="font-size: 1em;">🏠 ' + p.cellName + '구역</span>' +
+                        '<span style="font-size: 0.75em; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 10px;">' + dateLabel + ' · ' + p.leader + '</span>' +
+                    '</div>' +
+                    '<div class="prayer-content">' + formatPrayerContent(p.prayer) + '</div>' +
+                '</div>';
             });
             
             document.getElementById('prayerList').innerHTML = prayerHtml || '<div class="empty-state"><div style="font-size: 2em; margin-bottom: 10px;">🙏</div>기도제목이 없습니다<div style="font-size: 0.8em; margin-top: 10px; color: #94a3b8;">보고서에 기도제목을 입력해주세요</div></div>';
@@ -821,7 +814,7 @@
             const year = sunday.getFullYear();
             const month = String(sunday.getMonth() + 1).padStart(2, '0');
             const date = String(sunday.getDate()).padStart(2, '0');
-            return `${year}-${month}-${date}`;
+            return year + '-' + month + '-' + date;
         }
         
         function getLatestCellDate(cellName) {
@@ -878,8 +871,7 @@
                 const date = new Date(report.date);
                 const dateLabel = (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
                 const cellName = report.cellName || report.cell || '미지정';
-                html += `<div class="report-item" onclick="viewReport('${cellName}', '${report.date}')"><div class="report-cell">${cellName}</div><div style="flex: 1; min-width: 0; overflow: hidden;"><div style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${dateLabel}</div><div style="font-size: 0.75em; color: #64748b; white-space: nowrap;">참석 ${(report.attendance?.length || 0)}명 | 헌금 $${(report.offering || 0)}</div></div><span style="color: #4f46e5; flex-shrink: 0;">→</span></div>`;
-            });
+                html += '<div class="report-item" onclick="viewReport(\'' + cellName + '\', \'' + report.date + '\')"><div class="report-cell">' + cellName + '</div><div style="flex: 1; min-width: 0; overflow: hidden;"><div style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + dateLabel + '</div><div style="font-size: 0.75em; color: #64748b; white-space: nowrap;">참석 ' + (report.attendance ? report.attendance.length : 0) + '명 | 헌금 $' + (report.offering || 0) + '</div></div><span style="color: #4f46e5; flex-shrink: 0;">→</span></div>';
             });
             container.innerHTML = html;
         }
