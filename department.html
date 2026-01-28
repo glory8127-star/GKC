@@ -1,40 +1,1141 @@
-행사가 등록되었습니다');
-                renderEventList();
-                
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#059669">
+    <title>GKC 부서관리</title>
+    <link rel="manifest" href="manifest-dept.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+            background: #f0fdf4;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 15px 20px;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .header h1 { font-size: 1.2em; font-weight: 600; }
+        
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        
+        .main-content {
+            padding-top: 70px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+        }
+        
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 70px);
+            padding: 20px;
+        }
+        
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .login-logo { font-size: 3em; margin-bottom: 10px; }
+        .login-title { font-size: 1.5em; color: #059669; margin-bottom: 30px; font-weight: 700; }
+        
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; font-size: 0.9em; }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #059669;
+        }
+        
+        .form-textarea { min-height: 100px; resize: vertical; }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; }
+        .btn-secondary { background: #f1f5f9; color: #475569; }
+        .btn-danger { background: #ef4444; color: white; }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            margin: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .dept-card {
+            background: white;
+            border-radius: 16px;
+            margin: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+        
+        .dept-header { padding: 20px; color: white; }
+        .dept-name { font-size: 1.3em; font-weight: 700; margin-bottom: 5px; }
+        .dept-leader { font-size: 0.9em; opacity: 0.9; }
+        .dept-body { padding: 20px; }
+        
+        .dept-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        
+        .dept-stat-number { font-size: 1.1em; font-weight: 700; color: #059669; white-space: nowrap; }
+        .dept-stat-label { font-size: 0.75em; color: #64748b; }
+        
+        .expense-item {
+            background: white;
+            border-radius: 12px;
+            margin: 10px 15px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid #059669;
+        }
+        
+        .expense-item.pending { border-left-color: #f59e0b; }
+        .expense-item.rejected { border-left-color: #ef4444; }
+        
+        .expense-title { font-weight: 600; color: #1e293b; margin-bottom: 5px; }
+        .expense-info { font-size: 0.85em; color: #64748b; }
+        .expense-amount { font-size: 1.3em; font-weight: 700; color: #059669; margin-top: 10px; }
+        
+        .expense-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .status-approved { background: #dcfce7; color: #16a34a; }
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-rejected { background: #fee2e2; color: #dc2626; }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 15px;
+            color: #94a3b8;
+            font-size: 0.75em;
+            cursor: pointer;
+        }
+        
+        .nav-item.active { color: #059669; }
+        .nav-icon { font-size: 1.5em; margin-bottom: 4px; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .empty-icon { font-size: 3em; margin-bottom: 15px; }
+        
+        .hidden { display: none !important; }
+        
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9em;
+            z-index: 300;
+            display: none;
+        }
+        
+        .toast.show { display: block; animation: fadeIn 0.3s; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title { font-size: 1.2em; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 1.5em; cursor: pointer; color: #64748b; }
+        .modal-body { padding: 20px; }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal-footer .btn { flex: 1; }
+        
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            border: none;
+            font-size: 1.5em;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+            cursor: pointer;
+            z-index: 50;
+        }
+        
+        body.offline .header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+        
+        #monthSelector {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #monthSelector::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏛️ GKC 부서관리</h1>
+        <button class="header-btn" id="logoutBtn" onclick="logout()" style="display: none;">로그아웃</button>
+    </div>
+    
+    <div class="main-content">
+        <div id="loginScreen" class="login-container">
+            <div class="login-box">
+                <div class="login-logo">🏛️</div>
+                <div class="login-title">GKC 부서관리</div>
+                <div class="form-group">
+                    <label class="form-label">아이디</label>
+                    <input type="text" class="form-input" id="loginUsername" placeholder="아이디 입력">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">비밀번호</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') login()">
+                </div>
+                <button class="btn btn-primary" onclick="login()">로그인</button>
+            </div>
+        </div>
+        
+        <div id="appScreen" class="hidden">
+            <div id="tabDeptList">
+                <div id="deptList"></div>
+            </div>
+            
+            <div id="tabEvent" class="hidden">
+                <div class="card" style="position: sticky; top: 60px; z-index: 10;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button onclick="changeEventYear(-1)" style="background: #e2e8f0; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2em; cursor: pointer;">◀</button>
+                            <span id="eventYearDisplay" style="font-size: 1.3em; font-weight: 700; color: #059669; min-width: 60px; text-align: center;">2026</span>
+                            <button onclick="changeEventYear(1)" style="background: #e2e8f0; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2em; cursor: pointer;">▶</button>
+                        </div>
+                        <select class="form-select" id="eventDeptFilter" onchange="renderEventList()" style="width: auto; min-width: 120px;">
+                            <option value="">전체 부서</option>
+                        </select>
+                    </div>
+                    <div id="monthSelector" style="display: flex; gap: 8px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;"></div>
+                </div>
+                <div id="eventList"></div>
+            </div>
+            
+            <div id="tabExpense" class="hidden">
+                <div class="card">
+                    <div class="card-title">📋 내 지출결의서</div>
+                </div>
+                <div id="expenseList"></div>
+            </div>
+            
+            <div id="tabApproval" class="hidden">
+                <div class="card">
+                    <div class="card-title">⏳ 결재 대기 목록</div>
+                </div>
+                <div id="approvalList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bottom-nav hidden" id="bottomNav">
+        <div class="nav-item active" onclick="showTab('deptList')">
+            <div class="nav-icon">🏛️</div>
+            <span>부서</span>
+        </div>
+        <div class="nav-item" onclick="showTab('event')">
+            <div class="nav-icon">📅</div>
+            <span>행사</span>
+        </div>
+        <div class="nav-item" onclick="showTab('expense')">
+            <div class="nav-icon">📝</div>
+            <span>지출결의</span>
+        </div>
+        <div class="nav-item hidden" id="navApproval" onclick="showTab('approval')">
+            <div class="nav-icon">✅</div>
+            <span>결재</span>
+        </div>
+    </div>
+    
+    <button class="fab hidden" id="fabAdd" onclick="handleFabClick()">+</button>
+    
+    <!-- 행사 등록 모달 -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📅 행사 등록</div>
+                <button class="modal-close" onclick="closeEventModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">부서 선택 *</label>
+                    <select class="form-select" id="eventDept"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">행사명 *</label>
+                    <input type="text" class="form-input" id="eventName" placeholder="예: 부서 친교모임">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">행사 날짜 *</label>
+                    <input type="date" class="form-input" id="eventDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">시작 시간</label>
+                    <input type="time" class="form-input" id="eventStartTime">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">종료 시간</label>
+                    <input type="time" class="form-input" id="eventEndTime">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">장소</label>
+                    <input type="text" class="form-input" id="eventLocation" placeholder="예: 교회 친교실">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">행사 내용</label>
+                    <textarea class="form-textarea" id="eventDesc" placeholder="행사 내용을 상세히 작성해주세요"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEventModal()">취소</button>
+                <button class="btn btn-primary" onclick="submitEvent()">등록</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="expenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📝 지출결의서 작성</div>
+                <button class="modal-close" onclick="closeExpenseModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">부서 선택 *</label>
+                    <select class="form-select" id="expenseDept"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">지출 항목 *</label>
+                    <input type="text" class="form-input" id="expenseTitle" placeholder="예: 부서 모임 식대">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">지출 분류 *</label>
+                    <select class="form-select" id="expenseCategory">
+                        <option value="물품구입">물품구입</option>
+                        <option value="행사비">행사비</option>
+                        <option value="식비">식비</option>
+                        <option value="교통비">교통비</option>
+                        <option value="인쇄비">인쇄비</option>
+                        <option value="시설유지">시설유지</option>
+                        <option value="부서활동비">부서활동비</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">금액 ($) *</label>
+                    <input type="number" class="form-input" id="expenseAmount" placeholder="100.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">결제 방법 *</label>
+                    <select class="form-select" id="expensePayment" onchange="handlePaymentChange()">
+                        <option value="현금">현금</option>
+                        <option value="Check">Check</option>
+                        <option value="카드">카드</option>
+                    </select>
+                    <input type="text" class="form-input" id="expenseCheckNumber" placeholder="Check # 입력" style="display: none; margin-top: 10px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">지출 날짜 *</label>
+                    <input type="date" class="form-input" id="expenseDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">상세 내역</label>
+                    <textarea class="form-textarea" id="expenseDesc" placeholder="지출 내역을 상세히 작성해주세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🧾 영수증 첨부</label>
+                    <div id="receiptPreviewArea" style="display: none; margin-bottom: 10px; position: relative;">
+                        <img id="receiptPreview" style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 10px; border: 1px solid #e2e8f0;">
+                        <button onclick="removeReceipt()" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 1.1em;">×</button>
+                        <div id="receiptSize" style="text-align: center; font-size: 0.8em; color: #64748b; margin-top: 5px;"></div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; background: linear-gradient(135deg, #059669, #047857); color: white; border-radius: 10px; cursor: pointer; font-weight: 500;">
+                            <span style="font-size: 1.3em;">📷</span>
+                            <span>카메라</span>
+                            <input type="file" accept="image/*" capture="environment" onchange="handleReceiptSelect(event)" style="display: none;">
+                        </label>
+                        <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; background: #f1f5f9; color: #475569; border-radius: 10px; cursor: pointer; font-weight: 500; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 1.3em;">🖼️</span>
+                            <span>갤러리</span>
+                            <input type="file" accept="image/*" onchange="handleReceiptSelect(event)" style="display: none;">
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeExpenseModal()">취소</button>
+                <button class="btn btn-primary" id="submitExpenseBtn" onclick="submitExpense()">제출</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="receiptViewModal">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh;">
+            <div class="modal-header">
+                <div class="modal-title">🧾 영수증</div>
+                <button class="modal-close" onclick="closeReceiptView()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 10px; text-align: center;">
+                <img id="receiptViewImage" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 10px;">
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="deptDetailModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" id="deptDetailHeader">
+                <div class="modal-title" id="deptDetailTitle">부서 상세</div>
+                <button class="modal-close" onclick="closeDeptDetailModal()">×</button>
+            </div>
+            <div class="modal-body" id="deptDetailContent" style="max-height: 70vh; overflow-y: auto;"></div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-9Mfa2t5z6t9z9z9z9z9z9z9z9z9z9z9",
+            authDomain: "gkc-web-project-c87c9.firebaseapp.com",
+            projectId: "gkc-web-project-c87c9",
+            storageBucket: "gkc-web-project.firebasestorage.app",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abc123"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        let storage = null;
+        
+        function getStorage() {
+            if (!storage) storage = firebase.storage();
+            return storage;
+        }
+        
+        let currentUser = null;
+        let currentTab = 'deptList';
+        let departments = [];
+        let members = [];
+        let expenses = [];
+        let paymentRequests = [];
+        let yearlyEvents = [];
+        let budgets = [];
+        let selectedEventYear = new Date().getFullYear();
+        let selectedEventMonth = new Date().getMonth() + 1;
+        let selectedReceiptFile = null;
+        let compressedReceiptBlob = null;
+        
+        function formatMoney(amount) {
+            const num = parseFloat(amount) || 0;
+            return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            trackVisitor();
+            document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
+            const savedUser = localStorage.getItem('deptAppUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                initApp();
+            }
+        });
+        
+        async function trackVisitor() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const page = 'department.html';
+                const sessionKey = `visited_${today}_${page}`;
+                if (sessionStorage.getItem(sessionKey)) return;
+                sessionStorage.setItem(sessionKey, 'true');
+                const visitorRef = db.collection('visitorStats').doc('main');
+                const doc = await visitorRef.get();
+                let data = doc.exists ? doc.data() : { daily: {}, pages: {}, total: 0 };
+                if (!data.daily) data.daily = {};
+                if (!data.daily[today]) data.daily[today] = 0;
+                data.daily[today]++;
+                if (!data.pages) data.pages = {};
+                if (!data.pages[today]) data.pages[today] = {};
+                if (!data.pages[today][page]) data.pages[today][page] = 0;
+                data.pages[today][page]++;
+                if (!data.total) data.total = 0;
+                data.total++;
+                await visitorRef.set(data);
             } catch (error) {
-                console.error('저장 오류:', error);
-                showToast('저장 중 오류가 발생했습니다');
+                console.log('방문자 추적 오류:', error);
             }
         }
         
-        // 행사 삭제
-        async function deleteEvent(id) {
-            if (!confirm('이 행사를 삭제하시겠습니까?')) return;
-            
-            yearlyEvents = yearlyEvents.filter(function(e) { return e.id !== id; });
-            
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!username || !password) {
+                showToast('아이디와 비밀번호를 입력하세요');
+                return;
+            }
+            try {
+                const usersDoc = await db.collection('registeredUsers').doc('main').get();
+                if (!usersDoc.exists) {
+                    showToast('사용자 정보를 불러올 수 없습니다');
+                    return;
+                }
+                const users = usersDoc.data().list || [];
+                if (username === 'gkc8127' && password === '4581') {
+                    currentUser = { username: 'gkc8127', name: '정준연', role: '관리자', permissions: ['department', 'offering', 'offeringEdit'] };
+                } else {
+                    const user = users.find(u => u.username === username && u.password === password);
+                    if (!user) {
+                        showToast('아이디 또는 비밀번호가 틀립니다');
+                        return;
+                    }
+                    const hasAccess = user.role === '관리자' || (user.permissions && user.permissions.includes('department'));
+                    if (!hasAccess) {
+                        showToast('부서관리 접근 권한이 없습니다');
+                        return;
+                    }
+                    currentUser = { username: user.username, name: user.name || user.memberName || user.username, role: user.role, permissions: user.permissions || [], memberName: user.memberName };
+                }
+                localStorage.setItem('deptAppUser', JSON.stringify(currentUser));
+                initApp();
+                showToast('로그인 성공!');
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                showToast('로그인 중 오류가 발생했습니다');
+            }
+        }
+        
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('deptAppUser');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById('bottomNav').classList.add('hidden');
+            document.getElementById('fabAdd').classList.add('hidden');
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+        
+        async function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.remove('hidden');
+            document.getElementById('fabAdd').classList.remove('hidden');
+            document.getElementById('logoutBtn').style.display = 'block';
+            const canApprove = currentUser.role === '관리자' || currentUser.permissions?.includes('offeringEdit');
+            if (canApprove) document.getElementById('navApproval').classList.remove('hidden');
+            await loadData();
+            renderDeptList();
+            setupRealtimeListeners();
+        }
+        
+        async function loadData() {
+            try {
+                const deptDoc = await db.collection('departments').doc('main').get();
+                if (deptDoc.exists) { departments = deptDoc.data().list || []; localStorage.setItem('departments', JSON.stringify(departments)); }
+                const membersDoc = await db.collection('churchMembers').doc('main').get();
+                if (membersDoc.exists) { members = membersDoc.data().list || []; localStorage.setItem('churchMembers', JSON.stringify(members)); }
+                const expensesDoc = await db.collection('churchExpenses').doc('main').get();
+                if (expensesDoc.exists) { expenses = expensesDoc.data().list || []; localStorage.setItem('churchExpenses', JSON.stringify(expenses)); }
+                const requestsDoc = await db.collection('paymentRequests').doc('main').get();
+                if (requestsDoc.exists) { paymentRequests = requestsDoc.data().list || []; localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests)); }
+                const eventsDoc = await db.collection('yearlyEvents').doc('main').get();
+                if (eventsDoc.exists) { yearlyEvents = eventsDoc.data().list || []; localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents)); }
+                const budgetsDoc = await db.collection('churchBudgets').doc('main').get();
+                if (budgetsDoc.exists) { budgets = budgetsDoc.data().list || []; localStorage.setItem('churchBudgets', JSON.stringify(budgets)); }
+            } catch (e) {
+                console.error('데이터 로드 실패:', e);
+                departments = JSON.parse(localStorage.getItem('departments') || '[]');
+                members = JSON.parse(localStorage.getItem('churchMembers') || '[]');
+                expenses = JSON.parse(localStorage.getItem('churchExpenses') || '[]');
+                paymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+                yearlyEvents = JSON.parse(localStorage.getItem('yearlyEvents') || '[]');
+                budgets = JSON.parse(localStorage.getItem('churchBudgets') || '[]');
+            }
+        }
+        
+        function setupRealtimeListeners() {
+            db.collection('paymentRequests').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    paymentRequests = doc.data().list || [];
+                    localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                    if (!document.getElementById('tabExpense').classList.contains('hidden')) renderExpenseList();
+                    if (!document.getElementById('tabApproval').classList.contains('hidden')) renderApprovalList();
+                }
+            });
+            db.collection('churchExpenses').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    expenses = doc.data().list || [];
+                    localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                    if (!document.getElementById('tabDeptList').classList.contains('hidden')) renderDeptList();
+                }
+            });
+            db.collection('churchBudgets').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    budgets = doc.data().list || [];
+                    localStorage.setItem('churchBudgets', JSON.stringify(budgets));
+                    if (!document.getElementById('tabDeptList').classList.contains('hidden')) renderDeptList();
+                }
+            });
+            db.collection('yearlyEvents').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    yearlyEvents = doc.data().list || [];
+                    localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
+                    if (!document.getElementById('tabEvent').classList.contains('hidden')) renderEventList();
+                }
+            });
+        }
+        
+        function renderDeptList() {
+            const container = document.getElementById('deptList');
+            const currentYear = new Date().getFullYear();
+            if (departments.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">🏛️</div><p>등록된 부서가 없습니다</p></div>';
+                return;
+            }
+            const colors = ['#059669', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
+            let html = '';
+            departments.forEach((dept, idx) => {
+                const color = dept.color || colors[idx % colors.length];
+                const deptMembers = members.filter(m => m.department === dept.name);
+                const teams = dept.teams || [];
+                const deptExpenses = expenses.filter(e => e.department === dept.name && e.date && parseInt(e.date.substring(0, 4)) === currentYear);
+                const totalExpense = deptExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+                const budgetItem = budgets.find(b => b.name === dept.name && b.year === currentYear);
+                const budget = budgetItem ? parseFloat(budgetItem.budget) || 0 : 0;
+                const usageRate = budget > 0 ? Math.round((totalExpense / budget) * 100) : 0;
+                const usageColor = usageRate > 90 ? '#ef4444' : usageRate > 70 ? '#f59e0b' : '#059669';
+                html += `<div class="dept-card" onclick="showDeptDetail(${idx})"><div class="dept-header" style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);"><div class="dept-name">${dept.name}</div><div class="dept-leader">👤 ${dept.leader || '부장 미정'}</div></div><div class="dept-body">`;
+                if (budget > 0) {
+                    html += `<div style="margin-bottom: 12px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;"><span style="font-size: 0.8em; color: #64748b;">예산 사용률</span><span style="font-size: 0.85em; font-weight: 600; color: ${usageColor};">${usageRate}%</span></div><div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;"><div style="background: ${usageColor}; width: ${Math.min(usageRate, 100)}%; height: 100%; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.75em; color: #94a3b8;"><span>사용: ${formatMoney(totalExpense)}</span><span>예산: ${formatMoney(budget)}</span></div></div>`;
+                } else {
+                    html += `<div style="text-align: center; padding: 10px; margin-bottom: 12px; background: #f8fafc; border-radius: 8px; color: #94a3b8; font-size: 0.85em;">예산 미편성</div>`;
+                }
+                html += `<div class="dept-stats"><div><div class="dept-stat-number">${deptMembers.length}</div><div class="dept-stat-label">구성원</div></div><div><div class="dept-stat-number">${teams.length}</div><div class="dept-stat-label">팀</div></div><div><div class="dept-stat-number">${formatMoney(totalExpense).replace('$', '')}</div><div class="dept-stat-label">지출</div></div></div>`;
+                if (teams.length > 0) {
+                    html += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;"><div style="font-size: 0.75em; color: #64748b; margin-bottom: 8px;">👥 팀 구성</div><div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+                    teams.slice(0, 4).forEach(t => { html += `<span style="background: ${color}15; color: ${color}; padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 500;">${t.name || t}</span>`; });
+                    if (teams.length > 4) html += `<span style="color: #94a3b8; font-size: 0.75em;">+${teams.length - 4}개</span>`;
+                    html += `</div></div>`;
+                }
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+            updateDeptSelect();
+        }
+        
+        function updateDeptSelect() {
+            const select = document.getElementById('expenseDept');
+            select.innerHTML = '<option value="">-- 부서 선택 --</option>';
+            departments.forEach(dept => { select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`; });
+        }
+        
+        function showDeptDetail(idx) {
+            const dept = departments[idx];
+            if (!dept) return;
+            const currentYear = new Date().getFullYear();
+            const color = dept.color || '#059669';
+            const deptMembers = members.filter(m => m.department === dept.name);
+            const teams = dept.teams || [];
+            const deptExpenses = expenses.filter(e => e.department === dept.name && e.date && parseInt(e.date.substring(0, 4)) === currentYear);
+            const totalExpense = deptExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+            const budgetItem = budgets.find(b => b.name === dept.name && b.year === currentYear);
+            const budget = budgetItem ? parseFloat(budgetItem.budget) || 0 : 0;
+            const usageRate = budget > 0 ? Math.round((totalExpense / budget) * 100) : 0;
+            const remaining = budget - totalExpense;
+            const usageColor = usageRate > 90 ? '#ef4444' : usageRate > 70 ? '#f59e0b' : '#059669';
+            document.getElementById('deptDetailHeader').style.background = `linear-gradient(135deg, ${color}, ${color}dd)`;
+            document.getElementById('deptDetailHeader').style.color = 'white';
+            document.getElementById('deptDetailTitle').textContent = `🏛️ ${dept.name}`;
+            let html = `<div style="text-align: center; padding: 20px; background: #f8fafc; border-radius: 12px; margin-bottom: 20px;"><div style="font-size: 2.5em; margin-bottom: 10px;">👤</div><div style="font-size: 1.2em; font-weight: 600; color: #1e293b;">${dept.leader || '부장 미정'}</div><div style="color: #64748b; font-size: 0.9em;">부장</div></div>`;
+            html += `<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px;"><div style="font-weight: 600; color: #1e293b; margin-bottom: 15px;">💰 ${currentYear}년 예산 현황</div>`;
+            if (budget > 0) {
+                html += `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin-bottom: 15px;"><div><div style="font-size: 1.3em; font-weight: 700; color: #1e293b;">${formatMoney(budget)}</div><div style="font-size: 0.8em; color: #64748b;">연간 예산</div></div><div><div style="font-size: 1.3em; font-weight: 700; color: #ef4444;">${formatMoney(totalExpense)}</div><div style="font-size: 0.8em; color: #64748b;">사용</div></div><div><div style="font-size: 1.3em; font-weight: 700; color: ${remaining >= 0 ? '#059669' : '#ef4444'};">${formatMoney(remaining)}</div><div style="font-size: 0.8em; color: #64748b;">잔여</div></div></div><div style="margin-bottom: 5px; display: flex; justify-content: space-between;"><span style="font-size: 0.85em; color: #64748b;">사용률</span><span style="font-size: 0.9em; font-weight: 600; color: ${usageColor};">${usageRate}%</span></div><div style="background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;"><div style="background: ${usageColor}; width: ${Math.min(usageRate, 100)}%; height: 100%; border-radius: 5px;"></div></div>`;
+            } else {
+                html += `<div style="text-align: center; padding: 20px; color: #94a3b8;">예산이 편성되지 않았습니다</div>`;
+            }
+            html += `</div>`;
+            html += `<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px;"><div style="font-weight: 600; color: #1e293b; margin-bottom: 15px;">👥 팀 구성 (${teams.length}개)</div>`;
+            if (teams.length > 0) {
+                html += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+                teams.forEach(t => { const teamName = t.name || t; const teamLeader = t.leader || ''; html += `<div style="background: #f8fafc; padding: 12px 15px; border-radius: 10px; border-left: 3px solid ${color};"><div style="font-weight: 600; color: #1e293b;">${teamName}</div>${teamLeader ? `<div style="font-size: 0.85em; color: #64748b; margin-top: 3px;">👤 팀장: ${teamLeader}</div>` : ''}</div>`; });
+                html += `</div>`;
+            } else { html += `<div style="text-align: center; padding: 20px; color: #94a3b8;">등록된 팀이 없습니다</div>`; }
+            html += `</div>`;
+            html += `<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;"><div style="font-weight: 600; color: #1e293b; margin-bottom: 15px;">📋 구성원 (${deptMembers.length}명)</div>`;
+            if (deptMembers.length > 0) {
+                html += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
+                deptMembers.forEach(m => { html += `<span style="background: ${color}15; color: ${color}; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 500;">${m.nameKr}</span>`; });
+                html += `</div>`;
+            } else { html += `<div style="text-align: center; padding: 20px; color: #94a3b8;">등록된 구성원이 없습니다</div>`; }
+            html += `</div>`;
+            document.getElementById('deptDetailContent').innerHTML = html;
+            document.getElementById('deptDetailModal').classList.add('active');
+        }
+        
+        function closeDeptDetailModal() { document.getElementById('deptDetailModal').classList.remove('active'); }
+        
+        function renderExpenseList() {
+            const container = document.getElementById('expenseList');
+            const myRequests = paymentRequests.filter(r => r.requester === currentUser.name);
+            if (myRequests.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>작성한 지출결의서가 없습니다</p><p style="font-size: 0.85em; margin-top: 10px;">+ 버튼을 눌러 새 결의서를 작성하세요</p></div>';
+                return;
+            }
+            myRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            let html = '';
+            myRequests.forEach(req => {
+                const statusClass = req.status === 'approved' ? 'status-approved' : req.status === 'rejected' ? 'status-rejected' : 'status-pending';
+                const itemClass = req.status === 'pending' ? 'pending' : req.status === 'rejected' ? 'rejected' : '';
+                const statusText = req.status === 'approved' ? '승인' : req.status === 'rejected' ? '거절' : '대기중';
+                const canDelete = req.status === 'pending';
+                html += `<div class="expense-item ${itemClass}"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div class="expense-title">${req.title}</div><div style="display: flex; gap: 5px; align-items: center;">${req.receiptUrl ? `<button onclick="viewReceipt('${req.receiptUrl}')" style="background: #dcfce7; border: none; color: #16a34a; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8em; font-weight: 500;">🧾 영수증</button>` : ''}${canDelete ? `<button onclick="deleteRequest('${req.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em; padding: 0 5px;">×</button>` : ''}</div></div><div class="expense-info">${req.department} · ${req.category || '기타'} · ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div><div class="expense-info">${req.date}</div><div class="expense-amount">${formatMoney(req.amount)}</div><span class="expense-status ${statusClass}">${statusText}</span>${req.status === 'rejected' && req.rejectReason ? `<div style="font-size: 0.8em; color: #dc2626; margin-top: 5px;">거절 사유: ${req.rejectReason}</div>` : ''}</div>`;
+            });
+            container.innerHTML = html;
+        }
+        
+        function renderApprovalList() {
+            const container = document.getElementById('approvalList');
+            const pendingRequests = paymentRequests.filter(r => r.status === 'pending');
+            if (pendingRequests.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>대기중인 결재가 없습니다</p></div>';
+                return;
+            }
+            let html = '';
+            pendingRequests.forEach(req => {
+                html += `<div class="expense-item pending"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div class="expense-title">${req.title}</div>${req.receiptUrl ? `<button onclick="viewReceipt('${req.receiptUrl}')" style="background: #dcfce7; border: none; color: #16a34a; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8em; font-weight: 500;">🧾 영수증</button>` : '<span style="font-size: 0.75em; color: #94a3b8;">영수증 없음</span>'}</div><div class="expense-info">${req.department} · ${req.requester} · ${req.date}</div><div class="expense-info" style="color: #059669;">📁 ${req.category || '기타'} · 💳 ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div>${req.description ? `<div style="font-size: 0.85em; color: #475569; margin-top: 8px; padding: 10px; background: #f8fafc; border-radius: 8px;">${req.description}</div>` : ''}<div class="expense-amount">${formatMoney(req.amount)}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="approveRequest('${req.id}')">✅ 승인</button><button class="btn btn-danger" style="flex: 1; padding: 10px;" onclick="rejectRequest('${req.id}')">❌ 거절</button></div></div>`;
+            });
+            container.innerHTML = html;
+        }
+        
+        function openExpenseModal() {
+            document.getElementById('expenseModal').classList.add('active');
+            document.getElementById('expenseTitle').value = '';
+            document.getElementById('expenseCategory').value = '물품구입';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expensePayment').value = '현금';
+            document.getElementById('expenseCheckNumber').value = '';
+            document.getElementById('expenseCheckNumber').style.display = 'none';
+            document.getElementById('expenseDesc').value = '';
+            document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            removeReceipt();
+        }
+        
+        function closeExpenseModal() { document.getElementById('expenseModal').classList.remove('active'); }
+        
+        function handlePaymentChange() {
+            const payment = document.getElementById('expensePayment').value;
+            const checkInput = document.getElementById('expenseCheckNumber');
+            checkInput.style.display = payment === 'Check' ? 'block' : 'none';
+            if (payment !== 'Check') checkInput.value = '';
+        }
+        
+        async function handleReceiptSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('이미지 파일만 선택할 수 있습니다'); return; }
+            showToast('이미지 압축 중...');
+            try {
+                compressedReceiptBlob = await compressImage(file, 800, 0.5);
+                selectedReceiptFile = file;
+                const previewUrl = URL.createObjectURL(compressedReceiptBlob);
+                document.getElementById('receiptPreview').src = previewUrl;
+                document.getElementById('receiptPreviewArea').style.display = 'block';
+                const originalSize = (file.size / 1024).toFixed(1);
+                const compressedSize = (compressedReceiptBlob.size / 1024).toFixed(1);
+                document.getElementById('receiptSize').textContent = `원본: ${originalSize}KB → 압축: ${compressedSize}KB (${Math.round((1 - compressedReceiptBlob.size / file.size) * 100)}% 절감)`;
+                showToast('✅ 영수증이 첨부되었습니다');
+            } catch (error) { console.error('이미지 압축 오류:', error); showToast('이미지 처리 중 오류가 발생했습니다'); }
+            event.target.value = '';
+        }
+        
+        function compressImage(file, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width, height = img.height;
+                        if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function removeReceipt() {
+            selectedReceiptFile = null;
+            compressedReceiptBlob = null;
+            document.getElementById('receiptPreviewArea').style.display = 'none';
+            document.getElementById('receiptPreview').src = '';
+            document.getElementById('receiptSize').textContent = '';
+        }
+        
+        async function uploadReceipt(requestId) {
+            if (!compressedReceiptBlob) return null;
+            const fileName = `receipts/${requestId}_${Date.now()}.jpg`;
+            const storageRef = getStorage().ref(fileName);
+            try {
+                const snapshot = await storageRef.put(compressedReceiptBlob);
+                return await snapshot.ref.getDownloadURL();
+            } catch (error) { console.error('업로드 오류:', error); throw error; }
+        }
+        
+        function viewReceipt(url) { document.getElementById('receiptViewImage').src = url; document.getElementById('receiptViewModal').classList.add('active'); }
+        function closeReceiptView() { document.getElementById('receiptViewModal').classList.remove('active'); }
+        
+        async function submitExpense() {
+            const dept = document.getElementById('expenseDept').value;
+            const title = document.getElementById('expenseTitle').value.trim();
+            const category = document.getElementById('expenseCategory').value;
+            const amount = document.getElementById('expenseAmount').value;
+            const payment = document.getElementById('expensePayment').value;
+            const checkNumber = document.getElementById('expenseCheckNumber').value.trim();
+            const date = document.getElementById('expenseDate').value;
+            const description = document.getElementById('expenseDesc').value.trim();
+            if (!dept || !title || !amount || !date) { showToast('필수 항목을 모두 입력해주세요'); return; }
+            if (payment === 'Check' && !checkNumber) { showToast('Check 번호를 입력해주세요'); return; }
+            const deptInfo = departments.find(d => d.name === dept);
+            const deptLeader = deptInfo?.leader || currentUser.name;
+            const requestId = Date.now().toString();
+            const hasReceipt = !!compressedReceiptBlob;
+            const submitBtn = document.getElementById('submitExpenseBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = hasReceipt ? '영수증 업로드 중...' : '제출 중...';
+            try {
+                let receiptUrl = '';
+                if (hasReceipt) receiptUrl = await uploadReceipt(requestId);
+                const request = { id: requestId, department: dept, deptLeader: deptLeader, item: title, title: title, category: category, amount: parseFloat(amount), payment: payment, checkNumber: payment === 'Check' ? checkNumber : '', date: date, requestDate: new Date().toISOString().split('T')[0], description: description, requester: currentUser.name, status: 'pending', receiptUrl: receiptUrl, createdAt: new Date().toISOString() };
+                paymentRequests.push(request);
+                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                removeReceipt();
+                closeExpenseModal();
+                showToast('✅ 지출결의서가 제출되었습니다');
+                renderExpenseList();
+                db.collection('paymentRequests').doc('main').set({ list: paymentRequests }).catch(err => console.error('Firebase 저장 오류:', err));
+            } catch (error) { console.error('저장 오류:', error); showToast('저장 중 오류가 발생했습니다'); }
+            finally { submitBtn.disabled = false; submitBtn.textContent = '제출'; }
+        }
+        
+        async function approveRequest(id) {
+            const req = paymentRequests.find(r => String(r.id) === String(id));
+            if (!req) return;
+            if (!confirm(`"${req.title}" 지출결의서를 승인하시겠습니까?\n금액: ${formatMoney(req.amount)}${req.receiptUrl ? '\n🧾 영수증 첨부됨' : ''}`)) return;
+            req.status = 'approved';
+            req.approvedBy = currentUser.name;
+            req.approvedAt = new Date().toISOString();
+            req.approvedDate = new Date().toISOString().split('T')[0];
+            const newExpense = { id: Date.now(), date: req.date, category: req.category || '부서활동비', department: req.department, description: req.title + (req.description ? ' - ' + req.description : ''), item: req.title, amount: req.amount, payment: req.payment || '현금', checkNumber: req.checkNumber || '', paidBy: req.requester, receipt: req.receiptUrl ? true : false, receiptUrl: req.receiptUrl || '', createdAt: new Date().toISOString(), createdBy: currentUser.name, fromExpenseRequest: req.id };
+            expenses.push(newExpense);
+            try {
+                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
+                await db.collection('churchExpenses').doc('main').set({ list: expenses });
+                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                localStorage.setItem('churchExpenses', JSON.stringify(expenses));
+                showToast('✅ 승인 완료! 재정관리 지출에 반영되었습니다');
+                renderApprovalList();
+            } catch (error) { console.error('저장 오류:', error); showToast('저장 중 오류가 발생했습니다'); }
+        }
+        
+        async function rejectRequest(id) {
+            const req = paymentRequests.find(r => String(r.id) === String(id));
+            if (!req) return;
+            const reason = prompt('거절 사유를 입력하세요:');
+            if (!reason) return;
+            req.status = 'rejected';
+            req.rejectedBy = currentUser.name;
+            req.rejectReason = reason;
+            req.rejectedAt = new Date().toISOString();
+            try {
+                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
+                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                showToast('거절되었습니다');
+                renderApprovalList();
+            } catch (error) { console.error('저장 오류:', error); showToast('저장 중 오류가 발생했습니다'); }
+        }
+        
+        // 지출결의서 삭제 - 수정됨 (String 비교로 타입 불일치 해결)
+        async function deleteRequest(id) {
+            if (!confirm('이 지출결의서를 삭제하시겠습니까?')) return;
+            paymentRequests = paymentRequests.filter(function(r) { return String(r.id) !== String(id); });
+            try {
+                await db.collection('paymentRequests').doc('main').set({ list: paymentRequests });
+                localStorage.setItem('paymentRequests', JSON.stringify(paymentRequests));
+                showToast('지출결의서가 삭제되었습니다');
+                renderExpenseList();
+            } catch (error) { console.error('삭제 오류:', error); showToast('삭제 중 오류가 발생했습니다'); }
+        }
+        
+        function showTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabDeptList').classList.add('hidden');
+            document.getElementById('tabEvent').classList.add('hidden');
+            document.getElementById('tabExpense').classList.add('hidden');
+            document.getElementById('tabApproval').classList.add('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if (tab === 'deptList') { document.getElementById('tabDeptList').classList.remove('hidden'); document.querySelectorAll('.nav-item')[0].classList.add('active'); renderDeptList(); }
+            else if (tab === 'event') { document.getElementById('tabEvent').classList.remove('hidden'); document.querySelectorAll('.nav-item')[1].classList.add('active'); updateEventDeptFilter(); renderEventList(); }
+            else if (tab === 'expense') { document.getElementById('tabExpense').classList.remove('hidden'); document.querySelectorAll('.nav-item')[2].classList.add('active'); renderExpenseList(); }
+            else if (tab === 'approval') { document.getElementById('tabApproval').classList.remove('hidden'); document.getElementById('navApproval').classList.add('active'); renderApprovalList(); }
+        }
+        
+        function handleFabClick() { if (currentTab === 'event') openEventModal(); else openExpenseModal(); }
+        
+        function updateEventDeptFilter() {
+            const select = document.getElementById('eventDeptFilter');
+            select.innerHTML = '<option value="">전체 부서</option>';
+            departments.forEach(dept => { select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`; });
+            document.getElementById('eventYearDisplay').textContent = selectedEventYear;
+            renderMonthSelector();
+        }
+        
+        function changeEventYear(delta) { selectedEventYear += delta; document.getElementById('eventYearDisplay').textContent = selectedEventYear; renderMonthSelector(); renderEventList(); }
+        function selectMonth(month) { selectedEventMonth = month; renderMonthSelector(); renderEventList(); }
+        
+        function renderMonthSelector() {
+            const container = document.getElementById('monthSelector');
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth() + 1;
+            let html = '';
+            for (let m = 1; m <= 12; m++) {
+                const isSelected = m === selectedEventMonth;
+                const isCurrent = selectedEventYear === currentYear && m === currentMonth;
+                const hasEvents = yearlyEvents.some(evt => { const evtDate = evt.date || evt.startDate || ''; if (!evtDate) return false; return parseInt(evtDate.substring(0, 4)) === selectedEventYear && parseInt(evtDate.substring(5, 7)) === m; });
+                html += `<button onclick="selectMonth(${m})" style="min-width: 50px; padding: 10px 12px; border: ${isCurrent ? '2px solid #059669' : '1px solid #e2e8f0'}; border-radius: 12px; background: ${isSelected ? 'linear-gradient(135deg, #059669, #047857)' : 'white'}; color: ${isSelected ? 'white' : '#333'}; font-weight: ${isSelected || isCurrent ? '700' : '500'}; cursor: pointer; position: relative;">${m}월${hasEvents ? `<span style="position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; background: ${isSelected ? 'white' : '#059669'}; border-radius: 50%;"></span>` : ''}</button>`;
+            }
+            container.innerHTML = html;
+        }
+        
+        function renderEventList() {
+            const container = document.getElementById('eventList');
+            const filterDept = document.getElementById('eventDeptFilter').value;
+            let filteredEvents = yearlyEvents.filter(evt => { const evtDate = evt.date || evt.startDate || ''; if (!evtDate) return false; return parseInt(evtDate.substring(0, 4)) === selectedEventYear && parseInt(evtDate.substring(5, 7)) === selectedEventMonth; });
+            if (filterDept) filteredEvents = filteredEvents.filter(e => e.department === filterDept);
+            filteredEvents.sort((a, b) => (a.date || a.startDate || '').localeCompare(b.date || b.startDate || ''));
+            const today = new Date().toISOString().split('T')[0];
+            if (filteredEvents.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 60px 20px;"><div style="font-size: 4em; margin-bottom: 15px;">📭</div><div style="color: #64748b; font-size: 1.1em;">${selectedEventYear}년 ${selectedEventMonth}월</div><div style="color: #94a3b8; margin-top: 5px;">등록된 행사가 없습니다</div><button onclick="openEventModal()" style="margin-top: 20px; background: linear-gradient(135deg, #059669, #047857); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-weight: 600; cursor: pointer;">+ 행사 등록하기</button></div>`;
+                return;
+            }
+            let html = `<div style="padding: 20px 15px 10px; display: flex; justify-content: space-between; align-items: center;"><div><span style="font-size: 1.8em; font-weight: 700; color: #059669;">${selectedEventMonth}월</span><span style="font-size: 1em; color: #64748b; margin-left: 5px;">${selectedEventYear}</span></div><div style="background: #dcfce7; color: #166534; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.9em;">${filteredEvents.length}개 행사</div></div>`;
+            const colors = ['#059669', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
+            filteredEvents.forEach((evt, idx) => {
+                const evtDate = evt.date || evt.startDate || '';
+                const day = evtDate ? parseInt(evtDate.substring(8, 10)) : '-';
+                const dayOfWeek = evtDate ? ['일', '월', '화', '수', '목', '금', '토'][new Date(evtDate).getDay()] : '';
+                const isPast = evtDate < today;
+                const isToday = evtDate === today;
+                const color = colors[idx % colors.length];
+                html += `<div style="margin: 10px 15px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06); opacity: ${isPast ? '0.6' : '1'}; border-left: 4px solid ${color};"><div style="display: flex;"><div style="min-width: 70px; padding: 15px; background: ${isToday ? 'linear-gradient(135deg, #059669, #047857)' : '#f8fafc'}; display: flex; flex-direction: column; align-items: center; justify-content: center;"><div style="font-size: 1.8em; font-weight: 700; color: ${isToday ? 'white' : '#1e293b'};">${day}</div><div style="font-size: 0.8em; color: ${isToday ? 'rgba(255,255,255,0.9)' : '#64748b'}; font-weight: 500;">${dayOfWeek}요일</div>${isToday ? '<div style="font-size: 0.7em; color: white; background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 10px; margin-top: 5px;">오늘</div>' : ''}</div><div style="flex: 1; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="font-weight: 600; font-size: 1.05em; color: #1e293b;">${evt.name || evt.title || '행사명 없음'}</div>${!isPast && currentUser.role === '관리자' ? `<button onclick="deleteEvent('${evt.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em; padding: 0 5px;">×</button>` : ''}</div><div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.85em; color: #64748b;">${evt.startTime ? `<span>🕐 ${evt.startTime}${evt.endTime ? '~' + evt.endTime : ''}</span>` : ''}${evt.location ? `<span>📍 ${evt.location}</span>` : ''}</div>${evt.department ? `<div style="margin-top: 8px;"><span style="background: ${color}20; color: ${color}; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 500;">🏛️ ${evt.department}</span></div>` : ''}${evt.description ? `<div style="margin-top: 10px; font-size: 0.85em; color: #475569; padding: 10px; background: #f8fafc; border-radius: 8px;">${evt.description}</div>` : ''}</div></div></div>`;
+            });
+            container.innerHTML = html;
+        }
+        
+        function openEventModal() {
+            document.getElementById('eventModal').classList.add('active');
+            document.getElementById('eventName').value = '';
+            document.getElementById('eventDate').value = `${selectedEventYear}-${String(selectedEventMonth).padStart(2, '0')}-01`;
+            document.getElementById('eventStartTime').value = '';
+            document.getElementById('eventEndTime').value = '';
+            document.getElementById('eventLocation').value = '';
+            document.getElementById('eventDesc').value = '';
+            const select = document.getElementById('eventDept');
+            select.innerHTML = '<option value="">-- 부서 선택 (선택사항) --</option>';
+            departments.forEach(dept => { select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`; });
+        }
+        
+        function closeEventModal() { document.getElementById('eventModal').classList.remove('active'); }
+        
+        async function submitEvent() {
+            const dept = document.getElementById('eventDept').value;
+            const name = document.getElementById('eventName').value.trim();
+            const date = document.getElementById('eventDate').value;
+            const startTime = document.getElementById('eventStartTime').value;
+            const endTime = document.getElementById('eventEndTime').value;
+            const location = document.getElementById('eventLocation').value.trim();
+            const description = document.getElementById('eventDesc').value.trim();
+            if (!name || !date) { showToast('행사명과 날짜를 입력해주세요'); return; }
+            const newEvent = { id: Date.now().toString(), name: name, date: date, startDate: date, startTime: startTime, endTime: endTime, location: location, department: dept, description: description, createdBy: currentUser.name, createdAt: new Date().toISOString() };
+            yearlyEvents.push(newEvent);
             try {
                 await db.collection('yearlyEvents').doc('main').set({ list: yearlyEvents });
                 localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
-                
+                selectedEventYear = parseInt(date.substring(0, 4));
+                selectedEventMonth = parseInt(date.substring(5, 7));
+                document.getElementById('eventYearDisplay').textContent = selectedEventYear;
+                renderMonthSelector();
+                closeEventModal();
+                showToast('행사가 등록되었습니다');
+                renderEventList();
+            } catch (error) { console.error('저장 오류:', error); showToast('저장 중 오류가 발생했습니다'); }
+        }
+        
+        async function deleteEvent(id) {
+            if (!confirm('이 행사를 삭제하시겠습니까?')) return;
+            yearlyEvents = yearlyEvents.filter(e => e.id !== id);
+            try {
+                await db.collection('yearlyEvents').doc('main').set({ list: yearlyEvents });
+                localStorage.setItem('yearlyEvents', JSON.stringify(yearlyEvents));
                 showToast('행사가 삭제되었습니다');
                 renderEventList();
-                
-            } catch (error) {
-                console.error('삭제 오류:', error);
-                showToast('삭제 중 오류가 발생했습니다');
-            }
+            } catch (error) { console.error('삭제 오류:', error); showToast('삭제 중 오류가 발생했습니다'); }
         }
         
-        function showToast(msg) {
-            var toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(function() { toast.classList.remove('show'); }, 2500);
-        }
+        function showToast(msg) { const toast = document.getElementById('toast'); toast.textContent = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2500); }
         
-        window.addEventListener('online', function() { document.body.classList.remove('offline'); loadData(); });
-        window.addEventListener('offline', function() { document.body.classList.add('offline'); showToast('오프라인 모드입니다'); });
+        window.addEventListener('online', () => { document.body.classList.remove('offline'); loadData(); });
+        window.addEventListener('offline', () => { document.body.classList.add('offline'); showToast('오프라인 모드입니다'); });
     </script>
 </body>
 </html>
