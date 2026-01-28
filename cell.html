@@ -346,7 +346,7 @@
             const sunday = new Date(today);
             const day = today.getDay();
             if (day !== 0) sunday.setDate(today.getDate() - day);
-            const dateStr = sunday.toISOString().split('T')[0];
+            const dateStr = `${sunday.getFullYear()}-${String(sunday.getMonth()+1).padStart(2,'0')}-${String(sunday.getDate()).padStart(2,'0')}`;
             const sundayDate = document.getElementById('sundayAttendanceDate');
             if (sundayDate) { sundayDate.value = dateStr; localStorage.setItem('cellApp_sundayDate', dateStr); }
             loadSundayAttendance();
@@ -354,7 +354,8 @@
         
         function initDates() {
             const today = new Date();
-            let attDateStr = (selectedCell && cellWorshipDates[selectedCell]) ? cellWorshipDates[selectedCell] : (localStorage.getItem('cellApp_attendanceDate') || today.toISOString().split('T')[0]);
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            let attDateStr = (selectedCell && cellWorshipDates[selectedCell]) ? cellWorshipDates[selectedCell] : (localStorage.getItem('cellApp_attendanceDate') || todayStr);
             const attendanceDate = document.getElementById('attendanceDate');
             const reportDate = document.getElementById('reportDate');
             if (attendanceDate) attendanceDate.value = attDateStr;
@@ -362,7 +363,7 @@
             const savedSundayDate = localStorage.getItem('cellApp_sundayDate');
             let sundayDateStr;
             if (savedSundayDate) { sundayDateStr = savedSundayDate; }
-            else { const sunday = new Date(today); const day = today.getDay(); if (day !== 0) sunday.setDate(today.getDate() - day); sundayDateStr = sunday.toISOString().split('T')[0]; }
+            else { const sunday = new Date(today); const day = today.getDay(); if (day !== 0) sunday.setDate(today.getDate() - day); sundayDateStr = `${sunday.getFullYear()}-${String(sunday.getMonth()+1).padStart(2,'0')}-${String(sunday.getDate()).padStart(2,'0')}`; }
             const sundayDate = document.getElementById('sundayAttendanceDate');
             if (sundayDate) sundayDate.value = sundayDateStr;
             loadSundayAttendance();
@@ -810,7 +811,12 @@
             const diff = day === 0 ? 0 : day;
             const sunday = new Date(today);
             sunday.setDate(today.getDate() - diff);
-            return sunday.toISOString().split('T')[0];
+            
+            // 로컬 시간 기준으로 YYYY-MM-DD 형식 반환
+            const year = sunday.getFullYear();
+            const month = String(sunday.getMonth() + 1).padStart(2, '0');
+            const date = String(sunday.getDate()).padStart(2, '0');
+            return `${year}-${month}-${date}`;
         }
         
         function getLatestCellDate(cellName) {
