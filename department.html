@@ -465,9 +465,16 @@
                 <div class="form-group">
                     <label class="form-label">결제 방법 *</label>
                     <select class="form-select" id="expensePayment" onchange="handlePaymentChange()">
-                        <option value="현금">현금</option>
-                        <option value="Check">Check</option>
-                        <option value="카드">카드</option>
+                        <optgroup label="── 개인 지출 (환급 필요) ──">
+                            <option value="개인현금">개인현금</option>
+                            <option value="개인카드">개인카드</option>
+                        </optgroup>
+                        <optgroup label="── 교회 지출 ──">
+                            <option value="현금">교회현금</option>
+                            <option value="Check">Check</option>
+                            <option value="교회카드">교회카드</option>
+                            <option value="계좌이체">계좌이체</option>
+                        </optgroup>
                     </select>
                     <input type="text" class="form-input" id="expenseCheckNumber" placeholder="Check # 입력" style="display: none; margin-top: 10px;">
                 </div>
@@ -828,7 +835,7 @@
                 const statusClass = req.status === 'approved' ? 'status-approved' : req.status === 'rejected' ? 'status-rejected' : 'status-pending';
                 const itemClass = req.status === 'pending' ? 'pending' : req.status === 'rejected' ? 'rejected' : '';
                 const statusText = req.status === 'approved' ? '승인' : req.status === 'rejected' ? '거절' : '대기중';
-                const canDelete = req.status === 'pending';
+                const canDelete = req.status === 'pending' || req.status === 'rejected';
                 html += `<div class="expense-item ${itemClass}"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div class="expense-title">${req.title}</div><div style="display: flex; gap: 5px; align-items: center;">${req.receiptUrl ? `<button onclick="viewReceipt('${req.receiptUrl}')" style="background: #dcfce7; border: none; color: #16a34a; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8em; font-weight: 500;">🧾 영수증</button>` : ''}${canDelete ? `<button onclick="deleteRequest('${req.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2em; padding: 0 5px;">×</button>` : ''}</div></div><div class="expense-info">${req.department} · ${req.category || '기타'} · ${req.payment || '현금'}${req.checkNumber ? ' #' + req.checkNumber : ''}</div><div class="expense-info">${req.date}</div><div class="expense-amount">${formatMoney(req.amount)}</div><span class="expense-status ${statusClass}">${statusText}</span>${req.status === 'rejected' && req.rejectReason ? `<div style="font-size: 0.8em; color: #dc2626; margin-top: 5px;">거절 사유: ${req.rejectReason}</div>` : ''}</div>`;
             });
             container.innerHTML = html;
@@ -853,7 +860,7 @@
             document.getElementById('expenseTitle').value = '';
             document.getElementById('expenseCategory').value = '물품구입';
             document.getElementById('expenseAmount').value = '';
-            document.getElementById('expensePayment').value = '현금';
+            document.getElementById('expensePayment').value = '개인현금';
             document.getElementById('expenseCheckNumber').value = '';
             document.getElementById('expenseCheckNumber').style.display = 'none';
             document.getElementById('expenseDesc').value = '';
