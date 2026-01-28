@@ -1420,13 +1420,7 @@
             const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
             let filtered = [...members];
             
-            if (searchTerm) {
-                filtered = filtered.filter(m => 
-                    (m.nameKr || '').toLowerCase().includes(searchTerm) ||
-                    (m.nameEn || '').toLowerCase().includes(searchTerm)
-                );
-            }
-            
+            // 필터 먼저 적용
             if (currentMemberFilter === 'absent') {
                 filtered = getLongAbsentees();
             } else if (currentMemberFilter === 'new') {
@@ -1434,6 +1428,14 @@
                 threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
                 filtered = filtered.filter(m => m.regDate && new Date(m.regDate) >= threeMonthsAgo);
                 filtered.sort((a, b) => new Date(b.regDate) - new Date(a.regDate));
+            }
+            
+            // 검색어 적용
+            if (searchTerm) {
+                filtered = filtered.filter(m => 
+                    (m.nameKr || '').toLowerCase().includes(searchTerm) ||
+                    (m.nameEn || '').toLowerCase().includes(searchTerm)
+                );
             }
             
             document.getElementById('memberList').innerHTML = filtered.length > 0 ?
