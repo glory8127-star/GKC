@@ -61,8 +61,9 @@
         .report-submitted { background: #dcfce7; color: #16a34a; }
         .report-pending { background: #fef3c7; color: #d97706; }
         .report-view-btn { background: #4f46e5; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
-        .date-selector { display: flex; align-items: center; gap: 8px; padding: 12px 15px; background: #f8fafc; border-radius: 12px; margin: 15px; flex-wrap: wrap; }
-        .date-input { flex: 1; min-width: 120px; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9em; }
+        .date-selector { display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: #f8fafc; border-radius: 12px; margin: 15px; }
+        .date-input { width: 140px; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95em; }
+        .date-label { font-size: 0.85em; white-space: nowrap; min-width: 70px; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
@@ -124,9 +125,9 @@
             
             <div id="tabSunday">
                 <div class="date-selector">
-                    <span style="font-size: 0.85em; white-space: nowrap;">📅 주일예배 날짜</span>
+                    <span class="date-label">📅 주일예배</span>
                     <input type="date" class="date-input" id="sundayAttendanceDate" onchange="onSundayDateChange()">
-                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.8em; white-space: nowrap;">이번주일</button>
+                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 10px 14px; font-size: 0.85em; white-space: nowrap;">이번주일</button>
                 </div>
                 <div class="card">
                     <div class="card-title"><span>✝️</span><span id="sundayAttendanceTitle">주일예배 출석</span></div>
@@ -142,9 +143,9 @@
             
             <div id="tabAttendance" class="hidden">
                 <div class="date-selector">
-                    <span style="font-size: 0.85em; white-space: nowrap;">📅 구역예배<br>날짜</span>
+                    <span class="date-label">📅 구역예배</span>
                     <input type="date" class="date-input" id="attendanceDate" onchange="onAttendanceDateChange()">
-                    <button class="btn btn-primary" onclick="setToday()" style="width: auto; padding: 8px 12px; font-size: 0.8em;">오늘</button>
+                    <button class="btn btn-primary" onclick="setToday()" style="width: auto; padding: 10px 14px; font-size: 0.85em;">오늘</button>
                 </div>
                 <div class="card">
                     <div class="card-title"><span>⛪</span><span id="attendanceTitle">구역예배 출석</span></div>
