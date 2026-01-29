@@ -1504,18 +1504,12 @@
                 }
                 const total = allMembers.length;
                 
-                // 주일예배 출석: cellSundayAttendance + mainAttendance 합산
+                // 주일예배 출석: mainAttendance (웹사이트 출석관리)에서만 확인
                 const sundayKey = `${cell.name}_${lastSunday}`;
-                const cellSundayAtt = cellSundayAttendance[sundayKey] || [];
                 const mainAtt = mainAttendance[lastSunday] || [];
-                // 구역 교인 중 mainAttendance에 있는 사람도 출석으로 처리
-                const sundayAttSet = new Set([...cellSundayAtt]);
-                allMembers.forEach(name => {
-                    if (mainAtt.includes(name)) sundayAttSet.add(name);
-                });
-                const sundayAtt = [...sundayAttSet];
+                const sundayAtt = allMembers.filter(name => mainAtt.includes(name));
                 const sundayRate = total > 0 ? Math.round((sundayAtt.length / total) * 100) : 0;
-                const sundayAbsent = allMembers.filter(name => !sundayAtt.includes(name));
+                const sundayAbsent = allMembers.filter(name => !mainAtt.includes(name));
                 
                 const cellDate = cellWorshipDates[cell.name] || lastSunday;
                 const cellKey = `${cell.name}_${cellDate}`;
