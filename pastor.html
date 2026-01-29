@@ -1933,7 +1933,12 @@
             var consecutiveAbsent = 0;
             for (var i = 0; i < sundays.length; i++) {
                 var sundayDate = sundays[i];
-                var attendees = mainAttendance[sundayDate] || [];
+                var attendees = mainAttendance[sundayDate];
+                
+                // 해당 주일에 출석 데이터가 없으면 건너뛰기 (데이터 미입력)
+                if (!attendees || attendees.length === 0) {
+                    continue;
+                }
                 
                 if (attendees.includes(memberName)) {
                     break; // 출석한 주가 나오면 중단
