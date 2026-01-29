@@ -494,6 +494,9 @@
             if (selectedCell && cellWorshipDates[selectedCell]) {
                 const dateInput = document.getElementById('attendanceDate');
                 if (dateInput) dateInput.value = cellWorshipDates[selectedCell];
+                // 보고서 날짜도 구역예배 날짜로 자동 설정
+                const reportDateInput = document.getElementById('reportDate');
+                if (reportDateInput) reportDateInput.value = cellWorshipDates[selectedCell];
             }
             updateCurrentCellDisplay();
             loadAttendance();
@@ -923,7 +926,14 @@
             document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
             if (tab === 'overview') loadOverview();
             else if (tab === 'history') loadHistory();
-            else if (tab === 'report') { updateCurrentCellDisplay(); setTimeout(() => refreshReportAttendance(), 100); }
+            else if (tab === 'report') { 
+                updateCurrentCellDisplay(); 
+                // 보고서 날짜를 구역예배 날짜로 자동 설정
+                if (selectedCell && cellWorshipDates[selectedCell]) {
+                    document.getElementById('reportDate').value = cellWorshipDates[selectedCell];
+                }
+                setTimeout(() => refreshReportAttendance(), 100); 
+            }
             else if (tab === 'sunday' && selectedCell) loadSundayAttendance();
         }
         
