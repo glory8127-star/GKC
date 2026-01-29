@@ -15082,6 +15082,10 @@
                 
                 const isCurrentlyPresent = inMain || inCellSunday;
                 
+                // 교인의 구역 찾기
+                const member = members.find(m => m.nameKr === memberName);
+                const memberCell = member?.cell?.replace('구역', '') || null;
+                
                 if (isCurrentlyPresent) {
                     // 출석 해제 - 둘 다에서 제거
                     const mainIdx = mainAtt[dateStr].indexOf(memberName);
@@ -15095,7 +15099,16 @@
                 } else {
                     // 출석 체크 - mainAttendance에 추가
                     mainAtt[dateStr].push(memberName);
-                    console.log(`[출석표] ${memberName} 출석 체크 - 날짜: ${dateStr}`);
+                    
+                    // 구역이 있으면 cellSundayAttendance에도 추가
+                    if (memberCell) {
+                        const newCellKey = memberCell + '_' + dateStr;
+                        if (!cellSundayAtt[newCellKey]) cellSundayAtt[newCellKey] = [];
+                        if (!cellSundayAtt[newCellKey].includes(memberName)) {
+                            cellSundayAtt[newCellKey].push(memberName);
+                        }
+                    }
+                    console.log(`[출석표] ${memberName} 출석 체크 - 날짜: ${dateStr}, 구역: ${memberCell || '미배정'}`);
                 }
                 
                 // localStorage 저장
