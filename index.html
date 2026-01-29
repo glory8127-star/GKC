@@ -15054,34 +15054,64 @@
         }
         
         // 출석표에서 직접 출석 체크 토글
-        function toggleMainAttendance(memberName, dateStr) {
-            // 최신 데이터 로드
-            let mainAtt = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
-            
-            if (!mainAtt[dateStr]) {
-                mainAtt[dateStr] = [];
+        async function toggleMainAttendance(memberName, dateStr) {
+            // Firebase에서 최신 데이터 로드
+            try {
+                const mainAttDoc = await db.collection('mainAttendance').doc('main').get();
+                let mainAtt = mainAttDoc.exists ? mainAttDoc.data().data : {};
+                
+                const cellSundayDoc = await db.collection('cellSundayAttendance').doc('main').get();
+                let cellSundayAtt = cellSundayDoc.exists ? cellSundayDoc.data().data : {};
+                
+                if (!mainAtt[dateStr]) {
+                    mainAtt[dateStr] = [];
+                }
+                
+                // 현재 출석 상태 확인 (mainAttendance 또는 cellSundayAttendance에 있는지)
+                const inMain = mainAtt[dateStr].includes(memberName);
+                let inCellSunday = false;
+                let cellKey = null;
+                
+                // cellSundayAttendance에서 찾기
+                Object.keys(cellSundayAtt).forEach(key => {
+                    if (key.endsWith('_' + dateStr) && cellSundayAtt[key]?.includes(memberName)) {
+                        inCellSunday = true;
+                        cellKey = key;
+                    }
+                });
+                
+                const isCurrentlyPresent = inMain || inCellSunday;
+                
+                if (isCurrentlyPresent) {
+                    // 출석 해제 - 둘 다에서 제거
+                    const mainIdx = mainAtt[dateStr].indexOf(memberName);
+                    if (mainIdx >= 0) mainAtt[dateStr].splice(mainIdx, 1);
+                    
+                    if (cellKey && cellSundayAtt[cellKey]) {
+                        const cellIdx = cellSundayAtt[cellKey].indexOf(memberName);
+                        if (cellIdx >= 0) cellSundayAtt[cellKey].splice(cellIdx, 1);
+                    }
+                    console.log(`[출석표] ${memberName} 출석 해제 - 날짜: ${dateStr}`);
+                } else {
+                    // 출석 체크 - mainAttendance에 추가
+                    mainAtt[dateStr].push(memberName);
+                    console.log(`[출석표] ${memberName} 출석 체크 - 날짜: ${dateStr}`);
+                }
+                
+                // localStorage 저장
+                localStorage.setItem('mainAttendance', JSON.stringify(mainAtt));
+                mainAttendance = mainAtt;
+                
+                // Firebase 저장
+                await db.collection('mainAttendance').doc('main').set({ data: mainAtt });
+                await db.collection('cellSundayAttendance').doc('main').set({ data: cellSundayAtt });
+                console.log('mainAttendance 저장 완료');
+                
+                // 출석표 새로고침
+                loadYearlyAttendanceSheet();
+            } catch (error) {
+                console.error('출석 토글 오류:', error);
             }
-            
-            const idx = mainAtt[dateStr].indexOf(memberName);
-            if (idx >= 0) {
-                // 이미 출석 체크됨 - 해제
-                mainAtt[dateStr].splice(idx, 1);
-                console.log(`[출석표] ${memberName} 출석 해제 - 날짜: ${dateStr}`);
-            } else {
-                // 출석 체크
-                mainAtt[dateStr].push(memberName);
-                console.log(`[출석표] ${memberName} 출석 체크 - 날짜: ${dateStr}`);
-            }
-            
-            // 저장
-            localStorage.setItem('mainAttendance', JSON.stringify(mainAtt));
-            mainAttendance = mainAtt;
-            
-            // Firebase 동기화
-            saveMainAttendanceToFirebase();
-            
-            // 출석표 새로고침
-            loadYearlyAttendanceSheet();
         }
         
         // 연간 출석표 로드
