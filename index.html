@@ -15218,7 +15218,7 @@
             
             // 테이블 생성
             let html = `
-                <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
+                <table id="attendanceTable" style="width: 100%; border-collapse: collapse; font-size: 9px;">
                     <thead>
                         <tr style="background: #38a169;">
                             <th rowspan="2" style="padding: 3px 1px; color: white; border: 1px solid #2d8a5e; width: 20px; position: sticky; left: 0; background: #38a169; z-index: 2; font-size: 8px;">No</th>
@@ -15324,7 +15324,7 @@
                                 ${isPresent ? '✓' : isPast ? '✗' : ''}
                             </td>`;
                         } else {
-                            html += `<td style="padding: 1px; border: 1px solid #e2e8f0; text-align: center; cursor: pointer; background: ${isPresent ? '#dcfce7' : isPast ? '#fee2e2' : '#fff'}; font-size: 8px;"
+                            html += `<td data-attendance="true" style="padding: 1px; border: 1px solid #e2e8f0; text-align: center; cursor: pointer; background: ${isPresent ? '#dcfce7' : isPast ? '#fee2e2' : '#fff'}; font-size: 8px;"
                                 onclick="toggleMainAttendance('${member.nameKr}', '${dateStr}')" 
                                 title="${dateStr}">
                                 ${isPresent ? '✓' : isPast ? '✗' : ''}
