@@ -1126,7 +1126,7 @@
             // 주일예배 출석 (mainAttendance 사용)
             var sundayAttendees = mainAttendance[lastSunday] || [];
             var sundayAttendance = sundayAttendees.length;
-            console.log('주일출석 계산:', lastSunday, '- mainAttendance:', mainAtt.length, '+ cellSundayAttendance 합산 → 총:', sundayAttendance, '명');
+            console.log('주일출석 계산:', lastSunday, '- mainAttendance:', sundayAttendees.length, '명');
             
             var threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -1555,12 +1555,18 @@
                 }
                 const total = allMembers.length;
                 
-                // 주일예배 출석: mainAttendance (웹사이트 출석관리)에서만 확인
+                // 주일예배 출석: mainAttendance + cellSundayAttendance 합산
                 const sundayKey = `${cell.name}_${lastSunday}`;
                 const mainAtt = mainAttendance[lastSunday] || [];
-                const sundayAtt = allMembers.filter(name => mainAtt.includes(name));
+                const cellSundayAtt = cellSundayAttendance[sundayKey] || [];
+                // 합산 (중복 제거)
+                const combinedSundayAtt = [...mainAtt];
+                cellSundayAtt.forEach(name => {
+                    if (!combinedSundayAtt.includes(name)) combinedSundayAtt.push(name);
+                });
+                const sundayAtt = allMembers.filter(name => combinedSundayAtt.includes(name));
                 const sundayRate = total > 0 ? Math.round((sundayAtt.length / total) * 100) : 0;
-                const sundayAbsent = allMembers.filter(name => !mainAtt.includes(name));
+                const sundayAbsent = allMembers.filter(name => !combinedSundayAtt.includes(name));
                 
                 const cellDate = cellWorshipDates[cell.name] || lastSunday;
                 const cellKey = `${cell.name}_${cellDate}`;
@@ -1969,18 +1975,37 @@
                 d.setDate(d.getDate() - 7);
             }
             
-            // 연속 결석 주 계산 (mainAttendance 사용)
+            // 연속 결석 주 계산 (mainAttendance + cellSundayAttendance 사용)
             var consecutiveAbsent = 0;
             for (var i = 0; i < sundays.length; i++) {
                 var sundayDate = sundays[i];
-                var attendees = mainAttendance[sundayDate];
+                
+                // mainAttendance에서 출석자
+                var mainAttendees = mainAttendance[sundayDate] || [];
+                
+                // cellSundayAttendance에서 해당 날짜 출석자 합산
+                var cellAttendees = [];
+                Object.keys(cellSundayAttendance).forEach(function(key) {
+                    if (key.endsWith('_' + sundayDate)) {
+                        var arr = cellSundayAttendance[key] || [];
+                        arr.forEach(function(name) {
+                            if (!cellAttendees.includes(name)) cellAttendees.push(name);
+                        });
+                    }
+                });
+                
+                // 합산된 출석자
+                var allAttendees = [...mainAttendees];
+                cellAttendees.forEach(function(name) {
+                    if (!allAttendees.includes(name)) allAttendees.push(name);
+                });
                 
                 // 해당 주일에 출석 데이터가 없으면 건너뛰기 (데이터 미입력)
-                if (!attendees || attendees.length === 0) {
+                if (allAttendees.length === 0) {
                     continue;
                 }
                 
-                if (attendees.includes(memberName)) {
+                if (allAttendees.includes(memberName)) {
                     break; // 출석한 주가 나오면 중단
                 } else {
                     consecutiveAbsent++;
