@@ -534,7 +534,27 @@
             const presentList = Object.keys(attendanceData).filter(n => attendanceData[n]);
             cellAttendance[key] = presentList;
             localStorage.setItem('cellAttendance', JSON.stringify(cellAttendance));
-            try { await db.collection('cellAttendance').doc('main').set({ data: cellAttendance }); } catch (error) { console.error(error); }
+            
+            // mainAttendance에도 저장 (웹사이트 출석관리와 동기화)
+            var mainAtt = JSON.parse(localStorage.getItem('mainAttendance') || '{}');
+            if (!mainAtt[dateStr]) mainAtt[dateStr] = [];
+            
+            if (checked) {
+                // 출석 체크 - 추가
+                if (!mainAtt[dateStr].includes(name)) {
+                    mainAtt[dateStr].push(name);
+                }
+            } else {
+                // 출석 해제 - 제거
+                var idx = mainAtt[dateStr].indexOf(name);
+                if (idx >= 0) mainAtt[dateStr].splice(idx, 1);
+            }
+            localStorage.setItem('mainAttendance', JSON.stringify(mainAtt));
+            
+            try { 
+                await db.collection('cellAttendance').doc('main').set({ data: cellAttendance }); 
+                await db.collection('mainAttendance').doc('main').set({ data: mainAtt });
+            } catch (error) { console.error(error); }
             loadAttendance();
         }
         
