@@ -158,23 +158,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 8px 12px;
-            color: #94a3b8;
+            justify-content: center;
+            padding: 12px 16px;
+            color: #64748b;
             text-decoration: none;
-            font-size: 0.7em;
+            font-size: 0.85em;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s;
             border: none;
             background: none;
+            border-radius: 8px;
         }
         
         .nav-item.active {
-            color: #1e3a5f;
+            color: #ffffff;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
         }
         
-        .nav-item .nav-icon {
-            font-size: 1.6em;
-            margin-bottom: 4px;
+        .nav-item:not(.active):hover {
+            color: #1e3a5f;
+            background: #f1f5f9;
         }
         
         /* 탭 컨텐츠 */
@@ -612,7 +616,7 @@
     <!-- 로그인 화면 -->
     <div id="loginScreen" class="login-container">
         <div class="login-box">
-            <div class="login-logo">⛪</div>
+            <div class="login-logo" style="font-size: 2em; font-weight: bold; color: #1e3a5f;">GKC</div>
             <div class="login-title">GKC 목회자</div>
             <div class="form-group">
                 <label class="form-label">아이디</label>
@@ -632,7 +636,7 @@
         <header class="app-header">
             <div class="header-top">
                 <div>
-                    <div class="header-title">⛪ GKC 목회자</div>
+                    <div class="header-title">GKC 목회자</div>
                     <div class="header-user" id="headerUserName">목사님</div>
                 </div>
                 <button class="logout-btn" onclick="logout()">로그아웃</button>
@@ -647,21 +651,21 @@
             </div>
             
             <div class="card alert-card" id="alertCard" style="display: none;">
-                <div class="card-title">⚠️ 확인 필요</div>
+                <div class="card-title">확인 필요</div>
                 <div id="alertList">
                     <!-- 동적 생성 -->
                 </div>
             </div>
             
             <div class="card">
-                <div class="card-title">📅 오늘 심방 일정</div>
+                <div class="card-title">오늘 심방 일정</div>
                 <div id="todayVisits">
                     <!-- 동적 생성 -->
                 </div>
             </div>
             
             <div class="card">
-                <div class="card-title">🙏 긴급 기도요청</div>
+                <div class="card-title">긴급 기도요청</div>
                 <div id="urgentPrayers">
                     <!-- 동적 생성 -->
                 </div>
@@ -685,9 +689,10 @@
         <div id="tabPrayer" class="tab-content">
             <div class="filter-tabs">
                 <button class="filter-tab active" onclick="filterPrayers('all')">전체</button>
-                <button class="filter-tab" onclick="filterPrayers('urgent')">🔴 긴급</button>
-                <button class="filter-tab" onclick="filterPrayers('member')">🙏 성도</button>
-                <button class="filter-tab" onclick="filterPrayers('answered')">✅ 응답</button>
+                <button class="filter-tab" onclick="filterPrayers('urgent')">긴급</button>
+                <button class="filter-tab" onclick="filterPrayers('normal')">일반</button>
+                <button class="filter-tab" onclick="filterPrayers('member')">성도</button>
+                <button class="filter-tab" onclick="filterPrayers('answered')">응답</button>
             </div>
             
             <div id="prayerList">
@@ -698,13 +703,12 @@
         <!-- 교인 현황 -->
         <div id="tabMember" class="tab-content">
             <div class="search-box">
-                <span class="search-icon">🔍</span>
                 <input type="text" class="search-input" id="memberSearch" placeholder="교인 검색..." oninput="searchMembers()">
             </div>
             
             <div class="filter-tabs">
-                <button class="filter-tab active" onclick="filterMembers('absent')">⚠️ 장기결석</button>
-                <button class="filter-tab" onclick="filterMembers('new')">🆕 새신자</button>
+                <button class="filter-tab active" onclick="filterMembers('absent')">장기결석</button>
+                <button class="filter-tab" onclick="filterMembers('new')">새신자</button>
                 <button class="filter-tab" onclick="filterMembers('all')">전체</button>
             </div>
             
@@ -715,13 +719,13 @@
         
         <!-- 구역/부서 현황 -->
         <div id="tabStatus" class="tab-content">
-            <div class="card-title" style="margin-bottom: 12px;">⛪ 구역별 출석 현황</div>
+            <div class="card-title" style="margin-bottom: 12px;">구역별 출석 현황</div>
             <div id="cellStatusList">
                 <!-- 동적 생성 -->
             </div>
             
             <div class="card" style="margin-top: 20px;">
-                <div class="card-title">🏢 부서 현황</div>
+                <div class="card-title">부서 현황</div>
                 <div id="deptStatusList">
                     <!-- 동적 생성 -->
                 </div>
@@ -731,23 +735,18 @@
         <!-- 하단 네비게이션 -->
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="showTab('Home')">
-                <span class="nav-icon">🏠</span>
                 <span>홈</span>
             </button>
             <button class="nav-item" onclick="showTab('Visit')">
-                <span class="nav-icon">🚗</span>
                 <span>심방</span>
             </button>
             <button class="nav-item" onclick="showTab('Prayer')">
-                <span class="nav-icon">🙏</span>
                 <span>기도</span>
             </button>
             <button class="nav-item" onclick="showTab('Member')">
-                <span class="nav-icon">👥</span>
                 <span>교인</span>
             </button>
             <button class="nav-item" onclick="showTab('Status')">
-                <span class="nav-icon">📊</span>
                 <span>현황</span>
             </button>
         </nav>
@@ -760,7 +759,7 @@
     <div id="visitModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="visitModalTitle">🏠 심방 일정 추가</h3>
+                <h3 class="modal-title" id="visitModalTitle">심방 일정 추가</h3>
                 <button class="modal-close" onclick="closeModal('visitModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -807,7 +806,7 @@
     <div id="prayerModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="prayerModalTitle">🙏 기도제목 추가</h3>
+                <h3 class="modal-title" id="prayerModalTitle">기도제목 추가</h3>
                 <button class="modal-close" onclick="closeModal('prayerModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -831,7 +830,7 @@
                         <label class="form-label">긴급도</label>
                         <select class="form-input" id="prayerUrgency">
                             <option value="normal">일반</option>
-                            <option value="urgent">🔴 긴급</option>
+                            <option value="urgent">긴급</option>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary">저장</button>
@@ -844,7 +843,7 @@
     <div id="visitCompleteModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">✅ 심방 완료</h3>
+                <h3 class="modal-title">심방 완료</h3>
                 <button class="modal-close" onclick="closeModal('visitCompleteModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -1374,13 +1373,16 @@
             
             if (currentPrayerFilter === 'urgent') {
                 filtered = filtered.filter(p => p.urgency === 'urgent' && !p.answered);
+            } else if (currentPrayerFilter === 'normal') {
+                filtered = filtered.filter(p => p.urgency !== 'urgent' && !p.answered);
             } else if (currentPrayerFilter === 'member') {
                 // 성도 기도제목 탭으로 이동
-                showTab('MemberPrayer');
+                loadMemberPrayersInTab();
                 return;
             } else if (currentPrayerFilter === 'answered') {
                 filtered = filtered.filter(p => p.answered);
             } else {
+                // 전체: 응답되지 않은 모든 기도제목
                 filtered = filtered.filter(p => !p.answered);
             }
             
@@ -1393,16 +1395,25 @@
             document.getElementById('prayerList').innerHTML = filtered.length > 0 ?
                 filtered.map((p, idx) => {
                     const originalIdx = prayerRequests.indexOf(p);
+                    const isUrgent = p.urgency === 'urgent';
+                    const cardStyle = isUrgent 
+                        ? 'background: #fef2f2; border-left: 4px solid #dc2626;' 
+                        : 'background: #fefce8; border-left: 4px solid #eab308;';
+                    const labelStyle = isUrgent
+                        ? 'background: #dc2626; color: white;'
+                        : 'background: #eab308; color: white;';
+                    const labelText = isUrgent ? '긴급' : '일반';
                     
                     return `
-                        <div class="list-item" style="${p.answered ? 'opacity: 0.7; background: #f0fdf4;' : ''}">
+                        <div class="list-item" style="${p.answered ? 'opacity: 0.7; background: #f0fdf4;' : cardStyle}">
                             <div class="list-item-content">
                                 <div class="list-item-title">
-                                    ${p.urgency === 'urgent' ? '🔴 ' : ''}${p.name}
+                                    <span class="badge" style="${labelStyle}; margin-right: 8px; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">${labelText}</span>
+                                    ${p.name}
                                     ${p.cell ? `<span class="badge badge-blue" style="margin-left: 8px;">${p.cell}구역</span>` : ''}
                                 </div>
                                 <div class="list-item-sub" style="margin-top: 8px; white-space: pre-wrap;">${p.content}</div>
-                                ${p.answered ? `<div class="list-item-sub" style="margin-top: 5px; color: #16a34a;">✅ 응답됨</div>` : ''}
+                                ${p.answered ? `<div class="list-item-sub" style="margin-top: 5px; color: #16a34a;">응답됨</div>` : ''}
                             </div>
                             <div class="btn-group" style="flex-direction: column; gap: 4px;">
                                 ${!p.answered ? `
@@ -1707,7 +1718,7 @@
         function showAddVisitModal() {
             document.getElementById('visitForm').reset();
             document.getElementById('visitEditId').value = '';
-            document.getElementById('visitModalTitle').textContent = '🏠 심방 일정 추가';
+            document.getElementById('visitModalTitle').textContent = '심방 일정 추가';
             document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('visitModal').classList.add('active');
         }
@@ -1715,7 +1726,7 @@
         function editVisit(idx) {
             const visit = pastorVisits[idx];
             document.getElementById('visitEditId').value = idx;
-            document.getElementById('visitModalTitle').textContent = '🏠 심방 일정 수정';
+            document.getElementById('visitModalTitle').textContent = '심방 일정 수정';
             document.getElementById('visitDate').value = visit.date || '';
             document.getElementById('visitTime').value = visit.time || '';
             document.getElementById('visitTarget').value = visit.target || '';
@@ -1798,14 +1809,14 @@
         function showAddPrayerModal() {
             document.getElementById('prayerForm').reset();
             document.getElementById('prayerEditId').value = '';
-            document.getElementById('prayerModalTitle').textContent = '🙏 기도제목 추가';
+            document.getElementById('prayerModalTitle').textContent = '기도제목 추가';
             document.getElementById('prayerModal').classList.add('active');
         }
         
         function editPrayer(idx) {
             const prayer = prayerRequests[idx];
             document.getElementById('prayerEditId').value = idx;
-            document.getElementById('prayerModalTitle').textContent = '🙏 기도제목 수정';
+            document.getElementById('prayerModalTitle').textContent = '기도제목 수정';
             document.getElementById('prayerName').value = prayer.name || '';
             document.getElementById('prayerCell').value = prayer.cell || '';
             document.getElementById('prayerContent').value = prayer.content || '';
@@ -1844,7 +1855,7 @@
                 prayerRequests[idx].answered = true;
                 prayerRequests[idx].answeredAt = new Date().toISOString();
                 await savePrayers();
-                showToast('기도가 응답되었습니다! 🙏');
+                showToast('기도가 응답되었습니다');
                 loadPrayerList();
             }
         }
