@@ -768,7 +768,9 @@
                 const report = cellReports[cellKey];
                 
                 const cellMembers = members.filter(m => { const mc = (m.cell || '').replace('구역', ''); return mc === cell.name || m.cell === cell.name + '구역'; });
-                const cellTotal = cellMembers.length + (cell.leaderName ? 1 : 0);
+                // 구역장이 교인 목록에 없으면 +1
+                const leaderInMembers = cell.leaderName && cellMembers.some(m => m.nameKr === cell.leaderName);
+                const cellTotal = cellMembers.length + (cell.leaderName && !leaderInMembers ? 1 : 0);
                 totalMembers += cellTotal;
                 
                 const sundayRate = cellTotal > 0 ? Math.round((sundayAtt.length / cellTotal) * 100) : 0;
