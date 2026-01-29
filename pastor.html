@@ -691,7 +691,6 @@
                 <button class="filter-tab active" onclick="filterPrayers('all')">전체</button>
                 <button class="filter-tab" onclick="filterPrayers('urgent')">긴급</button>
                 <button class="filter-tab" onclick="filterPrayers('normal')">일반</button>
-                <button class="filter-tab" onclick="filterPrayers('member')">성도</button>
                 <button class="filter-tab" onclick="filterPrayers('answered')">응답</button>
             </div>
             
@@ -1369,16 +1368,54 @@
         
         // 기도제목 목록 (기도 탭)
         function loadPrayerList() {
-            let filtered = [...prayerRequests];
+            // prayerRequests (직접 입력) + 구역 보고서 기도제목 통합
+            let allPrayers = [...prayerRequests];
+            
+            // 구역 보고서에서 기도제목 추출하여 일반 기도제목으로 추가
+            Object.keys(cellReports).forEach(key => {
+                const report = cellReports[key];
+                if (!report || !report.prayer || !report.prayer.trim()) return;
+                
+                const cellName = report.cell || report.cellName || key.split('_')[0];
+                const reportDate = report.date || key.split('_')[1];
+                
+                // 기도제목 파싱 (이름: 내용 형식)
+                const lines = report.prayer.split('\n');
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (!line) return;
+                    
+                    const match = line.match(/^([^:;,]+)[:;,](.+)$/);
+                    if (match) {
+                        allPrayers.push({
+                            name: match[1].trim(),
+                            content: match[2].trim(),
+                            cell: cellName,
+                            date: reportDate,
+                            urgency: 'normal',
+                            answered: false,
+                            fromReport: true
+                        });
+                    } else {
+                        allPrayers.push({
+                            name: cellName + '구역',
+                            content: line,
+                            cell: cellName,
+                            date: reportDate,
+                            urgency: 'normal',
+                            answered: false,
+                            fromReport: true
+                        });
+                    }
+                });
+            });
+            
+            let filtered = [...allPrayers];
             
             if (currentPrayerFilter === 'urgent') {
                 filtered = filtered.filter(p => p.urgency === 'urgent' && !p.answered);
             } else if (currentPrayerFilter === 'normal') {
                 filtered = filtered.filter(p => p.urgency !== 'urgent' && !p.answered);
-            } else if (currentPrayerFilter === 'member') {
-                // 성도 기도제목 탭으로 이동
-                loadMemberPrayersInTab();
-                return;
             } else if (currentPrayerFilter === 'answered') {
                 filtered = filtered.filter(p => p.answered);
             } else {
@@ -1396,6 +1433,7 @@
                 filtered.map((p, idx) => {
                     const originalIdx = prayerRequests.indexOf(p);
                     const isUrgent = p.urgency === 'urgent';
+                    const isFromReport = p.fromReport;
                     const cardStyle = isUrgent 
                         ? 'background: #fef2f2; border-left: 4px solid #dc2626;' 
                         : 'background: #fefce8; border-left: 4px solid #eab308;';
@@ -1415,6 +1453,7 @@
                                 <div class="list-item-sub" style="margin-top: 8px; white-space: pre-wrap;">${p.content}</div>
                                 ${p.answered ? `<div class="list-item-sub" style="margin-top: 5px; color: #16a34a;">응답됨</div>` : ''}
                             </div>
+                            ${!isFromReport ? `
                             <div class="btn-group" style="flex-direction: column; gap: 4px;">
                                 ${!p.answered ? `
                                     <button class="btn btn-sm btn-success" onclick="markPrayerAnswered(${originalIdx})">응답</button>
@@ -1422,6 +1461,7 @@
                                 ` : ''}
                                 <button class="btn btn-sm btn-danger" onclick="deletePrayer(${originalIdx})">삭제</button>
                             </div>
+                            ` : ''}
                         </div>
                     `;
                 }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 40px;">기도제목이 없습니다</p>';
