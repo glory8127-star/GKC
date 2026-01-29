@@ -30,7 +30,7 @@
         .btn-secondary { background: #f1f5f9; color: #475569; }
         .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .tab-nav { display: flex; background: white; padding: 8px; gap: 6px; position: fixed; bottom: 0; left: 0; right: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
-        .tab-btn { flex: 1; padding: 8px 4px; border: none; background: #f1f5f9; border-radius: 10px; font-size: 0.7em; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #64748b; transition: all 0.3s; min-width: 0; }
+        .tab-btn { flex: 1; padding: 10px 4px; border: none; background: #f1f5f9; border-radius: 10px; font-size: 0.75em; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #64748b; transition: all 0.3s; min-width: 0; overflow: hidden; }
         .tab-btn.active { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; }
         .tab-icon { font-size: 1.2em; }
         .card { background: white; border-radius: 16px; padding: 15px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
@@ -124,9 +124,9 @@
             
             <div id="tabSunday">
                 <div class="date-selector">
-                    <span style="font-size: 0.85em; white-space: nowrap;">📅 주일예배<br>날짜</span>
+                    <span style="font-size: 0.85em; white-space: nowrap;">📅 주일예배 날짜</span>
                     <input type="date" class="date-input" id="sundayAttendanceDate" onchange="onSundayDateChange()">
-                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.8em; white-space: nowrap;">이번<br>주일</button>
+                    <button class="btn btn-primary" onclick="setThisSunday()" style="width: auto; padding: 8px 12px; font-size: 0.8em; white-space: nowrap;">이번주일</button>
                 </div>
                 <div class="card">
                     <div class="card-title"><span>✝️</span><span id="sundayAttendanceTitle">주일예배 출석</span></div>
@@ -226,8 +226,8 @@
     </div>
     
     <div class="tab-nav hidden" id="tabNav">
-        <button class="tab-btn active" onclick="showTab('sunday')" id="tabBtnSunday"><span class="tab-icon">✝️</span><span>주일예<br>배</span></button>
-        <button class="tab-btn" onclick="showTab('attendance')" id="tabBtnAttendance"><span class="tab-icon">🏠</span><span>구역예<br>배</span></button>
+        <button class="tab-btn active" onclick="showTab('sunday')" id="tabBtnSunday"><span class="tab-icon">✝️</span><span>주일</span></button>
+        <button class="tab-btn" onclick="showTab('attendance')" id="tabBtnAttendance"><span class="tab-icon">🏠</span><span>구역</span></button>
         <button class="tab-btn" onclick="showTab('report')" id="tabBtnReport"><span class="tab-icon">📝</span><span>보고서</span></button>
         <button class="tab-btn hidden" onclick="showTab('overview')" id="tabBtnOverview"><span class="tab-icon">📊</span><span>현황</span></button>
         <button class="tab-btn" onclick="showTab('history')" id="tabBtnHistory"><span class="tab-icon">📚</span><span>기록</span></button>
