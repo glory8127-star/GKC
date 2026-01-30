@@ -3464,7 +3464,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">헌금 종류 *</label>
-                                <select class="form-control" id="offeringType" required>
+                                <select class="form-control" id="offeringType" required onchange="updateMemoTemplateOptions()">
                                     <option value="">선택</option>
                                     <option value="십일조">십일조</option>
                                     <option value="감사헌금">감사헌금</option>
@@ -3508,6 +3508,12 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">메모</label>
+                                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                    <select class="form-control" id="offeringMemoTemplate" onchange="applyMemoTemplate()" style="flex: 1;">
+                                        <option value="">직접 입력</option>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary" onclick="openMemoTemplateManager()" style="padding: 8px 12px; font-size: 0.85em;">관리</button>
+                                </div>
                                 <input type="text" class="form-control" id="offeringMemo" placeholder="메모 입력 (선택사항)">
                             </div>
                             <div class="btn-group">
@@ -18803,6 +18809,184 @@
                 window.location.reload();
             });
         }
+    </script>
+    
+    <!-- 메모 템플릿 관리 모달 -->
+    <div id="memoTemplateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="background: linear-gradient(135deg, #1e3a5f, #2d5a87); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.1em;">메모 템플릿 관리</h3>
+                <button onclick="closeMemoTemplateManager()" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer;">&times;</button>
+            </div>
+            <div style="padding: 20px; overflow-y: auto; flex: 1;">
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">헌금 종류</label>
+                    <select id="templateOfferingType" class="form-control" onchange="loadMemoTemplatesForType()">
+                        <option value="지정헌금">지정헌금</option>
+                        <option value="특별헌금">특별헌금</option>
+                        <option value="작정헌금">작정헌금</option>
+                        <option value="공통">공통 (모든 헌금)</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">새 메모 추가</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="newMemoTemplate" class="form-control" placeholder="메모 내용 입력" style="flex: 1;">
+                        <button onclick="addMemoTemplate()" class="btn btn-primary" style="padding: 8px 15px;">추가</button>
+                    </div>
+                </div>
+                <div style="margin-bottom: 10px; font-weight: 600;">등록된 메모 목록</div>
+                <div id="memoTemplateList" style="border: 1px solid #e2e8f0; border-radius: 8px; max-height: 250px; overflow-y: auto;">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+            <div style="padding: 15px 20px; border-top: 1px solid #e2e8f0; text-align: right;">
+                <button onclick="closeMemoTemplateManager()" class="btn btn-secondary">닫기</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 메모 템플릿 관리
+        let memoTemplates = JSON.parse(localStorage.getItem('offeringMemoTemplates') || '{}');
+        
+        // 기본 템플릿 초기화
+        if (Object.keys(memoTemplates).length === 0) {
+            memoTemplates = {
+                '지정헌금': ['선교헌금', '건축헌금', '구제헌금', '장학헌금', '목회자사례'],
+                '특별헌금': ['감사헌금', '생일감사', '결혼기념', '출산감사', '졸업감사', '취업감사'],
+                '작정헌금': ['건축작정', '선교작정'],
+                '공통': []
+            };
+            localStorage.setItem('offeringMemoTemplates', JSON.stringify(memoTemplates));
+        }
+        
+        function updateMemoTemplateOptions() {
+            const offeringType = document.getElementById('offeringType').value;
+            const select = document.getElementById('offeringMemoTemplate');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">직접 입력</option>';
+            
+            // 공통 템플릿 추가
+            const commonTemplates = memoTemplates['공통'] || [];
+            commonTemplates.forEach(memo => {
+                const option = document.createElement('option');
+                option.value = memo;
+                option.textContent = memo;
+                select.appendChild(option);
+            });
+            
+            // 해당 헌금 종류 템플릿 추가
+            const typeTemplates = memoTemplates[offeringType] || [];
+            typeTemplates.forEach(memo => {
+                const option = document.createElement('option');
+                option.value = memo;
+                option.textContent = memo;
+                select.appendChild(option);
+            });
+        }
+        
+        function applyMemoTemplate() {
+            const select = document.getElementById('offeringMemoTemplate');
+            const memoInput = document.getElementById('offeringMemo');
+            if (select.value) {
+                memoInput.value = select.value;
+            }
+        }
+        
+        function openMemoTemplateManager() {
+            document.getElementById('memoTemplateModal').style.display = 'flex';
+            loadMemoTemplatesForType();
+        }
+        
+        function closeMemoTemplateManager() {
+            document.getElementById('memoTemplateModal').style.display = 'none';
+            updateMemoTemplateOptions();
+        }
+        
+        function loadMemoTemplatesForType() {
+            const type = document.getElementById('templateOfferingType').value;
+            const list = document.getElementById('memoTemplateList');
+            const templates = memoTemplates[type] || [];
+            
+            if (templates.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">등록된 메모가 없습니다</div>';
+                return;
+            }
+            
+            list.innerHTML = templates.map((memo, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid #f1f5f9;">
+                    <span>${memo}</span>
+                    <button onclick="deleteMemoTemplate('${type}', ${idx})" style="background: #fee2e2; color: #dc2626; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">삭제</button>
+                </div>
+            `).join('');
+        }
+        
+        function addMemoTemplate() {
+            const type = document.getElementById('templateOfferingType').value;
+            const input = document.getElementById('newMemoTemplate');
+            const memo = input.value.trim();
+            
+            if (!memo) {
+                alert('메모 내용을 입력하세요.');
+                return;
+            }
+            
+            if (!memoTemplates[type]) memoTemplates[type] = [];
+            
+            if (memoTemplates[type].includes(memo)) {
+                alert('이미 등록된 메모입니다.');
+                return;
+            }
+            
+            memoTemplates[type].push(memo);
+            localStorage.setItem('offeringMemoTemplates', JSON.stringify(memoTemplates));
+            
+            input.value = '';
+            loadMemoTemplatesForType();
+            
+            // Firebase에도 저장
+            saveMemoTemplatesToFirebase();
+        }
+        
+        function deleteMemoTemplate(type, idx) {
+            if (!confirm('이 메모를 삭제하시겠습니까?')) return;
+            
+            memoTemplates[type].splice(idx, 1);
+            localStorage.setItem('offeringMemoTemplates', JSON.stringify(memoTemplates));
+            loadMemoTemplatesForType();
+            
+            // Firebase에도 저장
+            saveMemoTemplatesToFirebase();
+        }
+        
+        async function saveMemoTemplatesToFirebase() {
+            try {
+                await db.collection('offeringMemoTemplates').doc('main').set({ data: memoTemplates });
+            } catch (error) {
+                console.error('메모 템플릿 저장 오류:', error);
+            }
+        }
+        
+        async function loadMemoTemplatesFromFirebase() {
+            try {
+                const doc = await db.collection('offeringMemoTemplates').doc('main').get();
+                if (doc.exists && doc.data().data) {
+                    memoTemplates = doc.data().data;
+                    localStorage.setItem('offeringMemoTemplates', JSON.stringify(memoTemplates));
+                }
+            } catch (error) {
+                console.error('메모 템플릿 로드 오류:', error);
+            }
+        }
+        
+        // 페이지 로드 시 메모 템플릿 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMemoTemplatesFromFirebase().then(() => {
+                updateMemoTemplateOptions();
+            });
+        });
     </script>
 </body>
 </html>
