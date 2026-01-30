@@ -3709,7 +3709,7 @@
                     </div>
                     
                     <!-- 오른쪽: 지출 내역 -->
-                    <div class="card" style="max-width: 700px;">
+                    <div class="card" style="flex: 1; min-width: 0;">
                         <h2>📋 지출 내역</h2>
                         <div class="form-row" style="margin-bottom: 20px;">
                             <div class="form-group">
@@ -3757,7 +3757,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div id="expenseList" style="max-height: 400px; overflow-y: auto;">
+                        <div id="expenseList" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
                             <p style="text-align: center; color: #666;">등록된 지출 내역이 없습니다.</p>
                         </div>
                     </div>
@@ -14717,18 +14717,18 @@
             let total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
             
             let html = `
-                <div class="table-container">
-                    <table>
+                <div class="table-container" style="overflow-x: auto;">
+                    <table style="min-width: 800px;">
                         <thead>
                             <tr>
-                                <th>날짜</th>
-                                <th>부서</th>
-                                <th>분류</th>
-                                <th>항목</th>
-                                <th>금액</th>
-                                <th>결제방법</th>
-                                <th>영수증</th>
-                                <th>관리</th>
+                                <th style="white-space: nowrap;">날짜</th>
+                                <th style="white-space: nowrap;">부서</th>
+                                <th style="white-space: nowrap;">분류</th>
+                                <th style="white-space: nowrap;">항목</th>
+                                <th style="white-space: nowrap;">금액</th>
+                                <th style="white-space: nowrap;">결제방법</th>
+                                <th style="white-space: nowrap;">영수증</th>
+                                <th style="white-space: nowrap;">관리</th>
                             </tr>
                         </thead>
                         <tbody>
