@@ -13192,31 +13192,32 @@
                 endOfWeek.setHours(23, 59, 59, 999);
                 
                 filteredOfferings = filteredOfferings.filter(o => {
-                    const d = new Date(o.date);
+                    const d = new Date(o.date + 'T00:00:00');
                     return d >= startOfWeek && d <= endOfWeek;
                 });
             } else if (period === 'month') {
+                // 문자열 비교로 월 필터링 (timezone 문제 방지)
+                const yearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
                 filteredOfferings = filteredOfferings.filter(o => {
-                    const d = new Date(o.date);
-                    return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                    return o.date && o.date.startsWith(yearMonth);
                 });
             } else if (period === 'quarter') {
-                const currentQuarter = Math.floor(currentMonth / 3);
+                const quarterMonths = [];
+                const startMonth = Math.floor(currentMonth / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    quarterMonths.push(`${currentYear}-${String(startMonth + i + 1).padStart(2, '0')}`);
+                }
                 filteredOfferings = filteredOfferings.filter(o => {
-                    const d = new Date(o.date);
-                    return d.getFullYear() === currentYear && Math.floor(d.getMonth() / 3) === currentQuarter;
+                    return o.date && quarterMonths.some(ym => o.date.startsWith(ym));
                 });
             } else if (period === 'year') {
                 filteredOfferings = filteredOfferings.filter(o => {
-                    const d = new Date(o.date);
-                    return d.getFullYear() === currentYear;
+                    return o.date && o.date.startsWith(String(currentYear));
                 });
             } else if (period.match(/^\d{4}-\d{2}$/)) {
                 // 특정 월 조회 (YYYY-MM 형식)
-                const [targetYear, targetMonth] = period.split('-').map(Number);
                 filteredOfferings = filteredOfferings.filter(o => {
-                    const d = new Date(o.date);
-                    return d.getFullYear() === targetYear && d.getMonth() === targetMonth - 1;
+                    return o.date && o.date.startsWith(period);
                 });
             }
             
@@ -14661,31 +14662,32 @@
                 endOfWeek.setHours(23, 59, 59, 999);
                 
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
+                    const d = new Date(e.date + 'T00:00:00');
                     return d >= startOfWeek && d <= endOfWeek;
                 });
             } else if (period === 'month') {
+                // 문자열 비교로 월 필터링 (timezone 문제 방지)
+                const yearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                    return e.date && e.date.startsWith(yearMonth);
                 });
             } else if (period === 'quarter') {
-                const currentQuarter = Math.floor(currentMonth / 3);
+                const quarterMonths = [];
+                const startMonth = Math.floor(currentMonth / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    quarterMonths.push(`${currentYear}-${String(startMonth + i + 1).padStart(2, '0')}`);
+                }
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === currentYear && Math.floor(d.getMonth() / 3) === currentQuarter;
+                    return e.date && quarterMonths.some(ym => e.date.startsWith(ym));
                 });
             } else if (period === 'year') {
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === currentYear;
+                    return e.date && e.date.startsWith(String(currentYear));
                 });
             } else if (period.match(/^\d{4}-\d{2}$/)) {
                 // 특정 월 조회 (YYYY-MM 형식)
-                const [targetYear, targetMonth] = period.split('-').map(Number);
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === targetYear && d.getMonth() === targetMonth - 1;
+                    return e.date && e.date.startsWith(period);
                 });
             }
             
@@ -14811,31 +14813,32 @@
                 endOfWeek.setHours(23, 59, 59, 999);
                 
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
+                    const d = new Date(e.date + 'T00:00:00');
                     return d >= startOfWeek && d <= endOfWeek;
                 });
             } else if (period === 'month') {
+                // 문자열 비교로 월 필터링 (timezone 문제 방지)
+                const yearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                    return e.date && e.date.startsWith(yearMonth);
                 });
             } else if (period === 'quarter') {
-                const currentQuarter = Math.floor(currentMonth / 3);
+                const quarterMonths = [];
+                const startMonth = Math.floor(currentMonth / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    quarterMonths.push(`${currentYear}-${String(startMonth + i + 1).padStart(2, '0')}`);
+                }
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === currentYear && Math.floor(d.getMonth() / 3) === currentQuarter;
+                    return e.date && quarterMonths.some(ym => e.date.startsWith(ym));
                 });
             } else if (period === 'year') {
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === currentYear;
+                    return e.date && e.date.startsWith(String(currentYear));
                 });
             } else if (period.match(/^\d{4}-\d{2}$/)) {
                 // 특정 월 조회 (YYYY-MM 형식)
-                const [targetYear, targetMonth] = period.split('-').map(Number);
                 filteredExpenses = filteredExpenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === targetYear && d.getMonth() === targetMonth - 1;
+                    return e.date && e.date.startsWith(period);
                 });
             }
             
