@@ -8679,19 +8679,18 @@
             // ===== 재정 현황 (수입/지출/잔액 계산) =====
             const thisMonth = new Date().toISOString().slice(0, 7);
             const currentYear = new Date().getFullYear();
+            const currentYearStr = String(currentYear);
             const monthIncome = offerings.filter(o => o.date && o.date.startsWith(thisMonth))
                 .reduce((sum, o) => sum + (parseFloat(o.amount) || 0), 0);
             const monthExpense = expenses.filter(e => e.date && e.date.startsWith(thisMonth))
                 .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
             
-            // 전체 잔액 계산 (이월금 + 올해 헌금 - 올해 지출)
+            // 전체 잔액 계산 (이월금 + 올해 헌금 - 올해 지출) - 문자열 비교
             const yearlyOfferings = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === currentYear;
+                return o.date && o.date.startsWith(currentYearStr);
             }).reduce((sum, o) => sum + (parseFloat(o.amount) || 0), 0);
             const yearlyExpense = expenses.filter(e => {
-                const d = new Date(e.date);
-                return d.getFullYear() === currentYear;
+                return e.date && e.date.startsWith(currentYearStr);
             }).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
             const totalBalance = 69713.10 + yearlyOfferings - yearlyExpense; // 이월금 포함
             
@@ -13333,28 +13332,30 @@
             const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
             const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
             
+            // 이번달/지난달 년월 문자열
+            const currentYearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+            const lastYearMonth = `${lastMonthYear}-${String(lastMonth + 1).padStart(2, '0')}`;
+            
             // 지난주 헌금
             const lastWeekOfferings = offerings.filter(o => {
-                const d = new Date(o.date);
+                const d = new Date(o.date + 'T00:00:00');
                 return d >= startOfLastWeek && d <= endOfLastWeek;
             });
             
             // 이번주 헌금
             const weeklyOfferings = offerings.filter(o => {
-                const d = new Date(o.date);
+                const d = new Date(o.date + 'T00:00:00');
                 return d >= startOfWeek && d <= endOfWeek;
             });
             
-            // 지난달 헌금
+            // 지난달 헌금 (문자열 비교)
             const lastMonthOfferings = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === lastMonthYear && d.getMonth() === lastMonth;
+                return o.date && o.date.startsWith(lastYearMonth);
             });
             
-            // 이번달 헌금
+            // 이번달 헌금 (문자열 비교)
             const monthlyOfferings = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                return o.date && o.date.startsWith(currentYearMonth);
             });
             
             const totalLastWeek = lastWeekOfferings.reduce((sum, o) => sum + o.amount, 0);
@@ -14927,29 +14928,30 @@
             const currentYear = now.getFullYear();
             const currentMonth = now.getMonth();
             
-            // 이번달 수입/지출
+            // 이번달/올해 년월 문자열
+            const currentYearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+            const currentYearStr = String(currentYear);
+            
+            // 이번달 수입/지출 (문자열 비교)
             const monthlyIncome = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                return o.date && o.date.startsWith(currentYearMonth);
             }).reduce((sum, o) => sum + o.amount, 0);
             
             const monthlyExpense = expenses.filter(e => {
-                const d = new Date(e.date);
-                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                return e.date && e.date.startsWith(currentYearMonth);
             }).reduce((sum, e) => sum + e.amount, 0);
             
-            // 올해 누적 헌금
+            // 올해 누적 헌금 (문자열 비교)
             const yearlyOfferings = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === currentYear;
+                return o.date && o.date.startsWith(currentYearStr);
             }).reduce((sum, o) => sum + o.amount, 0);
             
             // 올해 총 수입 = 이월금 + 올해 헌금
             const yearlyIncome = CARRYOVER_AMOUNT + yearlyOfferings;
             
+            // 올해 지출 (문자열 비교)
             const yearlyExpense = expenses.filter(e => {
-                const d = new Date(e.date);
-                return d.getFullYear() === currentYear;
+                return e.date && e.date.startsWith(currentYearStr);
             }).reduce((sum, e) => sum + e.amount, 0);
             
             // 헤더 카드 업데이트 (올해 전체)
