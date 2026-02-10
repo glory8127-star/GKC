@@ -6867,35 +6867,31 @@
         async function backupToFirebase() {
             if (!confirm('현재 데이터를 Firebase 백업 저장소에 저장하시겠습니까?')) return;
             
-            const keysToBackup = [
-                'churchMembers', 'registeredUsers', 'signupRequests',
-                'departments', 'churchCells', 'cellAttendance',
-                'mainAttendance', 'visitorData', 'absentReasons',
-                'churchOfferings', 'churchExpenses', 'churchBudgets', 'paymentRequests',
-                'mentoringPairs', 'mentoringProgress',
-                'yearlyEvents', 'churchDeptTeams', 'churchOrgChart',
-                'ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos', 'gloryClipVideos',
-                'heroSlides', 'churchGallery', 'churchCellsHistory', 'membersHistory'
-            ];
-            
-            // 데이터를 그룹으로 분할 (Firestore 1MB 제한 대응)
+            // 데이터를 더 작은 그룹으로 분할 (Firestore 1MB 제한 대응)
             const groups = {
-                group1: ['churchMembers', 'registeredUsers', 'signupRequests', 'departments', 'churchCells'],
-                group2: ['cellAttendance', 'mainAttendance', 'visitorData', 'absentReasons'],
-                group3: ['churchOfferings', 'churchExpenses', 'churchBudgets', 'paymentRequests'],
-                group4: ['mentoringPairs', 'mentoringProgress', 'yearlyEvents', 'churchDeptTeams', 'churchOrgChart'],
-                group5: ['ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos', 'gloryClipVideos'],
-                group6: ['heroSlides', 'churchGallery', 'churchCellsHistory', 'membersHistory']
+                group1: ['churchMembers'],  // 교인 데이터만 별도
+                group2: ['registeredUsers', 'signupRequests', 'departments', 'churchCells'],
+                group3: ['cellAttendance'],  // 출석 데이터 별도
+                group4: ['mainAttendance', 'visitorData', 'absentReasons'],
+                group5: ['churchOfferings'],  // 헌금 데이터 별도
+                group6: ['churchExpenses', 'churchBudgets', 'paymentRequests'],
+                group7: ['mentoringPairs', 'mentoringProgress', 'yearlyEvents', 'churchDeptTeams', 'churchOrgChart'],
+                group8: ['ssStaff', 'nextGenStudents', 'sundayVideos', 'wednesdayVideos', 'gloryClipVideos'],
+                group9: ['heroSlides', 'churchGallery', 'churchCellsHistory', 'membersHistory'],
+                group10: ['cellSundayAttendance', 'cellReports', 'cellWorshipDates']
             };
             
             const dateStr = new Date().toISOString().slice(0, 10);
             const timestamp = new Date().toISOString();
             
             try {
+                let successCount = 0;
+                let errorGroups = [];
+                
                 // 각 그룹별로 저장
                 for (const [groupName, keys] of Object.entries(groups)) {
                     const groupData = {
-                        version: '2.0',
+                        version: '2.1',
                         date: timestamp,
                         group: groupName,
                         data: {}
@@ -6912,28 +6908,53 @@
                         }
                     });
                     
-                    // latest 백업
-                    await db.collection('backups').doc('latest_' + groupName).set(groupData);
-                    // 날짜별 백업
-                    await db.collection('backups').doc(dateStr + '_' + groupName).set(groupData);
+                    // 그룹 데이터 크기 확인
+                    const dataSize = JSON.stringify(groupData).length;
+                    console.log(`${groupName}: ${(dataSize / 1024).toFixed(1)}KB`);
+                    
+                    if (dataSize > 1000000) {
+                        // 1MB 초과 시 경고하고 건너뛰기
+                        console.warn(`${groupName} 크기 초과 (${(dataSize/1024/1024).toFixed(2)}MB), 건너뜀`);
+                        errorGroups.push(groupName);
+                        continue;
+                    }
+                    
+                    try {
+                        // latest 백업
+                        await db.collection('backups').doc('latest_' + groupName).set(groupData);
+                        // 날짜별 백업
+                        await db.collection('backups').doc(dateStr + '_' + groupName).set(groupData);
+                        successCount++;
+                    } catch(err) {
+                        console.error(`${groupName} 저장 실패:`, err);
+                        errorGroups.push(groupName);
+                    }
                 }
                 
                 // 백업 메타데이터 저장
                 await db.collection('backups').doc('latest_meta').set({
-                    version: '2.0',
+                    version: '2.1',
                     date: timestamp,
-                    groups: Object.keys(groups)
+                    groups: Object.keys(groups),
+                    successGroups: successCount,
+                    errorGroups: errorGroups
                 });
                 await db.collection('backups').doc(dateStr + '_meta').set({
-                    version: '2.0',
+                    version: '2.1',
                     date: timestamp,
-                    groups: Object.keys(groups)
+                    groups: Object.keys(groups),
+                    successGroups: successCount,
+                    errorGroups: errorGroups
                 });
                 
                 localStorage.setItem('lastBackupDate', timestamp);
                 loadDataStatus();
                 
-                alert('✅ Firebase에 백업되었습니다!\n- latest: 최신 백업 (6개 그룹)\n- ' + dateStr + ': 오늘 백업');
+                if (errorGroups.length > 0) {
+                    alert(`⚠️ 일부 백업 완료\n- 성공: ${successCount}개 그룹\n- 실패: ${errorGroups.join(', ')}\n\n실패한 그룹은 데이터가 너무 큽니다.`);
+                } else {
+                    alert('✅ Firebase에 백업되었습니다!\n- ' + successCount + '개 그룹 저장 완료\n- ' + dateStr + ': 오늘 백업');
+                }
             } catch(error) {
                 console.error('Firebase 백업 실패:', error);
                 alert('❌ Firebase 백업 실패: ' + error.message);
