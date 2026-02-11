@@ -6995,6 +6995,7 @@
             try {
                 let successCount = 0;
                 let errorGroups = [];
+                let photoStripped = false;
                 
                 // 각 그룹별로 저장
                 for (const [groupName, keys] of Object.entries(groups)) {
@@ -7017,11 +7018,24 @@
                     });
                     
                     // 그룹 데이터 크기 확인
-                    const dataSize = JSON.stringify(groupData).length;
+                    let dataSize = JSON.stringify(groupData).length;
                     console.log(`${groupName}: ${(dataSize / 1024).toFixed(1)}KB`);
                     
+                    // 1MB 초과 시 사진 데이터 제거 후 재시도
+                    if (dataSize > 1000000 && groupName === 'group1' && groupData.data.churchMembers) {
+                        console.log('교인 데이터가 1MB 초과 - 사진 제외하고 저장...');
+                        groupData.data.churchMembers = groupData.data.churchMembers.map(m => {
+                            const { photo, ...rest } = m;  // 사진 필드 제거
+                            return rest;
+                        });
+                        groupData.photoStripped = true;
+                        dataSize = JSON.stringify(groupData).length;
+                        console.log(`${groupName} (사진제외): ${(dataSize / 1024).toFixed(1)}KB`);
+                        photoStripped = true;
+                    }
+                    
                     if (dataSize > 1000000) {
-                        // 1MB 초과 시 경고하고 건너뛰기
+                        // 여전히 1MB 초과 시 건너뛰기
                         console.warn(`${groupName} 크기 초과 (${(dataSize/1024/1024).toFixed(2)}MB), 건너뜀`);
                         errorGroups.push(groupName);
                         continue;
@@ -7060,6 +7074,8 @@
                 
                 if (errorGroups.length > 0) {
                     alert(`⚠️ 일부 백업 완료\n- 성공: ${successCount}개 그룹\n- 실패: ${errorGroups.join(', ')}\n\n실패한 그룹은 데이터가 너무 큽니다.`);
+                } else if (photoStripped) {
+                    alert('✅ Firebase에 백업되었습니다!\n- ' + successCount + '개 그룹 저장 완료\n- ' + dateStr + ': 오늘 백업\n\n⚠️ 교인 사진은 용량 문제로 제외되었습니다.\n(사진은 Firebase Storage에 별도 저장됨)');
                 } else {
                     alert('✅ Firebase에 백업되었습니다!\n- ' + successCount + '개 그룹 저장 완료\n- ' + dateStr + ': 오늘 백업');
                 }
