@@ -11564,7 +11564,59 @@
             }
             
             const period = document.getElementById('offeringPeriod')?.value || 'month';
+            const filterType = document.getElementById('offeringFilterType')?.value || 'all';
             const periodNames = { week: '이번 주', month: '이번 달', quarter: '이번 분기', year: '올해', all: '전체' };
+            
+            // 필터링 적용 (loadOfferingList와 동일한 로직)
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            const currentYearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+            
+            let filteredOfferings = [...offerings];
+            
+            if (period === 'week') {
+                const dayOfWeek = now.getDay();
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - dayOfWeek);
+                startOfWeek.setHours(0, 0, 0, 0);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                endOfWeek.setHours(23, 59, 59, 999);
+                
+                filteredOfferings = filteredOfferings.filter(o => {
+                    const d = new Date(o.date + 'T00:00:00');
+                    return d >= startOfWeek && d <= endOfWeek;
+                });
+            } else if (period === 'month') {
+                filteredOfferings = filteredOfferings.filter(o => o.date && o.date.startsWith(currentYearMonth));
+            } else if (period === 'quarter') {
+                const quarterMonths = [];
+                const startMonth = Math.floor(currentMonth / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    quarterMonths.push(`${currentYear}-${String(startMonth + i + 1).padStart(2, '0')}`);
+                }
+                filteredOfferings = filteredOfferings.filter(o => o.date && quarterMonths.some(ym => o.date.startsWith(ym)));
+            } else if (period === 'year') {
+                filteredOfferings = filteredOfferings.filter(o => o.date && o.date.startsWith(String(currentYear)));
+            } else if (period.match(/^\d{4}-\d{2}$/)) {
+                filteredOfferings = filteredOfferings.filter(o => o.date && o.date.startsWith(period));
+            }
+            
+            // 종류 필터
+            if (filterType !== 'all') {
+                filteredOfferings = filteredOfferings.filter(o => o.type === filterType);
+            }
+            
+            // 날짜순 정렬
+            filteredOfferings.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (filteredOfferings.length === 0) {
+                alert('선택한 기간에 인쇄할 헌금 내역이 없습니다.');
+                return;
+            }
+            
+            const periodLabel = period.match(/^\d{4}-\d{2}$/) ? period.replace('-', '년 ') + '월' : (periodNames[period] || period);
             
             let html = `
                 <!DOCTYPE html>
@@ -11586,19 +11638,20 @@
                 </head>
                 <body>
                     <h1>Sacramento Glory Korean Church</h1>
-                    <p class="subtitle">헌금 내역 (${periodNames[period]}) | 출력일: ${new Date().toLocaleDateString('ko-KR')}</p>
+                    <p class="subtitle">헌금 내역 (${periodLabel}) | 출력일: ${new Date().toLocaleDateString('ko-KR')}</p>
                     <table>
                         <thead><tr><th>날짜</th><th>헌금자</th><th>종류</th><th>금액</th><th>결제방법</th></tr></thead>
                         <tbody>
             `;
             
             let total = 0;
-            offerings.forEach(o => {
+            filteredOfferings.forEach(o => {
                 total += o.amount || 0;
-                html += `<tr><td>${o.date}</td><td>${o.memberName}</td><td>${o.type}</td><td>$${(o.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td>${o.payment || '현금'}</td></tr>`;
+                const displayName = o.name || o.memberName || '-';
+                html += `<tr><td>${o.date}</td><td>${displayName}</td><td>${o.type}</td><td>$${(o.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td>${o.payment || '현금'}</td></tr>`;
             });
             
-            html += `<tr class="total"><td colspan="3">합계</td><td colspan="2">$${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr></tbody></table>
+            html += `<tr class="total"><td colspan="3">합계 (${filteredOfferings.length}건)</td><td colspan="2">$${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr></tbody></table>
                 <p class="footer">Sacramento Glory Korean Church | EIN# 88-1719323</p></body></html>`;
             
             const printWindow = window.open('', '_blank');
