@@ -4729,6 +4729,7 @@
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em; color: #dc2626;">재정수정</th>
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">교적관리</th>
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em; color: #1e3a5f; background: rgba(255,255,255,0.2);">목회자</th>
+                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em; color: #92400e; background: rgba(254,243,199,0.5);">학생교적</th>
                             <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 0.85em;">사용자관리</th>
                             <th style="padding: 12px 10px; text-align: center; font-weight: 600;">관리</th>
                         </tr>
@@ -7238,7 +7239,7 @@
             if (table) table.style.display = 'table';
             if (emptyMsg) emptyMsg.style.display = 'none';
             
-            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'pastor', 'users'];
+            const permissionKeys = ['dashboard', 'attendance', 'cell', 'department', 'mentor', 'offering', 'offeringEdit', 'members', 'pastor', 'studentRecords', 'users'];
             
             let html = '';
             users.forEach((user, index) => {
