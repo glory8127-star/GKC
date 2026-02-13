@@ -425,6 +425,8 @@
             try {
                 const membersDoc = await db.collection('churchMembers').doc('main').get();
                 if (membersDoc.exists) members = membersDoc.data().list || [];
+                console.log('초기 로드 - 교인 수:', members.length);
+                
                 const cellsDoc = await db.collection('churchCells').doc('main').get();
                 if (cellsDoc.exists) cells = cellsDoc.data().list || [];
                 const attDoc = await db.collection('cellAttendance').doc('main').get();
@@ -437,6 +439,12 @@
                 if (reportsDoc.exists) cellReports = reportsDoc.data().data || {};
                 const reasonsDoc = await db.collection('absentReasons').doc('main').get();
                 if (reasonsDoc.exists) absentReasons = reasonsDoc.data().data || {};
+                
+                // 초기 로드 후 출석 데이터 표시
+                setTimeout(() => {
+                    loadAttendance();
+                    loadSundayAttendance();
+                }, 100);
             } catch (error) { console.error('데이터 로드 오류:', error); showToast('데이터를 불러오는 중 오류가 발생했습니다'); }
         }
         
@@ -446,7 +454,20 @@
             db.collection('cellWorshipDates').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { cellWorshipDates = doc.data().data; } });
             db.collection('cellReports').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { cellReports = doc.data().data; if (currentUser.role === '관리자') loadOverview(); loadHistory(); } });
             db.collection('absentReasons').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().data) { absentReasons = doc.data().data; loadAttendance(); } });
-            db.collection('churchMembers').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().list) { members = doc.data().list; loadAttendance(); loadSundayAttendance(); } });
+            db.collection('churchMembers').doc('main').onSnapshot(doc => { 
+                if (doc.exists && doc.data().list) { 
+                    members = doc.data().list; 
+                    console.log('구역관리 어플 - 교인 데이터 로드:', members.length + '명');
+                    // 은혜구역 교인 확인
+                    const graceMembers = members.filter(m => {
+                        const mc = (m.cell || '').replace('구역', '');
+                        return mc === '은혜' || m.cell === '은혜구역';
+                    });
+                    console.log('은혜구역 교인:', graceMembers.map(m => m.nameKr));
+                    loadAttendance(); 
+                    loadSundayAttendance(); 
+                } 
+            });
             db.collection('churchCells').doc('main').onSnapshot(doc => { if (doc.exists && doc.data().list) { cells = doc.data().list; initCellSelector(); } });
         }
         
