@@ -5812,7 +5812,22 @@
             localStorage.setItem('churchMembers', JSON.stringify(members));
             if (firebaseReady) {
                 const timestamp = new Date().toISOString();
-                await saveToFirestore('churchMembers', { list: members, timestamp: timestamp });
+                
+                // 데이터 크기 확인
+                let dataToSave = { list: members, timestamp: timestamp };
+                let dataSize = JSON.stringify(dataToSave).length;
+                
+                // 900KB 초과 시 사진 제외 (여유 있게 설정)
+                if (dataSize > 900000) {
+                    console.log('교인 데이터 용량 초과 (' + (dataSize/1024).toFixed(1) + 'KB), 사진 제외하고 저장');
+                    const membersNoPhoto = members.map(m => {
+                        const { photo, ...rest } = m;
+                        return rest;
+                    });
+                    dataToSave = { list: membersNoPhoto, timestamp: timestamp, photoStripped: true };
+                }
+                
+                await saveToFirestore('churchMembers', dataToSave);
                 localStorage.setItem('churchMembersTimestamp', timestamp);
                 console.log('교인 데이터 Firebase 저장 완료:', members.length + '명, 타임스탬프:', timestamp);
             }
@@ -11833,8 +11848,47 @@
             printWindow.print();
         }
         
-        // 교인 사진 업로드
-        function handleMemberPhotoUpload(event) {
+        // 이미지 압축 함수
+        function compressImage(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        // 원본 크기
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // 비율 유지하며 크기 조정
+                        if (width > maxWidth || height > maxHeight) {
+                            const ratio = Math.min(maxWidth / width, maxHeight / height);
+                            width = Math.round(width * ratio);
+                            height = Math.round(height * ratio);
+                        }
+                        
+                        // Canvas에 그리기
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 압축된 이미지 반환
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        
+                        console.log('사진 압축: ' + (file.size / 1024).toFixed(1) + 'KB → ' + (compressedDataUrl.length / 1024).toFixed(1) + 'KB');
+                        resolve(compressedDataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 교인 사진 업로드 (자동 압축)
+        async function handleMemberPhotoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
             
@@ -11843,14 +11897,18 @@
                 return;
             }
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('memberPhotoData').value = e.target.result;
+            try {
+                // 최대 200x250 픽셀, 품질 70%로 압축
+                const compressedImage = await compressImage(file, 200, 250, 0.7);
+                
+                document.getElementById('memberPhotoData').value = compressedImage;
                 document.getElementById('memberPhotoPreview').innerHTML = `
-                    <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="${compressedImage}" style="width: 100%; height: 100%; object-fit: cover;">
                 `;
-            };
-            reader.readAsDataURL(file);
+            } catch (error) {
+                console.error('사진 압축 실패:', error);
+                alert('사진 처리 중 오류가 발생했습니다.');
+            }
         }
         
         // ========== 멘토링 ==========
