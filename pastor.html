@@ -708,6 +708,7 @@
             <div class="filter-tabs">
                 <button class="filter-tab active" onclick="filterMembers('absent')">장기결석</button>
                 <button class="filter-tab" onclick="filterMembers('new')">새신자</button>
+                <button class="filter-tab" onclick="filterMembers('visitor')">방문자</button>
                 <button class="filter-tab" onclick="filterMembers('all')">전체</button>
             </div>
             
@@ -892,6 +893,7 @@
         let cellReports = {};
         let churchAttendance = {};
         let mainAttendance = {}; // 주일예배 출석 데이터
+        let visitorData = []; // 방문자 데이터
         
         let currentTab = 'Home';
         let currentVisitFilter = 'all';
@@ -1048,6 +1050,11 @@
                 if (mainAttDoc.exists) mainAttendance = mainAttDoc.data().data || {};
                 console.log('mainAttendance loaded:', Object.keys(mainAttendance));
                 
+                // 방문자 데이터 로드
+                const visitorDoc = await db.collection('visitorData').doc('main').get();
+                if (visitorDoc.exists) visitorData = visitorDoc.data().list || [];
+                console.log('visitorData loaded:', visitorData.length + '명');
+                
                 updatePrayerCellSelect();
                 
             } catch (error) {
@@ -1136,6 +1143,13 @@
                 return new Date(regDateStr) >= threeMonthsAgo;
             });
             
+            // 최근 방문자 수 (3개월 이내)
+            var recentVisitors = (visitorData || []).filter(function(v) {
+                var visitDateStr = v.visitDate || v.date || '';
+                if (!visitDateStr) return false;
+                return new Date(visitDateStr) >= threeMonthsAgo;
+            });
+            
             document.getElementById('dashboardStats').innerHTML = `
                 <div class="stat-card">
                     <div class="stat-value">${totalMembers}</div>
@@ -1148,6 +1162,10 @@
                 <div class="stat-card">
                     <div class="stat-value">${newMembers.length}</div>
                     <div class="stat-label">새신자</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${recentVisitors.length}</div>
+                    <div class="stat-label">방문자</div>
                 </div>
             `;
             
@@ -1471,6 +1489,7 @@
         function loadMemberList() {
             const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
             let filtered = [...members];
+            let isVisitorMode = false;
             
             // 필터 먼저 적용
             if (currentMemberFilter === 'absent') {
@@ -1494,14 +1513,60 @@
                     return dateB - dateA; 
                 });
                 console.log('새신자 수:', filtered.length);
+            } else if (currentMemberFilter === 'visitor') {
+                // 방문자 목록
+                isVisitorMode = true;
+                filtered = visitorData || [];
+                // 최신순 정렬
+                filtered.sort((a, b) => new Date(b.visitDate || b.date || 0) - new Date(a.visitDate || a.date || 0));
+                console.log('방문자 수:', filtered.length);
             }
             
             // 검색어 적용
             if (searchTerm) {
-                filtered = filtered.filter(m => 
-                    (m.nameKr || '').toLowerCase().includes(searchTerm) ||
-                    (m.nameEn || '').toLowerCase().includes(searchTerm)
-                );
+                if (isVisitorMode) {
+                    filtered = filtered.filter(v => 
+                        (v.name || '').toLowerCase().includes(searchTerm) ||
+                        (v.phone || '').includes(searchTerm)
+                    );
+                } else {
+                    filtered = filtered.filter(m => 
+                        (m.nameKr || '').toLowerCase().includes(searchTerm) ||
+                        (m.nameEn || '').toLowerCase().includes(searchTerm)
+                    );
+                }
+            }
+            
+            // 방문자 모드일 때
+            if (isVisitorMode) {
+                document.getElementById('memberList').innerHTML = filtered.length > 0 ?
+                    filtered.map(v => {
+                        const visitDate = v.visitDate || v.date || '';
+                        const phoneDisplay = v.phone ? `
+                            <a href="tel:${v.phone.replace(/[^0-9+]/g, '')}" 
+                               style="display: inline-flex; align-items: center; gap: 5px; background: #10b981; color: white; padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 0.85em; margin-top: 8px;">
+                                📞 ${v.phone}
+                            </a>
+                        ` : '';
+                        
+                        return `
+                            <div class="list-item" style="flex-direction: column; align-items: flex-start;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                    <div class="list-item-content">
+                                        <div class="list-item-title">${v.name || '이름없음'}</div>
+                                        <div class="list-item-sub">
+                                            ${visitDate ? '방문일: ' + visitDate : ''}
+                                            ${v.invitedBy ? ' · 초청자: ' + v.invitedBy : ''}
+                                            ${v.memo ? '<br>' + v.memo : ''}
+                                        </div>
+                                    </div>
+                                    <span class="badge" style="background: #f59e0b; color: white;">방문자</span>
+                                </div>
+                                ${phoneDisplay}
+                            </div>
+                        `;
+                    }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 40px;">등록된 방문자가 없습니다</p>';
+                return;
             }
             
             document.getElementById('memberList').innerHTML = filtered.length > 0 ?
