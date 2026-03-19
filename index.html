@@ -12379,8 +12379,7 @@
                 // 지출액 계산 (재정관리 지출에서 - 현재 연도만)
                 const deptExpenses = expenses.filter(e => {
                     if (e.department !== dept.name) return false;
-                    const expDate = new Date(e.date);
-                    return expDate.getFullYear() === currentYear;
+                    return e.date && e.date.startsWith(String(currentYear));
                 });
                 const usedBudget = deptExpenses.reduce((sum, e) => sum + e.amount, 0);
                 const budgetPercent = deptBudget > 0 ? Math.round((usedBudget / deptBudget) * 100) : 0;
@@ -14042,8 +14041,7 @@
             
             // 해당 년도 지출 집계
             const yearExpenses = expenses.filter(e => {
-                const d = new Date(e.date);
-                return d.getFullYear() === selectedYear;
+                return e.date && e.date.startsWith(String(selectedYear));
             });
             
             let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
@@ -14094,8 +14092,7 @@
             const currentYear = new Date().getFullYear();
             const currentYearBudgets = budgets.filter(b => b.year === currentYear);
             const currentYearExpenses = expenses.filter(e => {
-                const d = new Date(e.date);
-                return d.getFullYear() === currentYear;
+                return e.date && e.date.startsWith(String(currentYear));
             });
             
             const totalBudget = currentYearBudgets.reduce((sum, b) => sum + b.budget, 0);
@@ -18164,14 +18161,13 @@
             }
             
             const monthlyData = months.map(m => {
+                const yearMonth = `${m.year}-${String(m.month + 1).padStart(2, '0')}`;
                 const income = offerings.filter(o => {
-                    const d = new Date(o.date);
-                    return d.getFullYear() === m.year && d.getMonth() === m.month;
+                    return o.date && o.date.startsWith(yearMonth);
                 }).reduce((sum, o) => sum + o.amount, 0);
                 
                 const expense = expenses.filter(e => {
-                    const d = new Date(e.date);
-                    return d.getFullYear() === m.year && d.getMonth() === m.month;
+                    return e.date && e.date.startsWith(yearMonth);
                 }).reduce((sum, e) => sum + e.amount, 0);
                 
                 return { ...m, income, expense };
@@ -18224,9 +18220,9 @@
             const currentYear = now.getFullYear();
             const currentMonth = now.getMonth();
             
+            const currentYearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
             const monthlyOfferings = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                return o.date && o.date.startsWith(currentYearMonth);
             });
             
             if (monthlyOfferings.length === 0) {
@@ -18285,9 +18281,9 @@
             const currentYear = now.getFullYear();
             const currentMonth = now.getMonth();
             
+            const currentYearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
             const monthlyExpenses = expenses.filter(e => {
-                const d = new Date(e.date);
-                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                return e.date && e.date.startsWith(currentYearMonth);
             });
             
             if (monthlyExpenses.length === 0) {
@@ -18440,8 +18436,7 @@
             
             // 해당 연도 헌금 필터
             let filtered = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === year;
+                return o.date && o.date.startsWith(String(year));
             });
             
             if (memberName !== 'all') {
@@ -18567,8 +18562,7 @@
             const memberName = document.getElementById('irsMember').value;
             
             let filtered = offerings.filter(o => {
-                const d = new Date(o.date);
-                return d.getFullYear() === year;
+                return o.date && o.date.startsWith(String(year));
             });
             
             if (memberName !== 'all') {
@@ -18699,7 +18693,7 @@
             // 수입 보고서
             if (reportType === 'both' || reportType === 'income') {
                 const filteredIncome = offerings.filter(o => {
-                    const d = new Date(o.date);
+                    const d = new Date(o.date + 'T00:00:00');
                     return d >= start && d <= end;
                 });
                 
@@ -18755,7 +18749,7 @@
             // 지출 보고서
             if (reportType === 'both' || reportType === 'expense') {
                 const filteredExpense = expenses.filter(e => {
-                    const d = new Date(e.date);
+                    const d = new Date(e.date + 'T00:00:00');
                     return d >= start && d <= end;
                 });
                 
@@ -18810,11 +18804,11 @@
             // 수입/지출 요약 (둘 다 표시할 때)
             if (reportType === 'both') {
                 const filteredIncome = offerings.filter(o => {
-                    const d = new Date(o.date);
+                    const d = new Date(o.date + 'T00:00:00');
                     return d >= start && d <= end;
                 });
                 const filteredExpense = expenses.filter(e => {
-                    const d = new Date(e.date);
+                    const d = new Date(e.date + 'T00:00:00');
                     return d >= start && d <= end;
                 });
                 
@@ -18954,7 +18948,7 @@
             // 수입 데이터
             if (reportType === 'both' || reportType === 'income') {
                 const filteredIncome = offerings.filter(o => {
-                    const d = new Date(o.date);
+                    const d = new Date(o.date + 'T00:00:00');
                     return d >= start && d <= end;
                 });
                 
@@ -18977,7 +18971,7 @@
             // 지출 데이터
             if (reportType === 'both' || reportType === 'expense') {
                 const filteredExpense = expenses.filter(e => {
-                    const d = new Date(e.date);
+                    const d = new Date(e.date + 'T00:00:00');
                     return d >= start && d <= end;
                 });
                 
