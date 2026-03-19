@@ -13649,14 +13649,13 @@
             let filteredOfferings = [...offerings];
             
             if (period === 'month') {
+                const yearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
                 filteredOfferings = filteredOfferings.filter(o => {
-                    const d = new Date(o.date);
-                    return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                    return o.date && o.date.startsWith(yearMonth);
                 });
             } else if (period === 'year') {
                 filteredOfferings = filteredOfferings.filter(o => {
-                    const d = new Date(o.date);
-                    return d.getFullYear() === currentYear;
+                    return o.date && o.date.startsWith(String(currentYear));
                 });
             }
             
