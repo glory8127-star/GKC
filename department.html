@@ -545,7 +545,7 @@
             apiKey: "AIzaSyD-9Mfa2t5z6t9z9z9z9z9z9z9z9z9z9z9",
             authDomain: "gkc-web-project-c87c9.firebaseapp.com",
             projectId: "gkc-web-project-c87c9",
-            storageBucket: "gkc-web-project-c87c9.firebasestorage.app",
+            storageBucket: "gkc-web-project.firebasestorage.app",
             messagingSenderId: "123456789",
             appId: "1:123456789:web:abc123"
         };
@@ -1016,7 +1016,6 @@
             } catch (error) { console.error('저장 오류:', error); showToast('저장 중 오류가 발생했습니다'); }
         }
         
-        // 지출결의서 삭제 - 수정됨 (String 비교로 타입 불일치 해결)
         async function deleteRequest(id) {
             if (!confirm('이 지출결의서를 삭제하시겠습니까?')) return;
             paymentRequests = paymentRequests.filter(function(r) { return String(r.id) !== String(id); });
