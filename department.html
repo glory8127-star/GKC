@@ -972,7 +972,10 @@
                 showToast('✅ 지출결의서가 제출되었습니다');
                 renderExpenseList();
                 db.collection('paymentRequests').doc('main').set({ list: paymentRequests }).catch(err => console.error('Firebase 저장 오류:', err));
-            } catch (error) { console.error('저장 오류:', error); showToast('저장 중 오류가 발생했습니다'); }
+            } catch (error) { 
+                console.error('저장 오류:', error); 
+                showToast('저장 오류: ' + (error.message || error.code || '알 수 없는 오류')); 
+            }
             finally { submitBtn.disabled = false; submitBtn.textContent = '제출'; }
         }
         
